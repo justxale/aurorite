@@ -1,0 +1,18 @@
+[package]
+name = "aurorite"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = { version = "0.8.9", features = ["http2", "ws"] }
+serde = { version = "1.0.228", features = ["derive"] }
+tokio = { version = "1.52.0", features = ["fs", "macros", "parking_lot", "rt-multi-thread", "signal", "tracing"] }
+tracing = "0.1.44"
+vismut-core = { git = "https://github.com/justxale/vismut-core.git", version = "0.1.0", features = ["nodes", "serde"] }
+sea-orm = { version = "2.0.0-rc.37", default-features = false, features = ["entity-registry", "macros", "runtime-tokio-native-tls", "schema-sync", "sqlite-use-returning-for-3_35", "sqlx-sqlite", "with-chrono", "with-uuid"] }
+chrono = { version = "0.4.44", features = ["serde", "now"] }
+uuid = { version = "1.23.1", features = ["serde", "v4"] }
+tower = "0.5.3"
+tower-http = { version = "0.6.8", features = ["fs", "timeout", "trace"] }
+tracing-subscriber = "0.3.23"
+dotenvy = "0.15.7"
