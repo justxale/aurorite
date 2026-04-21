@@ -3,13 +3,14 @@ use uuid::Uuid;
 
 #[sea_orm::model]
 #[derive(Clone, Debug, DeriveEntityModel)]
-#[sea_orm(table_name = "character")]
+#[sea_orm(table_name = "origin")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: Uuid,
-    
-    #[sea_orm(belongs_to, from = "id", to = "id")]
-    pub class: HasOne<super::class::Entity>,
+    pub l18n_key: String,
+
+    #[sea_orm(has_many)]
+    pub class: HasMany<super::character::Entity>,
 
     pub strength: i8,
     pub intelligence: i8,

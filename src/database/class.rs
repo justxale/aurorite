@@ -7,9 +7,10 @@ use uuid::Uuid;
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: Uuid,
+    pub base_hits: u16,
 
-    #[sea_orm(belongs_to, from = "id", to = "id")]
-    pub characters: HasOne<super::character::Entity>,
+    #[sea_orm(has_many)]
+    pub characters: HasMany<super::character::Entity>,
 }
 
 impl ActiveModelBehavior for ActiveModel {}

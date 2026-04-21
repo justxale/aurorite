@@ -7,6 +7,7 @@ mod database;
 mod routes;
 mod state;
 mod config;
+pub mod utils;
 
 const ENV_FILTER: &str = "vismut_core=DEBUG,aurorite=DEBUG";
 

@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-axum = { version = "0.8.9", features = ["http2", "ws"] }
+axum = { version = "0.8.9", features = ["http2", "macros", "ws"] }
 serde = { version = "1.0.228", features = ["derive"] }
 tokio = { version = "1.52.0", features = ["fs", "macros", "parking_lot", "rt-multi-thread", "signal", "tracing"] }
 tracing = "0.1.44"

@@ -1,7 +1,8 @@
 mod script;
 mod character;
 mod attributes;
-mod classes;
+mod class;
+mod origin;
 
-pub use classes::Entity as Class;
+pub use class::Entity as Class;
 pub use character::Entity as Character;
