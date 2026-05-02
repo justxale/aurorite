@@ -6,6 +6,7 @@ use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 mod config;
 mod database;
 mod enums;
+pub mod extractors;
 mod routes;
 mod state;
 pub mod utils;
