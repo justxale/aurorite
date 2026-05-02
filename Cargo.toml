@@ -13,9 +13,11 @@ uuid = { version = "1.23.1", features = ["serde", "v4"] }
 tower = "0.5.3"
 tower-http = { version = "0.6.8", features = ["fs", "timeout", "trace"] }
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
-dotenvy = "0.15.7"
 axum-extra = { version = "0.12.6", features = ["typed-header"] }
 jsonwebtoken = "10.3.0"
 argon2 = { version = "0.5.3", features = ["std"] }
 toasty = { version = "0.4.0", features = ["jiff", "serde", "sqlite"] }
 jiff = "0.2.24"
+
+[dev-dependencies]
+dotenvy = "0.15.7"

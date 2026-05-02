@@ -7,9 +7,11 @@ mod config;
 mod database;
 mod enums;
 pub mod extractors;
+pub mod responses;
 mod routes;
 mod state;
 pub mod utils;
+pub mod requests;
 
 const ENV_FILTER: &str = "vismut_core=DEBUG,aurorite=DEBUG";
 
@@ -17,6 +19,9 @@ const ENV_FILTER: &str = "vismut_core=DEBUG,aurorite=DEBUG";
 
 #[tokio::main]
 async fn main() -> () {
+    #[cfg(debug_assertions)]
+    let _ = dotenvy::dotenv();
+
     tracing_subscriber::registry()
         .with(fmt::layer())
         .with(
@@ -26,8 +31,15 @@ async fn main() -> () {
         .init();
 
     let state = AuroriteState::new().await;
-    let listener = tokio::net::TcpListener::bind(state.get_env().host()).await.unwrap();
-    tracing::info!("Aurorite is ready. Listening on {}", listener.local_addr().unwrap());
+    let listener = tokio::net::TcpListener::bind(
+        format!("{}:{}", state.env().host(), state.env().port())
+    ).await.unwrap();
+
+    tracing::info!(
+        "Aurorite (v{}) is ready. Listening on {}",
+        env!("CARGO_PKG_VERSION"),
+        listener.local_addr().unwrap()
+    );
 
     let app = build_routes().with_state(state);
     axum::serve(listener, app.into_make_service())

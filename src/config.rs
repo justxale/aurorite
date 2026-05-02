@@ -7,14 +7,11 @@ pub struct EnvConfig {
 
 impl EnvConfig {
     pub fn new() -> Self {
-        match dotenvy::dotenv() {
-            Ok(_) => Self {
-                host: std::env::var("AURORITE_HOST").unwrap_or(String::from("0.0.0.0")),
-                port: std::env::var("AURORITE_PORT").unwrap_or(String::from("11811")),
-                database_path: std::env::var("AURORITE_DATABASE_PATH")
-                    .unwrap_or(EnvConfig::default_db_path()),
-            },
-            Err(_) => EnvConfig::default(),
+        Self {
+            host: std::env::var("AURORITE_HOST").unwrap_or(String::from("0.0.0.0")),
+            port: std::env::var("AURORITE_PORT").unwrap_or(String::from("11811")),
+            database_path: std::env::var("AURORITE_DATABASE_PATH")
+                .unwrap_or(EnvConfig::default_db_path()),
         }
     }
 
@@ -27,10 +24,15 @@ impl EnvConfig {
             .unwrap()
     }
 
-    pub fn host(&self) -> String {
-        format!("{}:{}", self.host, self.port)
+    pub fn host(&self) -> &str {
+        &self.host
     }
-    pub fn db_path(&self) -> &String {
+    
+    pub fn port(&self) -> &str {
+        &self.port
+    }
+    
+    pub fn db_path(&self) -> &str {
         &self.database_path
     }
 }
