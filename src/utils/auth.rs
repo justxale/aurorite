@@ -1,9 +1,11 @@
+use crate::utils::uuid::ALPHABET;
 use argon2::password_hash::{Error, SaltString, rand_core::OsRng};
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
+use argon2::password_hash::rand_core::RngCore;
 
-pub fn hash_password(provided: String) -> Result<Vec<u8>, Error> {
+pub fn hash_password(provided: &String) -> Result<String, Error> {
     match Argon2::default().hash_password(provided.as_bytes(), &SaltString::generate(&mut OsRng)) {
-        Ok(result) => Ok(Vec::from(result.to_string().as_bytes())),
+        Ok(result) => Ok(result.to_string()),
         Err(e) => Err(e),
     }
 }
@@ -15,4 +17,12 @@ pub fn verify(provided: &String, hash: &String) -> bool {
             &PasswordHash::new(hash).unwrap(),
         )
         .is_ok()
+}
+
+pub fn generate_password() -> String {
+    let mut pwd: [char; 12] = ['a'; 12];
+    for i in 0..12 {
+        pwd[i] = ALPHABET[(OsRng.next_u32() % 64) as usize];
+    }
+    String::from_iter(pwd)
 }
