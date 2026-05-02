@@ -1,23 +1,27 @@
-use std::str::FromStr;
-use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 use crate::routes::build_routes;
 use crate::state::AuroriteState;
+use std::str::FromStr;
+use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
+mod config;
 mod database;
+mod enums;
 mod routes;
 mod state;
-mod config;
 pub mod utils;
 
 const ENV_FILTER: &str = "vismut_core=DEBUG,aurorite=DEBUG";
+
+
 
 #[tokio::main]
 async fn main() -> () {
     tracing_subscriber::registry()
         .with(fmt::layer())
-        .with(EnvFilter::try_from_env("AURORITE_LOG").unwrap_or(
-            EnvFilter::from_str(ENV_FILTER).unwrap()
-        ))
+        .with(
+            EnvFilter::try_from_env("AURORITE_LOG")
+                .unwrap_or(EnvFilter::from_str(ENV_FILTER).unwrap()),
+        )
         .init();
 
     let state = AuroriteState::new().await;

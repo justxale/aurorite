@@ -1,8 +1,5 @@
-mod script;
-mod character;
-mod attributes;
-mod class;
-mod origin;
+mod dyndata;
+pub mod models;
 
-pub use class::Entity as Class;
-pub use character::Entity as Character;
+pub use dyndata::*;
+pub use models::*;
