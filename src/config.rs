@@ -1,5 +1,5 @@
 use std::sync::OnceLock;
-use config::Config;
+use config::{Case, Config};
 use serde::Deserialize;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -9,17 +9,13 @@ pub struct EnvConfig {
     pub database_path: String,
     pub admin: String,
     pub password: String,
+    pub secret: String,
 }
 
 static CONFIG: OnceLock<EnvConfig> = OnceLock::new();
 pub fn env() -> &'static EnvConfig {
     CONFIG.get_or_init(|| {
-        Config::builder()
-            .add_source(config::Environment::with_prefix("AURORITE")
-                .try_parsing(true)
-                .separator("_")
-                .ignore_empty(true)
-            )
+        let config = Config::builder()
             .set_default("host", "0.0.0.0").unwrap()
             .set_default("port", "11811").unwrap()
             .set_default("admin", "aurorite").unwrap()
@@ -32,8 +28,12 @@ pub fn env() -> &'static EnvConfig {
                     .into_os_string()
                     .into_string()
                     .unwrap()
+            ).unwrap()
+            .add_source(config::Environment::with_prefix("AURORITE")
+                .ignore_empty(true)
+                .convert_case(Case::Lower)
             )
-            .unwrap().build().unwrap()
-            .try_deserialize::<EnvConfig>().unwrap()
+            .build().unwrap();
+        config.try_deserialize::<EnvConfig>().unwrap()
     })
 }

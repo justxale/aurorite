@@ -1,3 +1,4 @@
+use crate::env;
 use crate::responses::AuroriteErrorResponse;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
@@ -10,8 +11,7 @@ use serde::{Deserialize, Serialize};
 use crate::utils::uuid::{deserialize_encoded_uuid, serialize_encoded_uuid};
 
 pub static KEYS: LazyLock<Keys> = LazyLock::new(|| {
-    let secret = std::env::var("AURORITE_SECRET").expect("AUTH_SECRET");
-    Keys::new(secret.as_bytes())
+    Keys::new(env().secret.as_bytes())
 });
 
 #[derive(Debug)]
