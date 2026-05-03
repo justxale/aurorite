@@ -11,7 +11,11 @@ pub struct Client {
     pub nickname: String,
     pub pwd: String,
 
-    pub display_name: String,
+    pub display_name: Option<String>,
+    #[default(false)]
+    pub is_master: bool,
+    #[default(false)]
+    pub is_admin: bool,
 
     #[auto]
     pub updated_at: Timestamp,

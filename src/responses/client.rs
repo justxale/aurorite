@@ -9,5 +9,5 @@ pub struct ClientToken {
 #[derive(Deserialize, Serialize)]
 pub struct ClientInfo {
     pub nickname: String,
-    pub display_name: String,
+    pub display_name: Option<String>,
 }
