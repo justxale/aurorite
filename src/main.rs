@@ -1,6 +1,8 @@
+use crate::config::env;
 use crate::routes::build_routes;
 use crate::state::AuroriteState;
 use std::str::FromStr;
+use axum::Router;
 use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
 mod config;
@@ -15,7 +17,10 @@ pub mod requests;
 
 const ENV_FILTER: &str = "vismut_core=DEBUG,aurorite=DEBUG";
 
-
+async fn build_app() -> Router {
+    let state = AuroriteState::new().await;
+    build_routes().with_state(state)
+}
 
 #[tokio::main]
 async fn main() -> () {
@@ -29,10 +34,8 @@ async fn main() -> () {
                 .unwrap_or(EnvFilter::from_str(ENV_FILTER).unwrap()),
         )
         .init();
-
-    let state = AuroriteState::new().await;
     let listener = tokio::net::TcpListener::bind(
-        format!("{}:{}", state.env().host(), state.env().port())
+        format!("{}:{}", env().host, env().port)
     ).await.unwrap();
 
     tracing::info!(
@@ -41,7 +44,7 @@ async fn main() -> () {
         listener.local_addr().unwrap()
     );
 
-    let app = build_routes().with_state(state);
+    let app = build_app().await;
     axum::serve(listener, app.into_make_service())
         .with_graceful_shutdown(shutdown_signal())
         .await

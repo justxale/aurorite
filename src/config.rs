@@ -1,48 +1,39 @@
-#[derive(Clone, Debug)]
+use std::sync::OnceLock;
+use config::Config;
+use serde::Deserialize;
+
+#[derive(Clone, Debug, Deserialize)]
 pub struct EnvConfig {
-    host: String,
-    port: String,
-    database_path: String,
+    pub host: String,
+    pub port: String,
+    pub database_path: String,
+    pub admin: String,
+    pub password: String,
 }
 
-impl EnvConfig {
-    pub fn new() -> Self {
-        Self {
-            host: std::env::var("AURORITE_HOST").unwrap_or(String::from("0.0.0.0")),
-            port: std::env::var("AURORITE_PORT").unwrap_or(String::from("11811")),
-            database_path: std::env::var("AURORITE_DATABASE_PATH")
-                .unwrap_or(EnvConfig::default_db_path()),
-        }
-    }
-
-    pub fn default_db_path() -> String {
-        std::env::current_dir()
-            .unwrap()
-            .join("aurorite.sqlite")
-            .into_os_string()
-            .into_string()
-            .unwrap()
-    }
-
-    pub fn host(&self) -> &str {
-        &self.host
-    }
-    
-    pub fn port(&self) -> &str {
-        &self.port
-    }
-    
-    pub fn db_path(&self) -> &str {
-        &self.database_path
-    }
-}
-
-impl Default for EnvConfig {
-    fn default() -> Self {
-        Self {
-            host: String::from("0.0.0.0"),
-            port: String::from("11811"),
-            database_path: EnvConfig::default_db_path(),
-        }
-    }
+static CONFIG: OnceLock<EnvConfig> = OnceLock::new();
+pub fn env() -> &'static EnvConfig {
+    CONFIG.get_or_init(|| {
+        Config::builder()
+            .add_source(config::Environment::with_prefix("AURORITE")
+                .try_parsing(true)
+                .separator("_")
+                .ignore_empty(true)
+            )
+            .set_default("host", "0.0.0.0").unwrap()
+            .set_default("port", "11811").unwrap()
+            .set_default("admin", "aurorite").unwrap()
+            .set_default("password", "aurorite").unwrap()
+            .set_default(
+                "database_path",
+                std::env::current_dir()
+                    .unwrap()
+                    .join("aurorite.sqlite")
+                    .into_os_string()
+                    .into_string()
+                    .unwrap()
+            )
+            .unwrap().build().unwrap()
+            .try_deserialize::<EnvConfig>().unwrap()
+    })
 }
