@@ -22,8 +22,6 @@ impl AuroriteState {
         executor.get_schema_mut();
 
         let connection = Self::build_connection().await;
-
-        let _ = connection.push_schema().await;
         AuroriteState {
             db: connection,
             executor: Arc::new(executor),
@@ -47,6 +45,7 @@ impl AuroriteState {
             .connect(format!("sqlite:///{}?mode=rwc", env().database_path).as_str())
             .await
             .unwrap();
+        let _ = connection.push_schema().await;
         if let Ok(None) = Client::filter(Client::fields().is_admin().eq(true)).first().exec(&mut connection).await {
             toasty::create!( Client {
                 nickname: env().admin.clone(),
