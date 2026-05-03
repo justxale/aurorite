@@ -1,3 +1,4 @@
+use std::io::{stderr, stdin, Read, Write};
 use crate::config::env;
 use crate::routes::build_routes;
 use crate::state::AuroriteState;
@@ -28,6 +29,15 @@ async fn build_app() -> Router {
 async fn main() -> () {
     #[cfg(debug_assertions)]
     let _ = dotenvy::dotenv();
+
+    #[cfg(target_os = "windows")]
+    std::panic::set_hook(Box::new(|info| {
+        let mut out = stderr().lock();
+        let mut input = stdin();
+        out.write_fmt(format_args!("Fatal error occured: {}\nPress any key to continue", info)).unwrap();
+        out.flush().unwrap();
+        input.read_exact(&mut [0; 1]).unwrap();
+    }));
 
     tracing_subscriber::registry()
         .with(fmt::layer())
