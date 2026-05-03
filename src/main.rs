@@ -14,6 +14,8 @@ mod routes;
 mod state;
 pub mod utils;
 pub mod requests;
+#[cfg(test)]
+mod tests;
 
 const ENV_FILTER: &str = "vismut_core=DEBUG,aurorite=DEBUG";
 

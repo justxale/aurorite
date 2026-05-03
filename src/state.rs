@@ -39,10 +39,28 @@ impl AuroriteState {
         &self.sender
     }
 
+    #[cfg(not(test))]
     async fn build_connection() -> Db {
         let mut connection = Db::builder()
             .models(toasty::models!(crate::*))
             .connect(format!("sqlite:///{}?mode=rwc", env().database_path).as_str())
+            .await
+            .unwrap();
+        let _ = connection.push_schema().await;
+        if let Ok(None) = Client::filter(Client::fields().is_admin().eq(true)).first().exec(&mut connection).await {
+            toasty::create!( Client {
+                nickname: env().admin.clone(),
+                pwd: hash_password(&env().password).unwrap()
+            } ).exec(&mut connection).await.unwrap();
+        }
+        connection
+    }
+
+    #[cfg(test)]
+    async fn build_connection() -> Db {
+        let mut connection = Db::builder()
+            .models(toasty::models!(crate::*))
+            .connect("sqlite::memory:")
             .await
             .unwrap();
         let _ = connection.push_schema().await;

@@ -7,6 +7,7 @@ use axum::response::Response;
 use axum::{Router, http};
 use http::StatusCode;
 use std::time::Duration;
+use axum::routing::any;
 use tower::ServiceBuilder;
 use tower_http::services::ServeDir;
 use tower_http::timeout::TimeoutLayer;
@@ -17,6 +18,7 @@ pub fn build_routes() -> Router<AuroriteState> {
     Router::new()
         // .nest("/characters", characters::build_characters_routes())
         .nest("/client", client::build_client_routes())
+        .route("/healthcheck", any(async || StatusCode::NO_CONTENT))
         .route_service("/", ServeDir::new("static"))
         .layer(
             ServiceBuilder::new()
