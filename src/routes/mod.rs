@@ -2,7 +2,7 @@ mod characters;
 mod client;
 
 use crate::state::AuroriteState;
-use axum::extract::Request;
+use axum::extract::{Request, MatchedPath};
 use axum::response::Response;
 use axum::{Router, http};
 use http::StatusCode;
@@ -23,20 +23,23 @@ pub fn build_routes() -> Router<AuroriteState> {
         .layer(
             ServiceBuilder::new()
                 .layer(TraceLayer::new_for_http()
-                    .make_span_with(|_: &Request| {
+                    .make_span_with(|request: &Request<_>| {
+                        let matched_path = request
+                            .extensions()
+                            .get::<MatchedPath>()
+                            .map(MatchedPath::as_str);
+
                         tracing::info_span!(
-                            "api",
-                            path = tracing::field::Empty,
-                            err = tracing::field::Empty,
-                        )
+                        "request",
+                        method = ?request.method(),
+                        matched_path,
+                    )
                     })
-                    .on_request(|req: &Request, span: &Span| {
-                        span.record("path", tracing::field::display(&req.uri().path()));
+                    .on_request(|_request: &Request<_>, _span: &Span| {
+                        // tracing::debug!("started processing request")
                     })
-                    .on_response(|response: &Response, duration: Duration, span: &Span| {
-                        if !response.status().is_server_error() {
-                            tracing::info!(parent: span, duration = ?duration.as_millis(), status_code = ?response.status());
-                        }
+                    .on_response(|response: &Response, latency: Duration, _span: &Span| {
+                        tracing::info!(latency = ?latency, status = ?response.status());
                     }))
                 .layer(TimeoutLayer::with_status_code(StatusCode::REQUEST_TIMEOUT, Duration::from_secs(5)))
         )

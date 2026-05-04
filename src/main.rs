@@ -21,8 +21,6 @@ mod state;
 mod tests;
 pub mod utils;
 
-const ENV_FILTER: &str = "vismut_core=DEBUG,aurorite=DEBUG";
-
 async fn build_app() -> Router {
     let state = AuroriteState::new().await;
     build_routes().with_state(state)
@@ -68,40 +66,22 @@ fn setup_tracing() -> (WorkerGuard, WorkerGuard, WorkerGuard) {
     (_guard, _debug_guard, _stderr_guard)
 }
 
-#[tokio::main]
-async fn main() -> () {
-    #[cfg(debug_assertions)]
-    let _ = dotenvy::dotenv();
-
-    // Not using env() here because of probability of wrong env configuration
-    #[cfg(target_os = "windows")]
-    if std::env::var("AURORITE_AUTOEXIT").ok().is_none_or(|v| v == "0") {
-        std::panic::set_hook(Box::new(|info| {
-            let mut out = stderr().lock();
-            let mut input = stdin();
-            out.write_fmt(format_args!(
-                "Fatal error occured: {}\nPress any key to continue...\n",
-                info
-            ))
-                .unwrap();
-            out.flush().unwrap();
-            input.read_exact(&mut [0; 1]).unwrap();
-        }));
-    }
-
-    let _guards = setup_tracing();
+async fn serve() -> () {
+    let span = tracing::info_span!("startup");
+    let _enter = span.enter();
+    tracing::info!("performing Aurorite startup...");
 
     let listener = tokio::net::TcpListener::bind(format!("{}:{}", env().host, env().port))
         .await
         .unwrap();
 
     let app = build_app().await;
+    drop(_enter);
     tracing::info!(
         "Aurorite (v{}) is ready. Listening on {}",
         env!("CARGO_PKG_VERSION"),
         listener.local_addr().unwrap()
     );
-
     axum::serve(listener, app.into_make_service())
         .with_graceful_shutdown(shutdown_signal())
         .await
@@ -134,4 +114,29 @@ async fn shutdown_signal() {
             tracing::info!("received SIGTERM, graceful shutdown...");
         },
     }
+}
+
+#[tokio::main]
+async fn main() {
+    #[cfg(debug_assertions)]
+    let _ = dotenvy::dotenv();
+    let _guards = setup_tracing();
+
+    // Not using env() here because of probability of wrong env configuration
+    #[cfg(target_os = "windows")]
+    if std::env::var("AURORITE_AUTOEXIT").ok().is_none_or(|v| v == "0") {
+        std::panic::set_hook(Box::new(|info| {
+            let mut out = stderr().lock();
+            let mut input = stdin();
+            out.write_fmt(format_args!(
+                "Fatal error occured: {}\nPress any key to continue...\n",
+                info
+            ))
+                .unwrap();
+            out.flush().unwrap();
+            input.read_exact(&mut [0; 1]).unwrap();
+        }));
+    }
+
+    serve().await;
 }
