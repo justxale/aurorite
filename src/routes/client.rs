@@ -43,7 +43,7 @@ async fn login_client(State(state): State<AuroriteState>, Json(body): Json<Clien
             )),
             Ok(access) =>  Ok((
                 StatusCode::OK,
-                Json(ClientToken { token_type: "bearer", access_token: access })
+                Json(ClientToken { token_type: String::from("bearer"), access_token: access })
             ))
         }
     } else {

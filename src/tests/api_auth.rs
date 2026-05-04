@@ -1,10 +1,12 @@
 use http_body_util::BodyExt;
 use axum::body::Body;
-use axum::http::{Request, header, StatusCode};
+use axum::http::{Request, header, StatusCode, Response};
+use axum::Json;
 use axum::response::IntoResponse;
-use serde_json::json;
+use serde_json::{json, Value};
 use tower::{Service, ServiceExt};
 use crate::build_app;
+use crate::responses::ClientToken;
 
 #[tokio::test]
 async fn test_not_existing_auth() {
@@ -38,8 +40,7 @@ async fn test_existing_auth() {
         .call(request)
         .await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
-    let body = response.into_body();
-    println!("{:?}", body);
-
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let _res = serde_json::from_slice::<ClientToken>(&body).unwrap();
 }
 
