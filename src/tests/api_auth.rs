@@ -6,10 +6,10 @@ use axum::response::IntoResponse;
 use serde_json::{json, Value};
 use tower::{Service, ServiceExt};
 use crate::build_app;
-use crate::responses::ClientToken;
+use crate::responses::{ClientToken, ClientInfo};
 
 #[tokio::test]
-async fn test_not_existing_auth() {
+async fn test_nonexisting_auth() {
     dotenvy::dotenv().ok();
     let app = build_app().await;
 
@@ -41,6 +41,19 @@ async fn test_existing_auth() {
         .await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let _res = serde_json::from_slice::<ClientToken>(&body).unwrap();
-}
+    let res = serde_json::from_slice::<ClientToken>(&body).unwrap();
 
+    let request = Request::get("/client/me")
+        .header(header::AUTHORIZATION, format!("Bearer {}", res.access_token))
+        .body(Body::empty())
+        .unwrap();
+    let response = ServiceExt::<Request<Body>>::ready(&mut app)
+        .await.unwrap()
+        .call(request)
+        .await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let res = serde_json::from_slice::<ClientInfo>(&body).unwrap();
+    assert_eq!(res.nickname, "aurorite");
+    assert_eq!(res.display_name, None);
+}
