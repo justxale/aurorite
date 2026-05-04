@@ -73,18 +73,22 @@ async fn main() -> () {
     #[cfg(debug_assertions)]
     let _ = dotenvy::dotenv();
 
+    // Not using env() here because of probability of wrong env configuration
     #[cfg(target_os = "windows")]
-    std::panic::set_hook(Box::new(|info| {
-        let mut out = stderr().lock();
-        let mut input = stdin();
-        out.write_fmt(format_args!(
-            "Fatal error occured: {}\nPress any key to continue\n",
-            info
-        ))
-        .unwrap();
-        out.flush().unwrap();
-        input.read_exact(&mut [0; 1]).unwrap();
-    }));
+    if std::env::var("AURORITE_AUTOEXIT").ok().is_none_or(|v| v == "0") {
+        std::panic::set_hook(Box::new(|info| {
+            let mut out = stderr().lock();
+            let mut input = stdin();
+            out.write_fmt(format_args!(
+                "Fatal error occured: {}\nPress any key to continue...\n",
+                info
+            ))
+                .unwrap();
+            out.flush().unwrap();
+            input.read_exact(&mut [0; 1]).unwrap();
+        }));
+    }
+
     let _guards = setup_tracing();
 
     let listener = tokio::net::TcpListener::bind(format!("{}:{}", env().host, env().port))
