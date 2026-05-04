@@ -1,4 +1,5 @@
 /target
 .idea/
+logs/
 Cargo.lock
 aurorite.sqlite

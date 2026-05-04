@@ -1,28 +1,66 @@
-use std::io::{stderr, stdin, Read, Write};
 use crate::config::env;
 use crate::routes::build_routes;
 use crate::state::AuroriteState;
-use std::str::FromStr;
 use axum::Router;
-use tracing_subscriber::{EnvFilter, fmt, prelude::*};
+use std::io::{stderr, stdin, Read, Write};
+use std::str::FromStr;
+use tracing::Level;
+use tracing_appender::non_blocking::WorkerGuard;
+use tracing_appender::rolling::{RollingFileAppender, Rotation};
+use tracing_subscriber::{fmt, prelude::*, EnvFilter, Registry};
 
 mod config;
 mod database;
 mod enums;
 pub mod extractors;
+pub mod requests;
 pub mod responses;
 mod routes;
 mod state;
-pub mod utils;
-pub mod requests;
 #[cfg(test)]
 mod tests;
+pub mod utils;
 
 const ENV_FILTER: &str = "vismut_core=DEBUG,aurorite=DEBUG";
 
 async fn build_app() -> Router {
     let state = AuroriteState::new().await;
     build_routes().with_state(state)
+}
+
+fn setup_tracing() -> (WorkerGuard, WorkerGuard, WorkerGuard) {
+    let appender = RollingFileAppender::builder()
+        .rotation(Rotation::DAILY)
+        .filename_suffix("log")
+        .latest_symlink("latest.log")
+        .build(std::env::current_dir().unwrap().join("logs"))
+        .expect("failed to build RollingFileAppender");
+    let (writer, _guard) = tracing_appender::non_blocking(appender);
+    let debug_appender = RollingFileAppender::builder()
+        .rotation(Rotation::DAILY)
+        .filename_prefix("debug")
+        .filename_suffix("log")
+        .latest_symlink("latest.log")
+        .build(std::env::current_dir().unwrap().join("logs"))
+        .expect("failed to build RollingFileAppender");
+    let (debug_writer, _debug_guard) = tracing_appender::non_blocking(debug_appender);
+    let (stderr_writer, _stderr_guard) = tracing_appender::non_blocking(std::io::stderr());
+
+    Registry::default()
+        .with(fmt::Layer::default().with_writer(writer.with_max_level(Level::INFO)).with_ansi(false))
+        .with(
+            fmt::Layer::default()
+                .with_writer(debug_writer.with_max_level(Level::DEBUG))
+                .with_ansi(false),
+        )
+        .with(fmt::Layer::default().with_writer(stderr_writer.with_max_level(Level::INFO)))
+        .with(
+            EnvFilter::try_from_env("AURORITE_LOG")
+                .unwrap_or(EnvFilter::from_str(ENV_FILTER).unwrap()),
+        )
+        .init();
+
+    (_guard, _debug_guard, _stderr_guard)
 }
 
 #[tokio::main]
@@ -34,21 +72,19 @@ async fn main() -> () {
     std::panic::set_hook(Box::new(|info| {
         let mut out = stderr().lock();
         let mut input = stdin();
-        out.write_fmt(format_args!("Fatal error occured: {}\nPress any key to continue", info)).unwrap();
+        out.write_fmt(format_args!(
+            "Fatal error occured: {}\nPress any key to continue\n",
+            info
+        ))
+        .unwrap();
         out.flush().unwrap();
         input.read_exact(&mut [0; 1]).unwrap();
     }));
+    let _guards = setup_tracing();
 
-    tracing_subscriber::registry()
-        .with(fmt::layer())
-        .with(
-            EnvFilter::try_from_env("AURORITE_LOG")
-                .unwrap_or(EnvFilter::from_str(ENV_FILTER).unwrap()),
-        )
-        .init();
-    let listener = tokio::net::TcpListener::bind(
-        format!("{}:{}", env().host, env().port)
-    ).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(format!("{}:{}", env().host, env().port))
+        .await
+        .unwrap();
 
     tracing::info!(
         "Aurorite (v{}) is ready. Listening on {}",

@@ -20,6 +20,7 @@ toasty = { version = "0.4.0", features = ["jiff", "serde", "sqlite"] }
 jiff = "0.2.24"
 dotenvy = "0.15.7"
 config = { version = "0.15.22", default-features = false, features = ["convert-case"] }
+tracing-appender = "0.2.5"
 
 [dev-dependencies]
 http-body-util = "0.1.3"
