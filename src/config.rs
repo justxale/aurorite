@@ -10,6 +10,7 @@ pub struct EnvConfig {
     pub admin: String,
     pub password: String,
     pub secret: String,
+    pub log: String,
 }
 
 static CONFIG: OnceLock<EnvConfig> = OnceLock::new();
@@ -29,6 +30,7 @@ pub fn env() -> &'static EnvConfig {
                     .into_string()
                     .unwrap()
             ).unwrap()
+            .set_default("log", format!("vismut_core=INFO,{}=INFO", env!("CARGO_CRATE_NAME"))).unwrap()
             .add_source(config::Environment::with_prefix("AURORITE")
                 .ignore_empty(true)
                 .convert_case(Case::Lower)

@@ -47,16 +47,21 @@ fn setup_tracing() -> (WorkerGuard, WorkerGuard, WorkerGuard) {
     let (stderr_writer, _stderr_guard) = tracing_appender::non_blocking(std::io::stderr());
 
     Registry::default()
-        .with(fmt::Layer::default().with_writer(writer.with_max_level(Level::INFO)).with_ansi(false))
+        .with(
+            fmt::Layer::default()
+                .with_writer(writer)
+                .with_ansi(false)
+                .with_filter(EnvFilter::from_str(&env().log).unwrap())
+        )
         .with(
             fmt::Layer::default()
                 .with_writer(debug_writer.with_max_level(Level::DEBUG))
                 .with_ansi(false),
         )
-        .with(fmt::Layer::default().with_writer(stderr_writer.with_max_level(Level::INFO)))
         .with(
-            EnvFilter::try_from_env("AURORITE_LOG")
-                .unwrap_or(EnvFilter::from_str(ENV_FILTER).unwrap()),
+            fmt::Layer::default()
+                .with_writer(stderr_writer)
+                .with_filter(EnvFilter::from_str(&env().log).unwrap())
         )
         .init();
 
@@ -86,13 +91,13 @@ async fn main() -> () {
         .await
         .unwrap();
 
+    let app = build_app().await;
     tracing::info!(
         "Aurorite (v{}) is ready. Listening on {}",
         env!("CARGO_PKG_VERSION"),
         listener.local_addr().unwrap()
     );
 
-    let app = build_app().await;
     axum::serve(listener, app.into_make_service())
         .with_graceful_shutdown(shutdown_signal())
         .await
