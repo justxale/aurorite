@@ -50,7 +50,8 @@ impl AuroriteState {
         if let Ok(None) = Client::filter(Client::fields().is_admin().eq(true)).first().exec(&mut connection).await {
             toasty::create!( Client {
                 nickname: env().admin.clone(),
-                pwd: hash_password(&env().password).unwrap()
+                pwd: hash_password(&env().password).unwrap(),
+                is_admin: true
             } ).exec(&mut connection).await.unwrap();
         }
         connection
@@ -67,7 +68,8 @@ impl AuroriteState {
         if let Ok(None) = Client::filter(Client::fields().is_admin().eq(true)).first().exec(&mut connection).await {
             toasty::create!( Client {
                 nickname: env().admin.clone(),
-                pwd: hash_password(&env().password).unwrap()
+                pwd: hash_password(&env().password).unwrap(),
+                is_admin: true
             } ).exec(&mut connection).await.unwrap();
         }
         connection
