@@ -1,4 +1,4 @@
-use crate::requests::{ClientAuth, NewClientData};
+use crate::requests::{ClientAuth, NewClientData, UpdatedClientData};
 use crate::responses::ClientToken;
 use crate::utils::jwt::{encode_key, Authorization};
 use crate::state::AuroriteState;
@@ -11,7 +11,7 @@ use crate::responses::{AuroriteErrorResponse, ClientInfo, FailableResponse};
 use crate::utils::auth::{generate_password, hash_password, verify};
 
 #[tracing::instrument]
-async fn get_client(State(state): State<AuroriteState>, user: Authorization) -> FailableResponse<ClientInfo> {
+async fn get_self(State(state): State<AuroriteState>, user: Authorization) -> FailableResponse<ClientInfo> {
     match Client::get_by_id(&mut state.db(), user.id()).await {
         Err(_) => Err((
             StatusCode::NOT_FOUND,
@@ -22,6 +22,30 @@ async fn get_client(State(state): State<AuroriteState>, user: Authorization) -> 
             Json(ClientInfo { display_name: record.display_name, nickname: record.nickname })
         )),
     }
+}
+
+#[tracing::instrument]
+async fn edit_self(State(state): State<AuroriteState>, user: Authorization, Json(fields): Json<UpdatedClientData>) -> FailableResponse<ClientInfo> {
+    let mut db = state.db();
+    let record = Client::get_by_id(&mut db, user.id()).await;
+    if record.is_err() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(AuroriteErrorResponse::new(format!("user {} not found", user.id())))
+        ))
+    }
+    let mut record = record.unwrap();
+    let UpdatedClientData { display_name, is_master: _, is_admin: _ } = fields;
+    if let Some(new_name) = display_name && record.update().display_name(new_name).exec(&mut db).await.is_err() {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            AuroriteErrorResponse::new("failed to update").json()
+        ))
+    }
+    Ok((
+        StatusCode::OK,
+        Json(ClientInfo { display_name: record.display_name, nickname: record.nickname })
+    ))
 }
 
 #[tracing::instrument]
@@ -54,7 +78,7 @@ async fn login_client(State(state): State<AuroriteState>, Json(body): Json<Clien
     }
 }
 
-
+#[tracing::instrument]
 async fn register_client(State(state): State<AuroriteState>, user: Authorization, Json(body): Json<NewClientData>) -> FailableResponse<ClientInfo> {
     let mut db = state.db();
     if Client::get_by_nickname(&mut db, &body.nickname).await.is_ok() {
@@ -75,7 +99,7 @@ async fn register_client(State(state): State<AuroriteState>, user: Authorization
 
 pub fn build_client_routes() -> Router<AuroriteState> {
     Router::new()
-        .route("/me", get(get_client))
+        .route("/me", get(get_self).put(edit_self))
         .route("/auth/login", post(login_client))
         .route("/auth/register", post(register_client))
 }

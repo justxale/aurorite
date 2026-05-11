@@ -12,3 +12,10 @@ pub struct NewClientData {
     pub display_name: String,
     pub password: Option<String>,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct UpdatedClientData {
+    pub display_name: Option<String>,
+    pub is_admin: Option<bool>,
+    pub is_master: Option<bool>,
+}

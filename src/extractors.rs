@@ -1,4 +1,4 @@
-use crate::utils::jwt::Authorization;
+pub use crate::utils::jwt::Authorization;
 use crate::utils::jwt::{KEYS, TokenError};
 use axum::RequestPartsExt;
 use axum::extract::FromRequestParts;
@@ -9,6 +9,7 @@ use axum_extra::typed_header::TypedHeader;
 use jsonwebtoken::Validation;
 use jsonwebtoken::decode;
 use serde::{Deserialize, de::Error};
+
 
 impl<S> FromRequestParts<S> for Authorization
 where
