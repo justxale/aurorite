@@ -20,6 +20,7 @@ mod state;
 #[cfg(test)]
 mod tests;
 pub mod utils;
+mod traits;
 
 async fn build_app() -> Router {
     let state = AuroriteState::new().await;

@@ -1,3 +1,4 @@
+use crate::traits::IntoJson;
 use crate::requests::{ClientAuth, NewClientData, UpdatedClientData};
 use crate::responses::ClientToken;
 use crate::utils::jwt::{encode_key, Authorization};

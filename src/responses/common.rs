@@ -13,10 +13,6 @@ impl AuroriteErrorResponse {
             err: err.to_string(),
         }
     }
-
-    pub fn json(self) -> Json<AuroriteErrorResponse> {
-        Json(self)
-    }
 }
 
 pub type FailableResponse<T> = Result<(StatusCode, Json<T>), (StatusCode, Json<AuroriteErrorResponse>)>;
