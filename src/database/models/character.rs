@@ -9,7 +9,7 @@ pub struct Character {
 
     pub level: u8,
     pub max_hits: u16,
-    pub current_hits: u16,
+    // pub current_hits: u16,
 
     #[index]
     class_id: Uuid,
@@ -25,10 +25,10 @@ pub struct Character {
     #[belongs_to(key = client_id, references = id)]
     pub client: toasty::BelongsTo<Client>,
 
-    strength: u8,
-    intelligence: u8,
-    wisdom: u8,
-    dexterity: u8,
-    constitution: u8,
-    charisma: u8,
+    pub strength: u8,
+    pub intelligence: u8,
+    pub wisdom: u8,
+    pub dexterity: u8,
+    pub constitution: u8,
+    pub charisma: u8,
 }
