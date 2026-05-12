@@ -1,6 +1,5 @@
 use crate::enums::{Ability, ArmourType, InstrumentType, Skill, WeaponType};
 use serde::{Deserialize, Serialize};
-use toasty::Error;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BackgroundData {
@@ -22,4 +21,9 @@ pub struct ClassData {
     weapon_types: Vec<WeaponType>,
     armour_types: Vec<ArmourType>,
     instrument_types: Vec<InstrumentType>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RaceData {
+
 }

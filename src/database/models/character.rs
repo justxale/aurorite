@@ -1,4 +1,4 @@
-use crate::database::{Background, Class, Client};
+use crate::database::{Background, Class, Client, Race};
 use uuid::Uuid;
 
 #[derive(Clone, Debug, toasty::Model)]
@@ -8,6 +8,7 @@ pub struct Character {
     pub id: Uuid,
 
     pub level: u8,
+    pub xp: u32,
     pub max_hits: u16,
     // pub current_hits: u16,
 
@@ -17,6 +18,8 @@ pub struct Character {
     background_id: Uuid,
     #[index]
     client_id: Uuid,
+    #[index]
+    race_id: Uuid,
 
     #[belongs_to(key = class_id, references = id)]
     pub class: toasty::BelongsTo<Class>,
@@ -24,6 +27,8 @@ pub struct Character {
     pub background: toasty::BelongsTo<Background>,
     #[belongs_to(key = client_id, references = id)]
     pub client: toasty::BelongsTo<Client>,
+    #[belongs_to(key = race_id, references = id)]
+    pub race: toasty::BelongsTo<Race>,
 
     pub strength: u8,
     pub intelligence: u8,
