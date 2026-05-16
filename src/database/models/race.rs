@@ -1,20 +1,29 @@
 use uuid::Uuid;
-use crate::database::{Character, RaceData};
+use crate::database::{Character, RaceData, Spell};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, toasty::Embed)]
 pub enum CreatureSize {
+    #[column(variant = 1)]
     Tiny,
+    #[column(variant = 2)]
     Small,
+    #[column(variant = 3)]
     Medium,
+    #[column(variant = 4)]
     Large,
+    #[column(variant = 5)]
     Huge,
+    #[column(variant = 6)]
     Gargantuan
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, toasty::Embed)]
 pub enum CreatureType {
+    #[column(variant = 1)]
     Humanoid,
+    #[column(variant = 2)]
     Undead,
+    #[column(variant = 3)]
     Other
 }
 
@@ -32,7 +41,26 @@ pub struct Race {
     pub dark_vision: Option<u16>,
 
     #[has_many]
+    pub spells: toasty::HasMany<RaceSpell>,
+    #[has_many]
     pub characters: toasty::HasMany<Character>,
     #[serialize(json, nullable)]
     pub dyn_data: Option<RaceData>,
+}
+
+#[derive(Clone, Debug, toasty::Model)]
+pub struct RaceSpell {
+    #[key]
+    #[auto]
+    pub id: u64,
+
+    #[index]
+    race_id: Uuid,
+    #[index]
+    spell_id: Uuid,
+
+    #[belongs_to(key = race_id, references = id)]
+    race: toasty::BelongsTo<Race>,
+    #[belongs_to(key = spell_id, references = id)]
+    spell: toasty::BelongsTo<Spell>
 }
