@@ -1,7 +1,9 @@
 use uuid::Uuid;
+use toasty::{Embed, Model};
+use serde::{Serialize, Deserialize};
 use crate::database::{Character, RaceData, Spell};
 
-#[derive(Debug, Clone, toasty::Embed)]
+#[derive(Debug, Clone, Embed, Serialize, Deserialize)]
 pub enum CreatureSize {
     #[column(variant = 1)]
     Tiny,
@@ -17,7 +19,7 @@ pub enum CreatureSize {
     Gargantuan
 }
 
-#[derive(Debug, Clone, toasty::Embed)]
+#[derive(Debug, Clone, Embed, Serialize, Deserialize)]
 pub enum CreatureType {
     #[column(variant = 1)]
     Humanoid,
@@ -27,7 +29,7 @@ pub enum CreatureType {
     Other
 }
 
-#[derive(Clone, Debug, toasty::Model)]
+#[derive(Clone, Debug, Model)]
 pub struct Race {
     #[key]
     #[auto]

@@ -10,6 +10,6 @@ pub use background::Background;
 pub use character::Character;
 pub use class::Class;
 pub use client::Client;
-pub use race::{Race, RaceSpell};
+pub use race::{Race, RaceSpell, CreatureSize, CreatureType};
 pub use script::Script;
 pub use spell::Spell;
