@@ -1,7 +1,7 @@
 use std::io::SeekFrom;
 use std::path::Path;
 use tokio::fs::File;
-use tokio::io::{AsyncReadExt, AsyncSeekExt};
+use tokio::io::{AsyncReadExt, AsyncSeekExt, AsyncWrite, AsyncWriteExt};
 use tokio_tar::{Builder, Header};
 use crate::common::{AssetType, ManifestRecord};
 
@@ -63,4 +63,8 @@ pub async fn export(root_dir: &Path) -> std::io::Result<Vec<u8>> {
     header.set_cksum();
     tar.append(&header, manifest_bytes.as_bytes()).await?;
     tar.into_inner().await
+}
+
+pub async fn export_to_file(root_dir: &Path, file: &mut (impl AsyncWrite + Unpin)) -> std::io::Result<()> {
+    file.write_all(&export(root_dir).await?).await
 }
