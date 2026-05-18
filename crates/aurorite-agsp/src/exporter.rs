@@ -15,22 +15,27 @@ async fn read_dir_files(
     let mut dir = tokio::fs::read_dir(dir_path).await?;
     while let Ok(Some(file)) = dir.next_entry().await {
         if let Ok(file_type) = file.file_type().await && file_type.is_file() {
-            let mut bytes = Vec::new();
-            let mut reader = File::open(&file.path()).await?;
-            reader.read_to_end(&mut bytes).await?;
-            let id = manifest.add_asset(
-                &bytes,
-                file.file_name().to_str().unwrap(),
-                dir_type.clone()
-            ).await?;
-            reader.seek(SeekFrom::Start(0)).await?;
-            tar.append_file(id.simple().to_string(), &mut reader).await?;
+            if file_type.is_file() {
+                let mut bytes = Vec::new();
+                let mut reader = File::open(&file.path()).await?;
+                reader.read_to_end(&mut bytes).await?;
+                let id = manifest.add_asset(
+                    &bytes,
+                    file.file_name().to_str().unwrap(),
+                    dir_type.clone()
+                ).await?;
+                reader.seek(SeekFrom::Start(0)).await?;
+                tar.append_file(id.simple().to_string(), &mut reader).await?;
+            } else if file_type.is_symlink() {
+                tracing::warn!("symlink found: {}", file.path().display());
+            }
         }
     };
     Ok(())
 }
 
 pub async fn export(root_dir: &Path) -> std::io::Result<Vec<u8>> {
+    tracing::debug!("started exporting assets from {}", root_dir.display());
     let encoder = GzipEncoder::new(Vec::new());
     let mut manifest = ManifestRecord::new();
     let mut tar = Builder::new(encoder);
@@ -46,9 +51,11 @@ pub async fn export(root_dir: &Path) -> std::io::Result<Vec<u8>> {
             } else if file_type.is_dir() {
                 match file.file_name().to_str() {
                     Some("meta") => {
+                        tracing::debug!("reading meta assets");
                         read_dir_files(&mut tar, &mut manifest, &file.path(), AssetType::META).await?
                     }
                     Some("audio") => {
+                        tracing::debug!("reading audio assets");
                         read_dir_files(&mut tar, &mut manifest, &file.path(), AssetType::AUDIO).await?
                     }
                     Some(_) => {}
@@ -57,6 +64,7 @@ pub async fn export(root_dir: &Path) -> std::io::Result<Vec<u8>> {
             }
         }
     };
+    tracing::debug!("writing manifest");
     let manifest_bytes = toml::to_string(&manifest).unwrap();
     let mut header = Header::new_gnu();
     header.set_path("MANIFEST")?;
@@ -64,6 +72,7 @@ pub async fn export(root_dir: &Path) -> std::io::Result<Vec<u8>> {
     header.set_mode(0o644);
     header.set_cksum();
     tar.append(&header, manifest_bytes.as_bytes()).await?;
+    tracing::info!("successfully exported AGSP");
     Ok(tar.into_inner().await?.into_inner())
 }
 
