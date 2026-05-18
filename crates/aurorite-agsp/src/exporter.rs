@@ -3,10 +3,11 @@ use std::path::Path;
 use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncSeekExt, AsyncWrite, AsyncWriteExt};
 use tokio_tar::{Builder, Header};
+use async_compression::tokio::write::GzipEncoder;
 use crate::common::{AssetType, ManifestRecord};
 
 async fn read_dir_files(
-    tar: &mut Builder<Vec<u8>>,
+    tar: &mut Builder<GzipEncoder<Vec<u8>>>,
     manifest: &mut ManifestRecord,
     dir_path: &Path,
     dir_type: AssetType
@@ -30,8 +31,9 @@ async fn read_dir_files(
 }
 
 pub async fn export(root_dir: &Path) -> std::io::Result<Vec<u8>> {
+    let encoder = GzipEncoder::new(Vec::new());
     let mut manifest = ManifestRecord::new();
-    let mut tar = Builder::new(Vec::new());
+    let mut tar = Builder::new(encoder);
     let mut dir = tokio::fs::read_dir(root_dir).await?;
 
     while let Ok(Some(file)) = dir.next_entry().await {
@@ -62,7 +64,7 @@ pub async fn export(root_dir: &Path) -> std::io::Result<Vec<u8>> {
     header.set_mode(0o644);
     header.set_cksum();
     tar.append(&header, manifest_bytes.as_bytes()).await?;
-    tar.into_inner().await
+    Ok(tar.into_inner().await?.into_inner())
 }
 
 pub async fn export_to_file(root_dir: &Path, file: &mut (impl AsyncWrite + Unpin)) -> std::io::Result<()> {
