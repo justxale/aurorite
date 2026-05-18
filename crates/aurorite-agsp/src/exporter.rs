@@ -16,7 +16,7 @@ async fn read_dir_files(
         if let Ok(file_type) = file.file_type().await && file_type.is_file() {
             let mut bytes = Vec::new();
             let mut reader = File::open(&file.path()).await?;
-            reader.read_to_end(&mut bytes).await.unwrap();
+            reader.read_to_end(&mut bytes).await?;
             let id = manifest.add_asset(
                 &bytes,
                 file.file_name().to_str().unwrap(),
@@ -32,22 +32,22 @@ async fn read_dir_files(
 pub async fn export(root_dir: &Path) -> std::io::Result<Vec<u8>> {
     let mut manifest = ManifestRecord::new();
     let mut tar = Builder::new(Vec::new());
-    let mut dir = tokio::fs::read_dir(root_dir).await.unwrap();
+    let mut dir = tokio::fs::read_dir(root_dir).await?;
 
     while let Ok(Some(file)) = dir.next_entry().await {
         if let Ok(file_type) = file.file_type().await {
             if file_type.is_file() {
                 let mut bytes = Vec::new();
-                let mut reader = File::open(&file.path()).await.unwrap();
-                reader.read_to_end(&mut bytes).await.unwrap();
-                manifest.add_asset(&bytes, file.file_name().to_str().unwrap(), AssetType::ROOT).await.unwrap();
+                let mut reader = File::open(&file.path()).await?;
+                reader.read_to_end(&mut bytes).await?;
+                manifest.add_asset(&bytes, file.file_name().to_str().unwrap(), AssetType::ROOT).await?;
             } else if file_type.is_dir() {
                 match file.file_name().to_str() {
                     Some("meta") => {
-                        read_dir_files(&mut tar, &mut manifest, &file.path(), AssetType::META).await.unwrap()
+                        read_dir_files(&mut tar, &mut manifest, &file.path(), AssetType::META).await?
                     }
                     Some("audio") => {
-                        read_dir_files(&mut tar, &mut manifest, &file.path(), AssetType::AUDIO).await.unwrap()
+                        read_dir_files(&mut tar, &mut manifest, &file.path(), AssetType::AUDIO).await?
                     }
                     Some(_) => {}
                     None => {}
@@ -57,10 +57,10 @@ pub async fn export(root_dir: &Path) -> std::io::Result<Vec<u8>> {
     };
     let manifest_bytes = toml::to_string(&manifest).unwrap();
     let mut header = Header::new_gnu();
-    header.set_path("MANIFEST").unwrap();
+    header.set_path("MANIFEST")?;
     header.set_size(manifest_bytes.len() as u64);
     header.set_mode(0o644);
     header.set_cksum();
-    tar.append(&header, manifest_bytes.as_bytes()).await.unwrap();
+    tar.append(&header, manifest_bytes.as_bytes()).await?;
     tar.into_inner().await
 }
