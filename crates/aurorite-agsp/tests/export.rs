@@ -1,13 +1,13 @@
 use std::path::{PathBuf};
 use std::sync::LazyLock;
-use aurorite_arps::{export, AssetRecord, AssetType, ManifestRecord};
+use aurorite_agsp::{export, AssetRecord, AssetType, ManifestRecord};
 
 static ASSETS_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
     std::env::current_dir().unwrap().join("tests").join("assets")
 });
 
 #[tokio::test]
-async fn test() -> Result<(), std::io::Error> {
+async fn test_success_export() -> Result<(), std::io::Error> {
     let mut should_be = ManifestRecord::new();
     should_be.add_asset_record(
         AssetRecord::new(
