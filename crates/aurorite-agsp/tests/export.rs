@@ -16,7 +16,7 @@ async fn test_success_export() -> Result<(), std::io::Error> {
         )
     );
 
-    let res = export(ASSETS_PATH.as_path()).await.unwrap();
+    let res = export(ASSETS_PATH.as_path()).await?;
     assert!(!res.is_empty());
     Ok(())
 }
