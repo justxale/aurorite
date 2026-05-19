@@ -8,7 +8,7 @@ license.workspace = true
 
 [dependencies]
 astral-tokio-tar = "0.6.1"
-async-compression = { version = "0.4.42", features = ["tokio", "gzip"] }
+async-compression = { version = "0.4.42", features = ["tokio", "zstd"] }
 const-hex = "1.19.0"
 serde = { version = "1.0.228", features = ["derive"] }
 sha2 = "0.11.0"
@@ -18,4 +18,5 @@ tracing = "0.1.44"
 uuid = { version = "1.23.1", features = ["serde", "v7"] }
 
 [dev-dependencies]
-tokio = { version = "1.52.3", features = ["fs", "rt"] }
+tokio = { version = "1.52.3", features = ["fs", "macros", "rt"] }
+tracing-test = { version = "0.2.6", features = ["no-env-filter"] }
