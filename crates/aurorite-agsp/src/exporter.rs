@@ -5,7 +5,7 @@ use std::io::SeekFrom;
 use std::path::Path;
 use std::path::PathBuf;
 use tokio::fs::{DirEntry, File};
-use tokio::io::{AsyncRead, AsyncReadExt, AsyncSeekExt, AsyncWrite, AsyncWriteExt};
+use tokio::io::{AsyncReadExt, AsyncSeekExt, AsyncWrite, AsyncWriteExt, DuplexStream, duplex};
 use tokio_tar::{Builder, Header};
 
 async fn add_file(
@@ -53,10 +53,10 @@ async fn read_dir_files(
     Ok(())
 }
 
-pub async fn export(root_dir: PathBuf) -> impl AsyncRead + Unpin {
+pub async fn export(root_dir: PathBuf) -> DuplexStream {
     tracing::debug!("started exporting assets from {}", root_dir.display());
     let parents = Vec::new();
-    let (reader, writer) = tokio::io::duplex(256 * 1024);
+    let (reader, writer) = duplex(256 * 1024);
 
     tokio::spawn(async move {
         let encoder = ZstdEncoder::with_quality(writer, Level::Best);
