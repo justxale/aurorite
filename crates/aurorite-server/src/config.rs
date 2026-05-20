@@ -33,7 +33,7 @@ pub fn env() -> &'static EnvConfig {
                     .into_string()
                     .unwrap()
             ).unwrap()
-            .set_default("log", format!("vismut_core=INFO,{}=INFO", env!("CARGO_CRATE_NAME"))).unwrap()
+            .set_default("log", "vismut_core=INFO,aurorite=INFO").unwrap()
             .set_default("auto_exit", false).unwrap()
             .add_source(config::Environment::with_prefix("AURORITE")
                 .ignore_empty(true)
