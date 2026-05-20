@@ -7,11 +7,12 @@ edition.workspace = true
 authors.workspace = true
 
 [dependencies]
-axum = { version = "0.8.9", features = ["http2", "macros", "ws"] }
+axum = { version = "0.8.9", features = ["http2", "macros", "multipart", "ws"] }
 serde = { version = "1.0.228", features = ["derive"] }
 tokio = { version = "1.52.0", features = ["fs", "macros", "parking_lot", "rt-multi-thread", "signal", "tracing"] }
 tracing = "0.1.44"
 vismut-core = { git = "https://github.com/justxale/vismut-core.git", version = "0.1.0", features = ["nodes", "serde"] }
+aurorite-agsp = { path = "../aurorite-agsp" }
 uuid = { version = "1.23.1", features = ["serde", "v4"] }
 tower = "0.5.3"
 tower-http = { version = "0.6.8", features = ["fs", "timeout", "trace"] }
@@ -24,6 +25,7 @@ jiff = "0.2.24"
 dotenvy = "0.15.7"
 config = { version = "0.15.22", default-features = false, features = ["convert-case"] }
 tracing-appender = "0.2.5"
+tokio-util = { version = "0.7.18", features = ["compat", "io"] }
 
 [dev-dependencies]
 http-body-util = "0.1.3"

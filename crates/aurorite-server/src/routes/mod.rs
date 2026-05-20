@@ -1,5 +1,6 @@
 mod characters;
 mod client;
+mod agsp;
 
 use crate::state::AuroriteState;
 use axum::extract::{Request, MatchedPath};
@@ -18,6 +19,7 @@ pub fn build_routes() -> Router<AuroriteState> {
     Router::new()
         // .nest("/characters", characters::build_characters_routes())
         .nest("/client", client::build_client_routes())
+        .nest("/agsp", agsp::build_agsp_routes())
         .route("/healthcheck", any(async || StatusCode::NO_CONTENT))
         .route_service("/", ServeDir::new("static"))
         .layer(

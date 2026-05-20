@@ -5,6 +5,7 @@ use std::io::ErrorKind;
 use uuid::Uuid;
 
 pub const MANIFEST_VERSION: u8 = 1;
+pub const MAX_PACKAGE_SIZE: usize = 8 * 1024 * 1024;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum AssetType {
