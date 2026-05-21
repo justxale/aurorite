@@ -14,7 +14,7 @@ enum AgspError {
 
 impl Display for AgspError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.to_string())
+        f.write_fmt(format_args!("{:?}", &self))
     }
 }
 
