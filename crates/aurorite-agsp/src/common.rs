@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -33,15 +34,15 @@ impl AssetRecord {
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub struct ManifestRecord {
-    pub package_name: String,
+    pub package_name: Arc<String>,
     pub version: u8,
-    pub assets: Vec<AssetRecord>,
+    pub assets: Vec<Arc<AssetRecord>>,
 }
 
 impl ManifestRecord {
     pub fn new() -> Self {
         Self {
-            package_name: String::from("example-package"),
+            package_name: Arc::new(String::from("example-package")),
             version: MANIFEST_VERSION,
             assets: Vec::new(),
         }
@@ -49,7 +50,7 @@ impl ManifestRecord {
 
     pub fn add_asset(&mut self, record: AssetRecord) -> uuid::Uuid {
         let id = record.id;
-        self.assets.push(record);
+        self.assets.push(Arc::new(record));
         id
     }
 }

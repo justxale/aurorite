@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use crate::{AssetRecord, MAX_PACKAGE_SIZE, ManifestRecord};
 use async_compression::tokio::bufread::ZstdDecoder;
 use sha2::{Digest, Sha256};
@@ -42,7 +43,7 @@ async fn inspect_manifest(mut reader: impl AsyncRead + Unpin) -> Result<Manifest
     toml::from_slice::<ManifestRecord>(&buf).map_err(|_| AgspError::InvalidManifest)
 }
 
-async fn import_asset(record: AssetRecord, package_name: String) -> Result<(), AgspError> {
+async fn import_asset(record: Arc<AssetRecord>, package_name: Arc<String>) -> Result<(), AgspError> {
     let path: PathBuf = [".", ".tmp", "extract", &record.id.as_simple().to_string()]
         .iter()
         .collect();
@@ -52,9 +53,9 @@ async fn import_asset(record: AssetRecord, package_name: String) -> Result<(), A
     }
     tracing::debug!("{} checksum passed", record.id);
     let mut output_path: PathBuf = [".", "packages", &package_name].iter().collect();
-    output_path.extend(record.path);
+    output_path.extend(&record.path);
     tokio::fs::create_dir_all(&output_path).await?;
-    output_path.push(record.filename);
+    output_path.push(&record.filename);
     tokio::fs::rename(path, output_path).await?;
     Ok(())
 }

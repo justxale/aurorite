@@ -10,7 +10,7 @@ license.workspace = true
 astral-tokio-tar = "0.6.1"
 async-compression = { version = "0.4.42", features = ["tokio", "zstd"] }
 const-hex = "1.19.0"
-serde = { version = "1.0.228", features = ["derive"] }
+serde = { version = "1.0.228", features = ["derive", "rc"] }
 sha2 = "0.11.0"
 tokio = { version = "1.52.3", features = ["fs"] }
 tokio-stream = { version = "0.1.18" }
