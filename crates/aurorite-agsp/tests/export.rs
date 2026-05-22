@@ -15,8 +15,7 @@ static ASSETS_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
 #[traced_test]
 async fn test_success_export() -> Result<(), std::io::Error> {
     let mut res = export(ASSETS_PATH.clone()).await;
-    let mut f = File::create("./res.zstd").await?;
+    let mut f = File::create("./res.tar.zst").await?;
     tokio::io::copy(&mut res, &mut f).await?;
-    assert!(false);
     Ok(())
 }
