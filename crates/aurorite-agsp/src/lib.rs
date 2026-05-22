@@ -2,6 +2,6 @@ mod common;
 mod exporter;
 mod importer;
 
-pub use common::{AssetRecord, AssetType, ManifestRecord, MAX_PACKAGE_SIZE};
+pub use common::{AssetRecord, AssetType, MAX_PACKAGE_SIZE, ManifestRecord};
 pub use exporter::export;
-pub use importer::import;
+pub use importer::{AgspError, import};

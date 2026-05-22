@@ -14,13 +14,13 @@ pub enum AssetType {
     AUDIO,
 }
 
-#[derive(Deserialize, Serialize, Debug, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
 pub struct AssetRecord {
     #[serde(with = "uuid::serde::simple")]
-    id: Uuid,
-    filename: String,
-    checksum: String,
-    path: Vec<String>,
+    pub id: Uuid,
+    pub filename: String,
+    pub checksum: String,
+    pub path: Vec<String>,
 }
 
 impl AssetRecord {
@@ -56,13 +56,15 @@ impl AssetRecord {
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub struct ManifestRecord {
-    version: u8,
-    assets: Vec<AssetRecord>,
+    pub package_name: String,
+    pub version: u8,
+    pub assets: Vec<AssetRecord>,
 }
 
 impl ManifestRecord {
     pub fn new() -> Self {
         Self {
+            package_name: String::from("example-package"),
             version: MANIFEST_VERSION,
             assets: Vec::new(),
         }
