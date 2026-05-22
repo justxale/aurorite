@@ -1,28 +1,31 @@
 use crate::common::ManifestRecord;
 use async_compression::Level;
 use async_compression::tokio::write::ZstdEncoder;
-use std::io::SeekFrom;
 use std::path::Path;
 use std::path::PathBuf;
 use tokio::fs::{DirEntry, File};
-use tokio::io::{AsyncReadExt, AsyncSeekExt, AsyncWrite, AsyncWriteExt, DuplexStream, duplex};
+use tokio::io::{AsyncWrite, AsyncWriteExt, DuplexStream, duplex};
 use tokio_tar::{Builder, Header};
+use tokio_util::io::ReaderStream;
+use crate::{AgspError, AssetRecord};
+use crate::checksum::compute_hash;
 
 async fn add_file(
     tar: &mut Builder<ZstdEncoder<impl AsyncWrite + Send + Unpin>>,
     manifest: &mut ManifestRecord,
     parents: &Vec<String>,
     entry: &DirEntry,
-) -> Result<(), std::io::Error> {
+) -> Result<(), AgspError> {
     tracing::debug!("file found: {}", entry.path().display());
-    let mut bytes = Vec::new();
-    let mut reader = File::open(entry.path()).await?;
-    reader.read_to_end(&mut bytes).await?;
-    let id = manifest
-        .add_asset(&bytes, entry.file_name().to_str().unwrap(), parents)
-        .await?;
-    reader.seek(SeekFrom::Start(0)).await?;
-    tar.append_file(id.simple().to_string(), &mut reader).await
+    let stream = ReaderStream::new(File::open(entry.path()).await?);
+    let hash = compute_hash(stream).await?;
+    let id = manifest.add_asset(
+        AssetRecord::new(hash, entry.file_name().to_str().unwrap(), parents)
+    );
+    tar.append_file(
+        id.simple().to_string(),
+        &mut File::open(entry.path()).await?
+    ).await.map_err(AgspError::from)
 }
 
 async fn read_dir_files(
@@ -30,7 +33,7 @@ async fn read_dir_files(
     manifest: &mut ManifestRecord,
     dir_path: &Path,
     parent_path: &[String],
-) -> Result<(), std::io::Error> {
+) -> Result<(), AgspError> {
     let mut parents = Vec::from(parent_path);
     if dir_path.is_dir()
         && let Some(dirname) = dir_path.file_name()
@@ -84,7 +87,7 @@ pub async fn export(root_dir: PathBuf) -> DuplexStream {
         tracing::info!("successfully exported AGSP");
         let mut encoder = tar.into_inner().await?;
         encoder.shutdown().await?;
-        Ok::<(), std::io::Error>(())
+        Ok::<(), AgspError>(())
     });
 
     reader

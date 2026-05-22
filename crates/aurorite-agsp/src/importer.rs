@@ -10,6 +10,7 @@ use tokio::task::JoinSet;
 use tokio_stream::StreamExt;
 use tokio_tar::Archive;
 use tokio_util::io::ReaderStream;
+use crate::checksum::compute_hash;
 
 #[derive(Debug)]
 pub enum AgspError {
@@ -45,13 +46,7 @@ async fn import_asset(record: AssetRecord, package_name: String) -> Result<(), A
     let path: PathBuf = [".", ".tmp", "extract", &record.id.as_simple().to_string()]
         .iter()
         .collect();
-    let mut hash = Sha256::new();
-    let mut f = ReaderStream::new(File::open(&path).await?);
-    while let Some(chunk) = f.next().await {
-        hash.update(chunk?)
-    }
-    let hash = const_hex::encode(hash.finalize());
-    drop(f);
+    let hash = compute_hash(ReaderStream::new(File::open(&path).await?)).await?;
     if record.checksum != hash {
         return Err(AgspError::InvalidChecksum);
     }
