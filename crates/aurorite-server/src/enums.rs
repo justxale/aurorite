@@ -54,3 +54,10 @@ pub enum InstrumentType {
     GamingSet,
     Musical,
 }
+
+#[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
+pub enum Proficiency {
+    None = 0,
+    Base = 1,
+    Expert = 2,
+}

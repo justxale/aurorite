@@ -3,7 +3,7 @@ use toasty::{Embed, Model};
 use serde::{Serialize, Deserialize};
 use crate::database::{Character, RaceData, Spell};
 
-#[derive(Debug, Clone, Embed, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Embed, Serialize, Deserialize)]
 pub enum CreatureSize {
     #[column(variant = 1)]
     Tiny,
@@ -19,7 +19,7 @@ pub enum CreatureSize {
     Gargantuan
 }
 
-#[derive(Debug, Clone, Embed, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Embed, Serialize, Deserialize)]
 pub enum CreatureType {
     #[column(variant = 1)]
     Humanoid,
@@ -41,6 +41,19 @@ pub struct Race {
     pub creature_type: CreatureType,
     pub speed: u16,
     pub dark_vision: Option<u16>,
+
+    #[default(0)]
+    pub strength: u8,
+    #[default(0)]
+    pub intelligence: u8,
+    #[default(0)]
+    pub wisdom: u8,
+    #[default(0)]
+    pub dexterity: u8,
+    #[default(0)]
+    pub constitution: u8,
+    #[default(0)]
+    pub charisma: u8,
 
     #[has_many]
     pub spells: toasty::HasMany<RaceSpell>,

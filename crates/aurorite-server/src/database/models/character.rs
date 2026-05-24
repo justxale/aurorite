@@ -1,4 +1,4 @@
-use crate::database::{Background, Class, Client, Race};
+use crate::database::{Background, CharacterData, Class, Client, Race};
 use uuid::Uuid;
 
 #[derive(Clone, Debug, toasty::Model)]
@@ -7,10 +7,11 @@ pub struct Character {
     #[auto]
     pub id: Uuid,
 
+    pub name: Option<String>,
+    pub full_name: String,
+
     pub level: u8,
-    pub xp: u32,
     pub max_hits: u16,
-    // pub current_hits: u16,
 
     #[index]
     class_id: Uuid,
@@ -36,4 +37,7 @@ pub struct Character {
     pub dexterity: u8,
     pub constitution: u8,
     pub charisma: u8,
+
+    #[serialize(json, nullable)]
+    pub dyn_data: Option<CharacterData>,
 }
