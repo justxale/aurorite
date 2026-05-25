@@ -1,5 +1,8 @@
-use serde::Deserialize;
+use std::fmt::{Display, Formatter};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::iter::Iterator;
+use serde::de::{Error, Visitor};
+use uuid::Uuid;
 
 const ALPHABET_LEN: u128 = 64;
 pub const ALPHABET: [char; ALPHABET_LEN as usize] = [
@@ -27,17 +30,17 @@ fn get_number(digit: char) -> u8 {
     }
 }
 
-pub fn decode_uuid(encoded: &String) -> uuid::Uuid {
+pub fn decode_uuid(encoded: &str) -> Uuid {
     let mut uuid_int: u128 = 0;
     for (i, digit) in encoded.chars().rev().enumerate() {
         let tmp = get_number(digit) as u128;
         uuid_int += tmp * ALPHABET_LEN.pow(i as u32) as u128
     }
 
-    uuid::Uuid::from_u128(uuid_int)
+    Uuid::from_u128(uuid_int)
 }
 
-pub fn encode_uuid(uuid: &uuid::Uuid) -> String {
+pub fn encode_uuid(uuid: &Uuid) -> String {
     let mut n = uuid.as_u128();
     let mut res = String::with_capacity(21);
     while n > 0 {
@@ -60,4 +63,79 @@ where
     D: serde::Deserializer<'de>,
 {
     Ok(decode_uuid(&String::deserialize(des)?))
+}
+
+#[derive(Debug, PartialEq)]
+pub struct EncodedUuid(pub Uuid);
+
+impl EncodedUuid {
+    pub fn now_v7() -> Self {
+        Self(Uuid::now_v7())
+    }
+
+    pub fn from_str(encoded: &str) -> Self {
+        EncodedUuid(decode_uuid(encoded))
+    }
+
+    pub fn uuid(&self) -> Uuid {
+        self.0
+    }
+}
+
+impl Display for EncodedUuid {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("{}", encode_uuid(&self.0)))
+    }
+}
+
+impl Serialize for EncodedUuid {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer
+    {
+        serializer.collect_str(&format_args!("{}", self.to_string()))
+    }
+}
+
+struct EncodedUuidVisitor;
+
+impl<'vi> Visitor<'vi> for EncodedUuidVisitor {
+    type Value = EncodedUuid;
+    fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+        formatter.write_str("expected encoded uuid")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: Error,
+    {
+        Ok(EncodedUuid(decode_uuid(v)))
+    }
+}
+
+impl<'de> Deserialize<'de> for EncodedUuid {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>
+    {
+        deserializer.deserialize_str(EncodedUuidVisitor)
+    }
+}
+
+pub mod serde_support {
+    use super::{deserialize_encoded_uuid, serialize_encoded_uuid};
+
+    pub fn serialize<S>(uuid: &uuid::Uuid, ser: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serialize_encoded_uuid(uuid, ser)
+    }
+
+    pub fn deserialize<'de, D>(des: D) -> Result<uuid::Uuid, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserialize_encoded_uuid(des)
+    }
 }
