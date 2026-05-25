@@ -54,6 +54,6 @@ async fn test_existing_auth() {
     assert_eq!(response.status(), StatusCode::OK);
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let res = serde_json::from_slice::<ClientInfo>(&body).unwrap();
-    assert_eq!(res.nickname, "aurorite");
+    assert_eq!(res.username, "aurorite");
     assert_eq!(res.display_name, None);
 }

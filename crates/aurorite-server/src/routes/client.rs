@@ -20,7 +20,7 @@ async fn get_self(State(state): State<AuroriteState>, user: Authorization) -> Fa
         )),
         Ok(record) => Ok((
             StatusCode::OK,
-            Json(ClientInfo { display_name: record.display_name, nickname: record.nickname })
+            Json(ClientInfo { display_name: record.display_name, username: record.username })
         )),
     }
 }
@@ -45,13 +45,13 @@ async fn edit_self(State(state): State<AuroriteState>, user: Authorization, Json
     }
     Ok((
         StatusCode::OK,
-        Json(ClientInfo { display_name: record.display_name, nickname: record.nickname })
+        Json(ClientInfo { display_name: record.display_name, username: record.username })
     ))
 }
 
 #[tracing::instrument]
 async fn login_client(State(state): State<AuroriteState>, Json(body): Json<ClientAuth>) -> FailableResponse<ClientToken> {
-    let record = Client::get_by_nickname(&mut state.db(), &body.login).await;
+    let record = Client::get_by_username(&mut state.db(), &body.login).await;
     if record.is_err() {
         return Err((
             StatusCode::NOT_FOUND,
@@ -82,10 +82,10 @@ async fn login_client(State(state): State<AuroriteState>, Json(body): Json<Clien
 #[tracing::instrument]
 async fn register_client(State(state): State<AuroriteState>, user: Authorization, Json(body): Json<NewClientData>) -> FailableResponse<ClientInfo> {
     let mut db = state.db();
-    if Client::get_by_nickname(&mut db, &body.nickname).await.is_ok() {
+    if Client::get_by_username(&mut db, &body.nickname).await.is_ok() {
         return Err((StatusCode::CONFLICT, AuroriteErrorResponse::new("client already exists").json()));
     }
-    let mut record = Client::create().nickname(body.nickname).display_name(body.display_name);
+    let mut record = Client::create().username(body.nickname).display_name(body.display_name);
     if let Some(ref pwd) = body.password {
         record = record.pwd(hash_password(pwd).unwrap());
     } else {
@@ -94,7 +94,7 @@ async fn register_client(State(state): State<AuroriteState>, user: Authorization
     let record = record.exec(&mut db).await.unwrap();
     Ok((
         StatusCode::CREATED,
-        Json(ClientInfo { nickname: record.nickname, display_name: record.display_name })
+        Json(ClientInfo { username: record.username, display_name: record.display_name })
     ))
 }
 
