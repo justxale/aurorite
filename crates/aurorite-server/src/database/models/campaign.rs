@@ -91,12 +91,8 @@ pub struct CampaignBackground {
 #[derive(Clone, Debug, Model)]
 pub struct CampaignClient {
     #[key]
-    #[auto]
-    pub id: u64,
-
-    #[index]
     client_id: Uuid,
-    #[index]
+    #[key]
     campaign_id: Uuid,
 
     #[default(false)]

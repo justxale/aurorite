@@ -5,7 +5,7 @@ use axum::http::StatusCode;
 use axum::routing::{get, post};
 use uuid::fmt::Simple;
 use crate::database::{Background};
-use crate::extractors::Authorization;
+use crate::extractors::{Authorization, AuthorizedClient};
 use crate::requests::{PostBackground};
 use crate::responses::{AuroriteErrorResponse, FailableResponse};
 use crate::responses::parts::BackgroundInfo;
@@ -13,8 +13,8 @@ use crate::traits::IntoJson;
 
 async fn get_background(
     Path(id): Path<Simple>,
+    AuthorizedClient(client): AuthorizedClient,
     State(state): State<AuroriteState>,
-    user: Authorization
 ) -> FailableResponse<BackgroundInfo> {
     match Background::get_by_id(&mut state.db(), id.as_uuid()).await {
         Ok(ref record) => Ok((StatusCode::OK, BackgroundInfo::from(record).json())),
@@ -24,7 +24,7 @@ async fn get_background(
 
 async fn post_background(
     State(state): State<AuroriteState>,
-    user: Authorization,
+    AuthorizedClient(client): AuthorizedClient,
     Json(body): Json<PostBackground>
 ) -> FailableResponse<BackgroundInfo> {
     let record = Background::create()

@@ -8,27 +8,34 @@ use std::sync::LazyLock;
 use std::{error, fmt};
 use jiff::ToSpan;
 use serde::{Deserialize, Serialize};
-use crate::utils::uuid::{deserialize_encoded_uuid, serialize_encoded_uuid};
+use crate::traits::IntoJson;
+use crate::utils::uuid::serde_support;
 
 pub static KEYS: LazyLock<Keys> = LazyLock::new(|| {
     Keys::new(env().secret.as_bytes())
 });
+const TOKEN_LIFETIME: i8 = 24;
 
 #[derive(Debug)]
 pub enum TokenError {
     InvalidToken,
-    Failed,
+    Failed(String),
     MissingToken,
+    NotAdmin,
+    NotMaster,
+    NotFound(String),
 }
 
 impl IntoResponse for TokenError {
     fn into_response(self) -> Response {
         let (status, msg) = match self {
-            TokenError::InvalidToken => (StatusCode::UNAUTHORIZED, "Invalid token"),
-            TokenError::Failed => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to create token"),
-            TokenError::MissingToken => (StatusCode::UNAUTHORIZED, "Missing token"),
+            TokenError::InvalidToken => (StatusCode::UNAUTHORIZED, "invalid token".into()),
+            TokenError::Failed(reason) => (StatusCode::INTERNAL_SERVER_ERROR, reason),
+            TokenError::MissingToken => (StatusCode::UNAUTHORIZED, "missing token".into()),
+            TokenError::NotAdmin | TokenError::NotMaster => (StatusCode::FORBIDDEN, "you cannot perform this action".into()),
+            TokenError::NotFound(msg) => (StatusCode::NOT_FOUND, msg),
         };
-        (status, Json(AuroriteErrorResponse::new(msg))).into_response()
+        (status, AuroriteErrorResponse::new(msg).json()).into_response()
     }
 }
 
@@ -42,15 +49,14 @@ impl error::Error for TokenError {}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Authorization {
-    #[serde(deserialize_with = "deserialize_encoded_uuid")]
-    #[serde(serialize_with = "serialize_encoded_uuid")]
+    #[serde(with = "serde_support")]
     sub: uuid::Uuid,
     exp: usize,
 }
 
 impl Authorization {
     pub fn new(sub: uuid::Uuid) -> Self {
-        let exp = jiff::Timestamp::now() + 1.hours();
+        let exp = jiff::Timestamp::now() + TOKEN_LIFETIME.hours();
         Self { sub, exp: exp.as_second() as usize }
     }
     
@@ -76,7 +82,7 @@ impl Keys {
 pub fn encode_key(sub: uuid::Uuid) -> Result<String, TokenError> {
     let claims = Authorization::new(sub);
     encode::<Authorization>(&Header::default(), &claims, &KEYS.encoding)
-        .map_err(|_| TokenError::Failed)
+        .map_err(|_| TokenError::Failed("failed to encode key".into()))
 }
 
 pub fn decode_key(token: &str) -> Result<Authorization, TokenError> {

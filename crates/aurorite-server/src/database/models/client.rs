@@ -1,4 +1,4 @@
-use crate::database::Character;
+use crate::database::{CampaignClient, Character};
 use jiff::Timestamp;
 use uuid::Uuid;
 
@@ -22,4 +22,6 @@ pub struct Client {
 
     #[has_many]
     pub characters: toasty::HasMany<Character>,
+    #[has_many]
+    pub campaigns: toasty::HasMany<CampaignClient>
 }
