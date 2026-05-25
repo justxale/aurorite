@@ -7,9 +7,10 @@ pub struct Campaign {
     #[key]
     #[auto]
     pub id: Uuid,
+    #[index]
+    owner_id: Uuid,
 
     pub title: String,
-    // pub current_hits: u16,
 
     #[has_many]
     pub clients: HasMany<CampaignClient>,
@@ -17,6 +18,9 @@ pub struct Campaign {
     pub races: HasMany<CampaignRace>,
     #[has_many]
     pub classes: HasMany<CampaignClass>,
+
+    #[belongs_to(key = owner_id, references = id)]
+    owner: BelongsTo<Client>
 }
 
 #[derive(Clone, Debug, Model)]
@@ -62,7 +66,7 @@ pub struct CampaignClass {
     campaign_id: Uuid,
 
     #[belongs_to(key = class_id, references = id)]
-    class: BelongsTo<Race>,
+    class: BelongsTo<Class>,
     #[belongs_to(key = campaign_id, references = id)]
     campaign: BelongsTo<Campaign>,
 }
@@ -99,7 +103,7 @@ pub struct CampaignClient {
     pub is_master: bool,
 
     #[belongs_to(key = client_id, references = id)]
-    client: BelongsTo<Client>,
+    pub client: BelongsTo<Client>,
     #[belongs_to(key = campaign_id, references = id)]
-    campaign: BelongsTo<Campaign>,
+    pub campaign: BelongsTo<Campaign>,
 }

@@ -24,6 +24,7 @@ pub fn build_routes() -> Router<AuroriteState> {
         // .nest("/characters", characters::build_characters_routes())
         .nest("/client", client::build_client_routes())
         .nest("/backgrounds", backgrounds::build_backgrounds_routes())
+        .nest("/campaigns", campaigns::build_campaign_routes())
         .nest("/agsp", agsp::build_agsp_routes())
         .route("/healthcheck", any(async || StatusCode::NO_CONTENT))
         .route_service("/", ServeDir::new("static"))
