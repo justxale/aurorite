@@ -17,7 +17,7 @@ async fn get_background(
     user: Authorization
 ) -> FailableResponse<BackgroundInfo> {
     match Background::get_by_id(&mut state.db(), id.as_uuid()).await {
-        Ok(ref record) => Ok((StatusCode::OK, BackgroundInfo::from(record).clone().json())),
+        Ok(ref record) => Ok((StatusCode::OK, BackgroundInfo::from(record).json())),
         Err(err) => Err((StatusCode::NOT_FOUND, AuroriteErrorResponse::new(err).json()))
     }
 }
