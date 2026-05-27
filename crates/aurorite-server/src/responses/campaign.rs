@@ -1,13 +1,13 @@
 use crate::database::Campaign;
 use crate::responses::{AuroriteErrorResponse, ClientInfo};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CampaignInfo {
-    id: uuid::Uuid,
-    title: String,
-    masters: Vec<ClientInfo>,
-    players: Vec<ClientInfo>,
+    pub id: uuid::Uuid,
+    pub title: String,
+    pub masters: Vec<ClientInfo>,
+    pub players: Vec<ClientInfo>,
 }
 
 impl TryFrom<&Campaign> for CampaignInfo {
