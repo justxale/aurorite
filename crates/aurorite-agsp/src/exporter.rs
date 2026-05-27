@@ -1,4 +1,6 @@
+use crate::checksum::compute_hash;
 use crate::common::ManifestRecord;
+use crate::{AgspError, AssetRecord};
 use async_compression::Level;
 use async_compression::tokio::write::ZstdEncoder;
 use std::path::Path;
@@ -7,8 +9,6 @@ use tokio::fs::{DirEntry, File};
 use tokio::io::{AsyncWrite, AsyncWriteExt, DuplexStream, duplex};
 use tokio_tar::{Builder, Header};
 use tokio_util::io::ReaderStream;
-use crate::{AgspError, AssetRecord};
-use crate::checksum::compute_hash;
 
 async fn add_file(
     tar: &mut Builder<ZstdEncoder<impl AsyncWrite + Send + Unpin>>,
@@ -19,13 +19,17 @@ async fn add_file(
     tracing::debug!("file found: {}", entry.path().display());
     let stream = ReaderStream::new(File::open(entry.path()).await?);
     let hash = compute_hash(stream).await?;
-    let id = manifest.add_asset(
-        AssetRecord::new(hash, entry.file_name().to_str().unwrap(), parents)
-    );
+    let id = manifest.add_asset(AssetRecord::new(
+        hash,
+        entry.file_name().to_str().unwrap(),
+        parents,
+    ));
     tar.append_file(
         id.simple().to_string(),
-        &mut File::open(entry.path()).await?
-    ).await.map_err(AgspError::from)
+        &mut File::open(entry.path()).await?,
+    )
+    .await
+    .map_err(AgspError::from)
 }
 
 async fn read_dir_files(

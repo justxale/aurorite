@@ -12,11 +12,14 @@ use axum::{Json, Router};
 #[axum::debug_handler]
 async fn get_campaign(
     State(_state): State<AuroriteState>,
-    AuthorizedMaster(_client, campaign): AuthorizedMaster<true>
+    AuthorizedMaster(_client, campaign): AuthorizedMaster<true>,
 ) -> FailableResponse<CampaignInfo> {
     match CampaignInfo::try_from(&campaign) {
         Ok(res) => Ok((StatusCode::OK, res.json())),
-        Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new("failed to build response").json()))
+        Err(_) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            AuroriteErrorResponse::new("failed to build response").json(),
+        )),
     }
 }
 
@@ -25,15 +28,19 @@ async fn post_campaign(
     AuthorizedAdmin(client): AuthorizedAdmin,
     Json(body): Json<PostCampaign>,
 ) -> FailableResponse<CampaignInfo> {
-    let record = Campaign::create()
-        .title(body.title)
-        .owner_id(client.id);
+    let record = Campaign::create().title(body.title).owner_id(client.id);
     match record.exec(&mut state.db()).await {
-        Err(err) => Err((StatusCode::NOT_FOUND, AuroriteErrorResponse::new(err).json())),
+        Err(err) => Err((
+            StatusCode::NOT_FOUND,
+            AuroriteErrorResponse::new(err).json(),
+        )),
         Ok(ref res) => match CampaignInfo::try_from(res) {
             Ok(res) => Ok((StatusCode::OK, res.json())),
-            Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new("failed to build response").json()))
-        }
+            Err(_) => Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                AuroriteErrorResponse::new("failed to build response").json(),
+            )),
+        },
     }
 }
 

@@ -1,19 +1,17 @@
 use crate::env;
 use crate::responses::AuroriteErrorResponse;
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
-use axum::Json;
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
-use std::sync::LazyLock;
-use std::{error, fmt};
-use jiff::ToSpan;
-use serde::{Deserialize, Serialize};
 use crate::traits::IntoJson;
 use crate::utils::uuid::serde_support;
+use axum::Json;
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
+use jiff::ToSpan;
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
+use serde::{Deserialize, Serialize};
+use std::sync::LazyLock;
+use std::{error, fmt};
 
-pub static KEYS: LazyLock<Keys> = LazyLock::new(|| {
-    Keys::new(env().secret.as_bytes())
-});
+pub static KEYS: LazyLock<Keys> = LazyLock::new(|| Keys::new(env().secret.as_bytes()));
 const TOKEN_LIFETIME: i8 = 24;
 
 #[derive(Debug)]
@@ -32,7 +30,10 @@ impl IntoResponse for TokenError {
             TokenError::InvalidToken => (StatusCode::UNAUTHORIZED, "invalid token".into()),
             TokenError::Failed(reason) => (StatusCode::INTERNAL_SERVER_ERROR, reason),
             TokenError::MissingToken => (StatusCode::UNAUTHORIZED, "missing token".into()),
-            TokenError::NotAdmin | TokenError::NotMaster => (StatusCode::FORBIDDEN, "you cannot perform this action".into()),
+            TokenError::NotAdmin | TokenError::NotMaster => (
+                StatusCode::FORBIDDEN,
+                "you cannot perform this action".into(),
+            ),
             TokenError::NotFound(msg) => (StatusCode::NOT_FOUND, msg),
         };
         (status, AuroriteErrorResponse::new(msg).json()).into_response()
@@ -57,9 +58,12 @@ pub struct Authorization {
 impl Authorization {
     pub fn new(sub: uuid::Uuid) -> Self {
         let exp = jiff::Timestamp::now() + TOKEN_LIFETIME.hours();
-        Self { sub, exp: exp.as_second() as usize }
+        Self {
+            sub,
+            exp: exp.as_second() as usize,
+        }
     }
-    
+
     pub fn id(&self) -> &uuid::Uuid {
         &self.sub
     }
@@ -86,8 +90,9 @@ pub fn encode_key(sub: uuid::Uuid) -> Result<String, TokenError> {
 }
 
 pub fn decode_key(token: &str) -> Result<Authorization, TokenError> {
-    Ok(decode::<Authorization>(token, &KEYS.decoding, &Validation::default())
-        .map_err(|_| TokenError::InvalidToken)?
-        .claims
+    Ok(
+        decode::<Authorization>(token, &KEYS.decoding, &Validation::default())
+            .map_err(|_| TokenError::InvalidToken)?
+            .claims,
     )
 }

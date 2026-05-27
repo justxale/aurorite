@@ -1,13 +1,12 @@
-use std::convert::TryFrom;
 use crate::database::{
-    Background, BackgroundData, Character, Class, ClassData, CreatureSize,
-    CreatureType, Race
+    Background, BackgroundData, Character, Class, ClassData, CreatureSize, CreatureType, Race,
 };
 use crate::enums::{Ability, Proficiency, Skill};
+use crate::responses::character::stats::{AbilityInfo, SkillInfo};
 use crate::responses::common::AuroriteErrorResponse;
 use serde::{Deserialize, Serialize};
+use std::convert::TryFrom;
 use uuid::Uuid;
-use crate::responses::character::stats::{AbilityInfo, SkillInfo};
 
 #[derive(Debug, Serialize)]
 pub struct CharacterRaceInfo {
@@ -29,15 +28,32 @@ pub struct CharacterRaceInfo {
 
 impl CharacterRaceInfo {
     pub fn new(
-        id: Uuid, l18n: String,
-        size: CreatureSize, creature_type: CreatureType,
-        speed: u16, dark_vision: Option<u16>,
-        strength: u8, intelligence: u8, wisdom: u8,
-        dexterity: u8, constitution: u8, charisma: u8,
+        id: Uuid,
+        l18n: String,
+        size: CreatureSize,
+        creature_type: CreatureType,
+        speed: u16,
+        dark_vision: Option<u16>,
+        strength: u8,
+        intelligence: u8,
+        wisdom: u8,
+        dexterity: u8,
+        constitution: u8,
+        charisma: u8,
     ) -> Self {
         Self {
-            id, l18n, size, creature_type, speed, dark_vision,
-            strength, intelligence, wisdom, dexterity, constitution, charisma,
+            id,
+            l18n,
+            size,
+            creature_type,
+            speed,
+            dark_vision,
+            strength,
+            intelligence,
+            wisdom,
+            dexterity,
+            constitution,
+            charisma,
         }
     }
 }
@@ -45,11 +61,18 @@ impl CharacterRaceInfo {
 impl From<&Race> for CharacterRaceInfo {
     fn from(race: &Race) -> Self {
         Self::new(
-            race.id, race.l18n_key.clone(),
-            race.size, race.creature_type,
-            race.speed, race.dark_vision,
-            race.strength, race.intelligence, race.wisdom,
-            race.dexterity, race.constitution, race.charisma
+            race.id,
+            race.l18n_key.clone(),
+            race.size,
+            race.creature_type,
+            race.speed,
+            race.dark_vision,
+            race.strength,
+            race.intelligence,
+            race.wisdom,
+            race.dexterity,
+            race.constitution,
+            race.charisma,
         )
     }
 }
@@ -68,7 +91,7 @@ impl TryFrom<&Character> for CharacterAbilitiesInfo {
     type Error = AuroriteErrorResponse;
     fn try_from(character: &Character) -> Result<Self, Self::Error> {
         if character.class.is_unloaded() || character.race.is_unloaded() {
-            return Err(AuroriteErrorResponse::new("failed to collect data"))
+            return Err(AuroriteErrorResponse::new("failed to collect data"));
         }
         let mut strength = AbilityInfo::new(character.strength);
         let mut intelligence = AbilityInfo::new(character.intelligence);
@@ -112,7 +135,12 @@ impl TryFrom<&Character> for CharacterAbilitiesInfo {
         }
 
         Ok(Self {
-            strength, intelligence, wisdom, dexterity, constitution, charisma
+            strength,
+            intelligence,
+            wisdom,
+            dexterity,
+            constitution,
+            charisma,
         })
     }
 }
@@ -136,14 +164,17 @@ pub struct CharacterSkillsInfo {
     religion: SkillInfo,
     stealth: SkillInfo,
     arcana: SkillInfo,
-    persuasion: SkillInfo
+    persuasion: SkillInfo,
 }
 
 impl TryFrom<&Character> for CharacterSkillsInfo {
     type Error = AuroriteErrorResponse;
     fn try_from(character: &Character) -> Result<Self, Self::Error> {
-        if character.class.is_unloaded() || character.race.is_unloaded() || character.background.is_unloaded() {
-            return Err(AuroriteErrorResponse::new("failed to collect data"))
+        if character.class.is_unloaded()
+            || character.race.is_unloaded()
+            || character.background.is_unloaded()
+        {
+            return Err(AuroriteErrorResponse::new("failed to collect data"));
         }
         let abilities = CharacterAbilitiesInfo::try_from(character)?;
 
@@ -227,9 +258,24 @@ impl TryFrom<&Character> for CharacterSkillsInfo {
         }
 
         Ok(Self {
-            acrobatics, athletics, perception, survival, performance, intimidation,
-            history, sleight_of_hand, medicine, deception, animal_handling, nature, insight,
-            investigation, religion, stealth, arcana, persuasion
+            acrobatics,
+            athletics,
+            perception,
+            survival,
+            performance,
+            intimidation,
+            history,
+            sleight_of_hand,
+            medicine,
+            deception,
+            animal_handling,
+            nature,
+            insight,
+            investigation,
+            religion,
+            stealth,
+            arcana,
+            persuasion,
         })
     }
 }
@@ -247,8 +293,11 @@ pub struct ClassInfo {
 impl From<&Class> for ClassInfo {
     fn from(class: &Class) -> Self {
         Self {
-            id: class.id, l18n_key: class.l18n_key.clone(), dynamic: class.dyn_data.clone(),
-            base_hits: class.base_hits, base_hit_dice: class.base_hit_dice.clone()
+            id: class.id,
+            l18n_key: class.l18n_key.clone(),
+            dynamic: class.dyn_data.clone(),
+            base_hits: class.base_hits,
+            base_hit_dice: class.base_hit_dice.clone(),
         }
     }
 }
@@ -257,7 +306,7 @@ impl From<&Class> for ClassInfo {
 pub struct BackgroundInfo {
     id: Uuid,
     l18n_key: String,
-    dynamic: Option<BackgroundData>
+    dynamic: Option<BackgroundData>,
 }
 
 impl From<&Background> for BackgroundInfo {
@@ -265,7 +314,7 @@ impl From<&Background> for BackgroundInfo {
         Self {
             id: background.id,
             l18n_key: background.l18n_key.clone(),
-            dynamic: background.dyn_data.clone()
+            dynamic: background.dyn_data.clone(),
         }
     }
 }

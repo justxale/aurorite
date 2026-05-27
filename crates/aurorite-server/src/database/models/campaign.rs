@@ -1,6 +1,6 @@
+use crate::database::{Background, Character, Class, Client, Race};
 use toasty::{BelongsTo, HasMany, Model};
 use uuid::Uuid;
-use crate::database::{Background, Character, Class, Client, Race};
 
 #[derive(Clone, Debug, Model)]
 pub struct Campaign {
@@ -20,7 +20,7 @@ pub struct Campaign {
     pub classes: HasMany<CampaignClass>,
 
     #[belongs_to(key = owner_id, references = id)]
-    owner: BelongsTo<Client>
+    owner: BelongsTo<Client>,
 }
 
 #[derive(Clone, Debug, Model)]

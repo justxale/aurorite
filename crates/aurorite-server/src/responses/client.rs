@@ -1,5 +1,5 @@
-use serde::{Serialize, Deserialize};
-use crate::database::{Client};
+use crate::database::Client;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ClientToken {
@@ -17,7 +17,7 @@ impl From<&Client> for ClientInfo {
     fn from(client: &Client) -> Self {
         Self {
             username: client.username.clone(),
-            display_name: client.display_name.clone()
+            display_name: client.display_name.clone(),
         }
     }
 }

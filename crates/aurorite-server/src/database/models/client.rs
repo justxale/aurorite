@@ -23,5 +23,5 @@ pub struct Client {
     #[has_many]
     pub characters: toasty::HasMany<Character>,
     #[has_many]
-    pub campaigns: toasty::HasMany<CampaignClient>
+    pub campaigns: toasty::HasMany<CampaignClient>,
 }

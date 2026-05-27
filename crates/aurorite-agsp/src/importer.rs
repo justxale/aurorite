@@ -1,17 +1,17 @@
-use std::sync::Arc;
+use crate::checksum::compute_hash;
 use crate::{AssetRecord, MAX_PACKAGE_SIZE, ManifestRecord};
 use async_compression::tokio::bufread::ZstdDecoder;
 use sha2::{Digest, Sha256};
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 use std::path::PathBuf;
+use std::sync::Arc;
 use tokio::fs::File;
 use tokio::io::{AsyncRead, AsyncReadExt, BufReader};
 use tokio::task::JoinSet;
 use tokio_stream::StreamExt;
 use tokio_tar::Archive;
 use tokio_util::io::ReaderStream;
-use crate::checksum::compute_hash;
 
 #[derive(Debug)]
 pub enum AgspError {
@@ -43,7 +43,10 @@ async fn inspect_manifest(mut reader: impl AsyncRead + Unpin) -> Result<Manifest
     toml::from_slice::<ManifestRecord>(&buf).map_err(|_| AgspError::InvalidManifest)
 }
 
-async fn import_asset(record: Arc<AssetRecord>, package_name: Arc<String>) -> Result<(), AgspError> {
+async fn import_asset(
+    record: Arc<AssetRecord>,
+    package_name: Arc<String>,
+) -> Result<(), AgspError> {
     let path: PathBuf = [".", ".tmp", "extract", &record.id.as_simple().to_string()]
         .iter()
         .collect();

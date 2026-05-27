@@ -2,12 +2,12 @@ use crate::config::env;
 use crate::routes::build_routes;
 use crate::state::AuroriteState;
 use axum::Router;
-use std::io::{stderr, stdin, Read, Write};
+use std::io::{Read, Write, stderr, stdin};
 use std::str::FromStr;
 use tracing::Level;
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
-use tracing_subscriber::{fmt, prelude::*, EnvFilter, Registry};
+use tracing_subscriber::{EnvFilter, Registry, fmt, prelude::*};
 
 mod config;
 mod database;
@@ -19,8 +19,8 @@ mod routes;
 mod state;
 #[cfg(test)]
 mod tests;
-pub mod utils;
 mod traits;
+pub mod utils;
 
 async fn build_app() -> Router {
     let state = AuroriteState::new().await;
@@ -50,7 +50,7 @@ fn setup_tracing() -> (WorkerGuard, WorkerGuard, WorkerGuard) {
             fmt::Layer::default()
                 .with_writer(writer)
                 .with_ansi(false)
-                .with_filter(EnvFilter::from_str(&env().log).unwrap())
+                .with_filter(EnvFilter::from_str(&env().log).unwrap()),
         )
         .with(
             fmt::Layer::default()
@@ -60,7 +60,7 @@ fn setup_tracing() -> (WorkerGuard, WorkerGuard, WorkerGuard) {
         .with(
             fmt::Layer::default()
                 .with_writer(stderr_writer)
-                .with_filter(EnvFilter::from_str(&env().log).unwrap())
+                .with_filter(EnvFilter::from_str(&env().log).unwrap()),
         )
         .init();
 
@@ -125,7 +125,10 @@ async fn main() {
 
     // Not using env() here because of probability of wrong env configuration
     #[cfg(target_os = "windows")]
-    if std::env::var("AURORITE_AUTOEXIT").ok().is_none_or(|v| v == "0") {
+    if std::env::var("AURORITE_AUTOEXIT")
+        .ok()
+        .is_none_or(|v| v == "0")
+    {
         std::panic::set_hook(Box::new(|info| {
             let mut out = stderr().lock();
             let mut input = stdin();
@@ -133,7 +136,7 @@ async fn main() {
                 "Fatal error occured: {}\nPress any key to continue...\n",
                 info
             ))
-                .unwrap();
+            .unwrap();
             out.flush().unwrap();
             input.read_exact(&mut [0; 1]).unwrap();
         }));

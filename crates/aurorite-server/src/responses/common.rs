@@ -15,4 +15,5 @@ impl AuroriteErrorResponse {
     }
 }
 
-pub type FailableResponse<T> = Result<(StatusCode, Json<T>), (StatusCode, Json<AuroriteErrorResponse>)>;
+pub type FailableResponse<T> =
+    Result<(StatusCode, Json<T>), (StatusCode, Json<AuroriteErrorResponse>)>;

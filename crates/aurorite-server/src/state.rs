@@ -1,12 +1,12 @@
 use crate::config::env;
+use crate::database::Client;
+use crate::utils::auth::hash_password;
 use axum::extract::ws::Message;
 use std::sync::Arc;
 use toasty::Db;
 use tokio::sync::broadcast;
 use tokio::sync::broadcast::Sender;
 use vismut_core::VismutExecutionEnvironment;
-use crate::database::Client;
-use crate::utils::auth::hash_password;
 
 #[derive(Clone, Debug)]
 pub struct AuroriteState {
@@ -47,12 +47,19 @@ impl AuroriteState {
             .await
             .unwrap();
         let _ = connection.push_schema().await;
-        if let Ok(None) = Client::filter(Client::fields().is_admin().eq(true)).first().exec(&mut connection).await {
-            toasty::create!( Client {
+        if let Ok(None) = Client::filter(Client::fields().is_admin().eq(true))
+            .first()
+            .exec(&mut connection)
+            .await
+        {
+            toasty::create!(Client {
                 username: env().admin.clone(),
                 pwd: hash_password(&env().password).unwrap(),
                 is_admin: true
-            } ).exec(&mut connection).await.unwrap();
+            })
+            .exec(&mut connection)
+            .await
+            .unwrap();
         }
         connection
     }
@@ -65,12 +72,19 @@ impl AuroriteState {
             .await
             .unwrap();
         let _ = connection.push_schema().await;
-        if let Ok(None) = Client::filter(Client::fields().is_admin().eq(true)).first().exec(&mut connection).await {
-            toasty::create!( Client {
+        if let Ok(None) = Client::filter(Client::fields().is_admin().eq(true))
+            .first()
+            .exec(&mut connection)
+            .await
+        {
+            toasty::create!(Client {
                 username: env().admin.clone(),
                 pwd: hash_password(&env().password).unwrap(),
                 is_admin: true
-            } ).exec(&mut connection).await.unwrap();
+            })
+            .exec(&mut connection)
+            .await
+            .unwrap();
         }
         connection
     }

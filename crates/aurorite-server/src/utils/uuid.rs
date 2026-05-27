@@ -1,19 +1,15 @@
-use std::fmt::{Display, Formatter};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::iter::Iterator;
 use serde::de::{Error, Visitor};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::fmt::{Display, Formatter};
+use std::iter::Iterator;
 use uuid::Uuid;
 
 const ALPHABET_LEN: u128 = 64;
 pub const ALPHABET: [char; ALPHABET_LEN as usize] = [
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-    'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
-    'U', 'V','W', 'X', 'Y', 'Z',
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
-    'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-    'u', 'v', 'w', 'x', 'y', 'z',
-    '_', '-'
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
+    'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b',
+    'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
+    'v', 'w', 'x', 'y', 'z', '_', '-',
 ];
 
 fn get_number(digit: char) -> u8 {
@@ -91,7 +87,7 @@ impl Display for EncodedUuid {
 impl Serialize for EncodedUuid {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: Serializer
+        S: Serializer,
     {
         serializer.collect_str(&format_args!("{}", self.to_string()))
     }
@@ -116,16 +112,16 @@ impl<'vi> Visitor<'vi> for EncodedUuidVisitor {
 impl<'de> Deserialize<'de> for EncodedUuid {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         deserializer.deserialize_str(EncodedUuidVisitor)
     }
 }
 
 pub mod serde_support {
-    use uuid::Uuid;
-    use serde::{Deserializer, Serializer};
     use super::{deserialize_encoded_uuid, serialize_encoded_uuid};
+    use serde::{Deserializer, Serializer};
+    use uuid::Uuid;
 
     pub fn serialize<S>(uuid: &Uuid, ser: S) -> Result<S::Ok, S::Error>
     where

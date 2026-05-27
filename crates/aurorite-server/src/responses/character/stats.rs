@@ -1,20 +1,21 @@
-use serde::{Deserialize, Serialize};
 use crate::database::Overwrite;
-use crate::enums::{Proficiency, Skill, Ability};
+use crate::enums::{Ability, Proficiency, Skill};
 use crate::utils::get_modification;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone)]
 pub struct AbilityInfo {
     value: u8,
     modification: i8,
-    pub save_throw: Proficiency
+    pub save_throw: Proficiency,
 }
 
 impl AbilityInfo {
     pub fn new(value: u8) -> Self {
         Self {
-            value, modification: get_modification(value.into()),
-            save_throw: Proficiency::None
+            value,
+            modification: get_modification(value.into()),
+            save_throw: Proficiency::None,
         }
     }
 
@@ -41,14 +42,15 @@ impl AbilityInfo {
 pub struct SkillInfo {
     value: u8,
     modification: i8,
-    pub proficiency: Proficiency
+    pub proficiency: Proficiency,
 }
 
 impl SkillInfo {
     pub fn new(value: u8) -> Self {
         Self {
-            value, modification: get_modification(value.into()),
-            proficiency: Proficiency::None
+            value,
+            modification: get_modification(value.into()),
+            proficiency: Proficiency::None,
         }
     }
 

@@ -1,33 +1,37 @@
-use std::sync::LazyLock;
-use std::path::PathBuf;
-use axum::{Router};
+use crate::responses::FailableResponse;
+use crate::state::AuroriteState;
+use aurorite_agsp::{MAX_PACKAGE_SIZE, export};
+use axum::Router;
 use axum::body::Body;
 use axum::extract::{DefaultBodyLimit, Multipart, State};
-use axum::http::{header, StatusCode};
+use axum::http::{StatusCode, header};
 use axum::response::IntoResponse;
 use axum::routing::get;
-use aurorite_agsp::{export, MAX_PACKAGE_SIZE};
-use crate::responses::{FailableResponse};
-use crate::state::AuroriteState;
+use std::path::PathBuf;
+use std::sync::LazyLock;
 use tokio_util::io::ReaderStream;
 
-static ASSETS_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
-    std::env::current_dir().unwrap().join("assets")
-});
+static ASSETS_PATH: LazyLock<PathBuf> =
+    LazyLock::new(|| std::env::current_dir().unwrap().join("assets"));
 
 async fn get_package(State(state): State<AuroriteState>) -> impl IntoResponse {
     let stream = ReaderStream::new(export(ASSETS_PATH.clone()).await);
     (
         StatusCode::OK,
-        [(header::CONTENT_DISPOSITION, "attachment; filename=text.tar.zst")],
+        [(
+            header::CONTENT_DISPOSITION,
+            "attachment; filename=text.tar.zst",
+        )],
         Body::from_stream(stream),
     )
 }
 
-async fn post_package(State(state): State<AuroriteState>, mut multipart: Multipart) -> FailableResponse<()> {
+async fn post_package(
+    State(state): State<AuroriteState>,
+    mut multipart: Multipart,
+) -> FailableResponse<()> {
     while let Some(mut field) = multipart.next_field().await.unwrap() {
         let name = field.name().unwrap().to_string();
-
     }
 
     Ok((StatusCode::NO_CONTENT, axum::Json(())))

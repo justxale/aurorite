@@ -1,7 +1,7 @@
-use uuid::Uuid;
-use toasty::{Embed, Model};
-use serde::{Serialize, Deserialize};
 use crate::database::{Character, RaceData, Spell};
+use serde::{Deserialize, Serialize};
+use toasty::{Embed, Model};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, Embed, Serialize, Deserialize)]
 pub enum CreatureSize {
@@ -16,7 +16,7 @@ pub enum CreatureSize {
     #[column(variant = 5)]
     Huge,
     #[column(variant = 6)]
-    Gargantuan
+    Gargantuan,
 }
 
 #[derive(Debug, Clone, Copy, Embed, Serialize, Deserialize)]
@@ -26,7 +26,7 @@ pub enum CreatureType {
     #[column(variant = 2)]
     Undead,
     #[column(variant = 3)]
-    Other
+    Other,
 }
 
 #[derive(Clone, Debug, Model)]
@@ -77,5 +77,5 @@ pub struct RaceSpell {
     #[belongs_to(key = race_id, references = id)]
     race: toasty::BelongsTo<Race>,
     #[belongs_to(key = spell_id, references = id)]
-    spell: toasty::BelongsTo<Spell>
+    spell: toasty::BelongsTo<Spell>,
 }

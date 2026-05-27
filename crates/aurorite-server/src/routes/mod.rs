@@ -1,18 +1,18 @@
-mod characters;
-mod client;
 mod agsp;
-mod campaigns;
-mod classes;
-mod races;
 mod backgrounds;
+mod campaigns;
+mod characters;
+mod classes;
+mod client;
+mod races;
 
 use crate::state::AuroriteState;
-use axum::extract::{Request, MatchedPath};
+use axum::extract::{MatchedPath, Request};
 use axum::response::Response;
+use axum::routing::any;
 use axum::{Router, http};
 use http::StatusCode;
 use std::time::Duration;
-use axum::routing::any;
 use tower::ServiceBuilder;
 use tower_http::services::ServeDir;
 use tower_http::timeout::TimeoutLayer;
@@ -30,25 +30,30 @@ pub fn build_routes() -> Router<AuroriteState> {
         .route_service("/", ServeDir::new("static"))
         .layer(
             ServiceBuilder::new()
-                .layer(TraceLayer::new_for_http()
-                    .make_span_with(|request: &Request<_>| {
-                        let matched_path = request
-                            .extensions()
-                            .get::<MatchedPath>()
-                            .map(MatchedPath::as_str);
+                .layer(
+                    TraceLayer::new_for_http()
+                        .make_span_with(|request: &Request<_>| {
+                            let matched_path = request
+                                .extensions()
+                                .get::<MatchedPath>()
+                                .map(MatchedPath::as_str);
 
-                        tracing::info_span!(
-                            "request",
-                            method = ?request.method(),
-                            matched_path,
-                        )
-                    })
-                    .on_request(|_request: &Request<_>, _span: &Span| {
-                        // tracing::debug!("started processing request")
-                    })
-                    .on_response(|response: &Response, latency: Duration, _span: &Span| {
-                        tracing::info!(latency = ?latency, status = ?response.status());
-                    }))
-                .layer(TimeoutLayer::with_status_code(StatusCode::REQUEST_TIMEOUT, Duration::from_secs(5)))
+                            tracing::info_span!(
+                                "request",
+                                method = ?request.method(),
+                                matched_path,
+                            )
+                        })
+                        .on_request(|_request: &Request<_>, _span: &Span| {
+                            // tracing::debug!("started processing request")
+                        })
+                        .on_response(|response: &Response, latency: Duration, _span: &Span| {
+                            tracing::info!(latency = ?latency, status = ?response.status());
+                        }),
+                )
+                .layer(TimeoutLayer::with_status_code(
+                    StatusCode::REQUEST_TIMEOUT,
+                    Duration::from_secs(5),
+                )),
         )
 }

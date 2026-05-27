@@ -30,7 +30,7 @@ pub struct RaceData {}
 pub struct Overwrite<K, V> {
     pub kind: K,
     pub value: Option<V>,
-    pub proficiency: Option<Proficiency>
+    pub proficiency: Option<Proficiency>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,12 +1,12 @@
-use http_body_util::BodyExt;
-use axum::body::Body;
-use axum::http::{Request, header, StatusCode, Response};
-use axum::Json;
-use axum::response::IntoResponse;
-use serde_json::{json, Value};
-use tower::{Service, ServiceExt};
 use crate::build_app;
-use crate::responses::{ClientToken, ClientInfo};
+use crate::responses::{ClientInfo, ClientToken};
+use axum::Json;
+use axum::body::Body;
+use axum::http::{Request, Response, StatusCode, header};
+use axum::response::IntoResponse;
+use http_body_util::BodyExt;
+use serde_json::{Value, json};
+use tower::{Service, ServiceExt};
 
 #[tokio::test]
 async fn test_nonexisting_auth() {
@@ -16,7 +16,7 @@ async fn test_nonexisting_auth() {
     let request = Request::post("/client/auth/login")
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(
-            serde_json::to_vec(&json!({ "password": "notexists", "login": "notexists" })).unwrap()
+            serde_json::to_vec(&json!({ "password": "notexists", "login": "notexists" })).unwrap(),
         ))
         .unwrap();
     let response = app.oneshot(request).await.unwrap();
@@ -32,25 +32,32 @@ async fn test_existing_auth() {
     let request = Request::post("/client/auth/login")
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(
-            serde_json::to_vec(&json!({ "password": "aurorite", "login": "aurorite" })).unwrap()
+            serde_json::to_vec(&json!({ "password": "aurorite", "login": "aurorite" })).unwrap(),
         ))
         .unwrap();
     let response = ServiceExt::<Request<Body>>::ready(&mut app)
-        .await.unwrap()
+        .await
+        .unwrap()
         .call(request)
-        .await.unwrap();
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let res = serde_json::from_slice::<ClientToken>(&body).unwrap();
 
     let request = Request::get("/client/me")
-        .header(header::AUTHORIZATION, format!("Bearer {}", res.access_token))
+        .header(
+            header::AUTHORIZATION,
+            format!("Bearer {}", res.access_token),
+        )
         .body(Body::empty())
         .unwrap();
     let response = ServiceExt::<Request<Body>>::ready(&mut app)
-        .await.unwrap()
+        .await
+        .unwrap()
         .call(request)
-        .await.unwrap();
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let res = serde_json::from_slice::<ClientInfo>(&body).unwrap();

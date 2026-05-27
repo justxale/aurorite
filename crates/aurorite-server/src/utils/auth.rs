@@ -1,7 +1,7 @@
 use crate::utils::uuid::ALPHABET;
+use argon2::password_hash::rand_core::RngCore;
 use argon2::password_hash::{Error, SaltString, rand_core::OsRng};
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
-use argon2::password_hash::rand_core::RngCore;
 
 pub fn hash_password(provided: &String) -> Result<String, Error> {
     match Argon2::default().hash_password(provided.as_bytes(), &SaltString::generate(&mut OsRng)) {
@@ -12,10 +12,7 @@ pub fn hash_password(provided: &String) -> Result<String, Error> {
 
 pub fn verify(provided: &String, hash: &String) -> bool {
     Argon2::default()
-        .verify_password(
-            provided.as_bytes(),
-            &PasswordHash::new(hash).unwrap(),
-        )
+        .verify_password(provided.as_bytes(), &PasswordHash::new(hash).unwrap())
         .is_ok()
 }
 
