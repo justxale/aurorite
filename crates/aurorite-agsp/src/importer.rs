@@ -1,7 +1,7 @@
 use crate::checksum::compute_hash;
 use crate::{AssetRecord, MAX_PACKAGE_SIZE, ManifestRecord};
 use async_compression::tokio::bufread::ZstdDecoder;
-use sha2::{Digest, Sha256};
+use sha2::Digest;
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 use std::path::PathBuf;

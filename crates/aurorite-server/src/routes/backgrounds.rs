@@ -1,5 +1,5 @@
 use crate::database::Background;
-use crate::extractors::{Authorization, AuthorizedClient};
+use crate::extractors::AuthorizedClient;
 use crate::requests::PostBackground;
 use crate::responses::parts::BackgroundInfo;
 use crate::responses::{AuroriteErrorResponse, FailableResponse};
@@ -13,7 +13,7 @@ use uuid::fmt::Simple;
 
 async fn get_background(
     Path(id): Path<Simple>,
-    AuthorizedClient(client): AuthorizedClient,
+    AuthorizedClient(_client): AuthorizedClient,
     State(state): State<AuroriteState>,
 ) -> FailableResponse<BackgroundInfo> {
     match Background::get_by_id(&mut state.db(), id.as_uuid()).await {
@@ -27,7 +27,7 @@ async fn get_background(
 
 async fn post_background(
     State(state): State<AuroriteState>,
-    AuthorizedClient(client): AuthorizedClient,
+    AuthorizedClient(_client): AuthorizedClient,
     Json(body): Json<PostBackground>,
 ) -> FailableResponse<BackgroundInfo> {
     let record = Background::create()

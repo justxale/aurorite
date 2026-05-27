@@ -1,13 +1,10 @@
-use crate::database::Character;
 use crate::extractors::Authorization;
-use crate::requests::PostCharacterBase;
-use crate::responses::FullCharacterBaseInfo;
 use crate::state::AuroriteState;
 use axum::extract::State;
-use axum::routing::{get, post};
-use axum::{Form, Json, Router};
+use axum::routing::get;
+use axum::Router;
 
-async fn get_character(State(state): State<AuroriteState>, user: Authorization) -> &'static str {
+async fn get_character(State(_state): State<AuroriteState>, _user: Authorization) -> &'static str {
     "your character here"
 }
 

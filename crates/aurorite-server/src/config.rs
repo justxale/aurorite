@@ -1,6 +1,5 @@
 use config::{Case, Config, ConfigError};
 use serde::Deserialize;
-use std::error::Error;
 use std::net::Ipv4Addr;
 use std::sync::OnceLock;
 

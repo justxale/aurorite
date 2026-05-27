@@ -9,11 +9,10 @@ mod spell;
 
 pub use background::Background;
 pub use campaign::{
-    Campaign, CampaignBackground, CampaignCharacter, CampaignClass, CampaignClient, CampaignRace,
+    Campaign, CampaignClient,
 };
 pub use character::Character;
 pub use class::Class;
 pub use client::Client;
-pub use race::{CreatureSize, CreatureType, Race, RaceSpell};
-pub use script::Script;
+pub use race::{CreatureSize, CreatureType, Race};
 pub use spell::Spell;

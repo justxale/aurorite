@@ -2,7 +2,6 @@ use crate::config::env;
 use crate::routes::build_routes;
 use crate::state::AuroriteState;
 use axum::Router;
-use std::io::{Read, Write, stderr, stdin};
 use std::str::FromStr;
 use tracing::Level;
 use tracing_appender::non_blocking::WorkerGuard;
