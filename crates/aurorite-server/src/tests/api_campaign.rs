@@ -1,40 +1,37 @@
-use axum::body::Body;
-use axum::http::{header, Request, StatusCode};
-use http_body_util::BodyExt;
-use tower::{Service, ServiceExt};
-use tracing_test::traced_test;
+use axum::http::StatusCode;
 use crate::build_app;
-use crate::responses::CampaignInfo;
-use crate::tests::utils::auth_client;
+use crate::responses::{ClientCampaigns, FullCampaignInfo};
+use crate::tests::utils::{auth_client, delete_request, get_request, post_request};
+use crate::utils::uuid::EncodedUuid;
 
 #[tokio::test]
-#[traced_test]
+#[tracing_test::traced_test]
 async fn test_creating_campaign() {
     dotenvy::dotenv().ok();
     let mut app = build_app().await.into_service();
     let token = auth_client(&mut app).await;
-    let request = Request::post("/campaigns")
-        .header(
-            header::AUTHORIZATION, format!("Bearer {}", token.access_token)
-        )
-        .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(
-            serde_json::to_vec(&serde_json::json!({ "title": "Best tested DnD!" })).unwrap()
-        ))
-        .unwrap();
-    let response = ServiceExt::<Request<Body>>::ready(&mut app)
-        .await
-        .unwrap()
-        .call(request)
-        .await
-        .unwrap();
-
-    let status = response.status();
-
-    let body = response.into_body().collect().await.unwrap().to_bytes();
-    println!("{:?}", &body);
-    let res = serde_json::from_slice::<CampaignInfo>(&body).unwrap();
-    println!("{:?}", res);
+    let (status, body) = get_request(&mut app, "/campaigns", Some(&token.access_token)).await;
+    let res = serde_json::from_slice::<ClientCampaigns>(&body).unwrap();
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(res.title, "Best tested DnD!")
+    assert_eq!(res.campaigns.len(), 0);
+
+    let (status, body) = post_request(&mut app, "/campaigns", &serde_json::json!({ "title": "Best tested DnD!" }), Some(&token.access_token)).await;
+    let res = serde_json::from_slice::<FullCampaignInfo>(&body).unwrap();
+    assert_eq!(status, StatusCode::CREATED);
+    assert_eq!(res.title, "Best tested DnD!");
+
+    let (status, body) = get_request(&mut app, "/campaigns", Some(&token.access_token)).await;
+    let res = serde_json::from_slice::<ClientCampaigns>(&body).unwrap();
+    println!("{:?}" ,body);
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(res.campaigns.len(), 1);
+
+    let status = delete_request(&mut app, &format!("/campaigns/{}", EncodedUuid(res.campaigns[0].id)), Some(&token.access_token)).await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+
+    let (status, body) = get_request(&mut app, "/campaigns", Some(&token.access_token)).await;
+    let res = serde_json::from_slice::<ClientCampaigns>(&body).unwrap();
+    println!("{:?}" ,body);
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(res.campaigns.len(), 0);
 }
