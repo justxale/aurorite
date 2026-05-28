@@ -1,3 +1,4 @@
+use jiff::Timestamp;
 use crate::database::{Background, Character, Class, Client, Race};
 use toasty::{BelongsTo, HasMany, Model};
 use uuid::Uuid;
@@ -7,10 +8,20 @@ pub struct Campaign {
     #[key]
     #[auto]
     pub id: Uuid,
+    
+    #[default(true)]
+    pub is_active: bool,
+    pub title: String,
+
     #[index]
     owner_id: Uuid,
-
-    pub title: String,
+    #[belongs_to(key = owner_id, references = id)]
+    owner: BelongsTo<Client>,
+    
+    #[default(jiff::Timestamp::now())]
+    pub last_played_at: Timestamp,
+    #[auto]
+    pub created_at: Timestamp,
 
     #[has_many]
     pub clients: HasMany<CampaignClient>,
@@ -20,9 +31,6 @@ pub struct Campaign {
     pub classes: HasMany<CampaignClass>,
     #[has_many]
     pub characters: HasMany<CampaignCharacter>,
-
-    #[belongs_to(key = owner_id, references = id)]
-    owner: BelongsTo<Client>,
 }
 
 #[derive(Clone, Debug, Model)]
@@ -35,7 +43,6 @@ pub struct CampaignCharacter {
     #[index]
     #[key]
     campaign_id: Uuid,
-
 
     #[belongs_to(key = character_id, references = id)]
     base: BelongsTo<Character>,
