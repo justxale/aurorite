@@ -21,7 +21,7 @@ use tracing::Span;
 
 pub fn build_routes() -> Router<AuroriteState> {
     Router::new()
-        // .nest("/characters", characters::build_characters_routes())
+        .nest("/characters", characters::build_characters_routes())
         .nest("/client", client::build_client_routes())
         .nest("/backgrounds", backgrounds::build_backgrounds_routes())
         .nest("/campaigns", campaigns::build_campaign_routes())

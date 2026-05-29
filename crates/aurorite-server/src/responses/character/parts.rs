@@ -8,75 +8,6 @@ use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 use uuid::Uuid;
 
-#[derive(Debug, Serialize)]
-pub struct CharacterRaceInfo {
-    id: Uuid,
-    l18n: String,
-    size: CreatureSize,
-    #[serde(rename = "type")]
-    creature_type: CreatureType,
-    speed: u16,
-    dark_vision: Option<u16>,
-
-    strength: u8,
-    intelligence: u8,
-    wisdom: u8,
-    dexterity: u8,
-    constitution: u8,
-    charisma: u8,
-}
-
-impl CharacterRaceInfo {
-    pub fn new(
-        id: Uuid,
-        l18n: String,
-        size: CreatureSize,
-        creature_type: CreatureType,
-        speed: u16,
-        dark_vision: Option<u16>,
-        strength: u8,
-        intelligence: u8,
-        wisdom: u8,
-        dexterity: u8,
-        constitution: u8,
-        charisma: u8,
-    ) -> Self {
-        Self {
-            id,
-            l18n,
-            size,
-            creature_type,
-            speed,
-            dark_vision,
-            strength,
-            intelligence,
-            wisdom,
-            dexterity,
-            constitution,
-            charisma,
-        }
-    }
-}
-
-impl From<&Race> for CharacterRaceInfo {
-    fn from(race: &Race) -> Self {
-        Self::new(
-            race.id,
-            race.l18n_key.clone(),
-            race.size,
-            race.creature_type,
-            race.speed,
-            race.dark_vision,
-            race.strength,
-            race.intelligence,
-            race.wisdom,
-            race.dexterity,
-            race.constitution,
-            race.charisma,
-        )
-    }
-}
-
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct CharacterAbilitiesInfo {
     strength: AbilityInfo,
@@ -93,6 +24,7 @@ impl TryFrom<&Character> for CharacterAbilitiesInfo {
         if character.class.is_unloaded() || character.race.is_unloaded() {
             return Err(AuroriteErrorResponse::new("failed to collect data"));
         }
+
         let mut strength = AbilityInfo::new(character.strength);
         let mut intelligence = AbilityInfo::new(character.intelligence);
         let mut wisdom = AbilityInfo::new(character.wisdom);
@@ -100,7 +32,7 @@ impl TryFrom<&Character> for CharacterAbilitiesInfo {
         let mut constitution = AbilityInfo::new(character.constitution);
         let mut charisma = AbilityInfo::new(character.charisma);
 
-        if let Some(data) = &character.class.get().dyn_data {
+        if let Some(class_data) = character.class.get() && let Some(ref data) = class_data.dyn_data {
             for save_throw in &data.save_throws {
                 match save_throw {
                     Ability::Strength => strength.save_throw = Proficiency::Base,
@@ -111,15 +43,16 @@ impl TryFrom<&Character> for CharacterAbilitiesInfo {
                     Ability::Charisma => charisma.save_throw = Proficiency::Base,
                 }
             }
-        };
+        }
 
-        let race = character.race.get();
-        strength.set_value(character.strength + race.strength);
-        intelligence.set_value(character.intelligence + race.intelligence);
-        wisdom.set_value(character.wisdom + race.wisdom);
-        dexterity.set_value(character.dexterity + race.dexterity);
-        constitution.set_value(character.constitution + race.constitution);
-        charisma.set_value(character.charisma + race.charisma);
+        if let Some(race) = character.race.get() {
+            strength.set_value(character.strength + race.strength);
+            intelligence.set_value(character.intelligence + race.intelligence);
+            wisdom.set_value(character.wisdom + race.wisdom);
+            dexterity.set_value(character.dexterity + race.dexterity);
+            constitution.set_value(character.constitution + race.constitution);
+            charisma.set_value(character.charisma + race.charisma);
+        }
 
         if let Some(data) = &character.dyn_data {
             for overwrite in &data.ability_overwrites {
@@ -206,7 +139,7 @@ impl TryFrom<&Character> for CharacterSkillsInfo {
         if let Some(data) = &character.dyn_data {
             selected_skills.extend_from_slice(&data.chosen_class_skills)
         }
-        if let Some(data) = &character.background.get().dyn_data {
+        if let Some(class_data) = &character.background.get() && let Some(ref data) = class_data.dyn_data {
             selected_skills.extend_from_slice(&data.skills)
         }
 
@@ -280,41 +213,3 @@ impl TryFrom<&Character> for CharacterSkillsInfo {
     }
 }
 
-#[derive(Debug, Serialize)]
-pub struct ClassInfo {
-    id: Uuid,
-    l18n_key: String,
-    dynamic: Option<ClassData>,
-
-    base_hits: u16,
-    base_hit_dice: String,
-}
-
-impl From<&Class> for ClassInfo {
-    fn from(class: &Class) -> Self {
-        Self {
-            id: class.id,
-            l18n_key: class.l18n_key.clone(),
-            dynamic: class.dyn_data.clone(),
-            base_hits: class.base_hits,
-            base_hit_dice: class.base_hit_dice.clone(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct BackgroundInfo {
-    id: Uuid,
-    l18n_key: String,
-    dynamic: Option<BackgroundData>,
-}
-
-impl From<&Background> for BackgroundInfo {
-    fn from(background: &Background) -> Self {
-        Self {
-            id: background.id,
-            l18n_key: background.l18n_key.clone(),
-            dynamic: background.dyn_data.clone(),
-        }
-    }
-}
