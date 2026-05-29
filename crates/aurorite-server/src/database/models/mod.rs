@@ -6,6 +6,9 @@ mod client;
 mod race;
 mod script;
 mod spell;
+mod item;
+mod scene;
+mod asset;
 
 pub use background::Background;
 pub use campaign::{
@@ -16,3 +19,5 @@ pub use class::Class;
 pub use client::Client;
 pub use race::{CreatureSize, CreatureType, Race};
 pub use spell::Spell;
+pub use scene::Scene;
+pub use asset::Asset;

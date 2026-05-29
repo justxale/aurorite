@@ -1,5 +1,5 @@
 use jiff::Timestamp;
-use crate::database::{Background, Character, Class, Client, Race};
+use crate::database::{Background, Character, Class, Client, Race, Scene};
 use toasty::{BelongsTo, HasMany, Model};
 use uuid::Uuid;
 
@@ -36,7 +36,9 @@ pub struct Campaign {
 #[derive(Clone, Debug, Model)]
 pub struct CampaignCharacter {
     current_hp: u16,
-
+    #[auto]
+    #[key]
+    pub id: Uuid,
     #[index]
     #[key]
     character_id: Uuid,
@@ -111,4 +113,39 @@ pub struct CampaignClient {
     pub client: BelongsTo<Client>,
     #[belongs_to(key = campaign_id, references = id)]
     pub campaign: BelongsTo<Campaign>,
+}
+
+#[derive(Clone, Debug, Model)]
+pub struct CampaignScene {
+    #[key]
+    #[auto]
+    pub id: Uuid,
+    #[index]
+    #[key]
+    scene_id: Uuid,
+    #[index]
+    #[key]
+    campaign_id: Uuid,
+
+    #[belongs_to(key = scene_id, references = id)]
+    pub client: BelongsTo<Scene>,
+    #[belongs_to(key = campaign_id, references = id)]
+    pub campaign: BelongsTo<Campaign>,
+
+    #[has_many]
+    pub preloads: HasMany<PreloadedObjects>
+}
+
+#[derive(Clone, Debug, Model)]
+pub struct PreloadedObjects {
+    #[index]
+    #[key]
+    scene_id: Uuid,
+    #[key]
+    character_id: Uuid,
+
+    #[belongs_to(key = scene_id, references = id)]
+    pub campaign_scene: BelongsTo<CampaignScene>,
+    #[belongs_to(key = character_id, references = id)]
+    pub character: BelongsTo<CampaignCharacter>
 }
