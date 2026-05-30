@@ -33,7 +33,7 @@ pub struct Overwrite<K, V> {
     pub proficiency: Option<Proficiency>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct CharacterData {
     pub chosen_class_skills: Vec<Skill>,
     pub skill_overwrites: Vec<Overwrite<Skill, u8>>,

@@ -1,6 +1,6 @@
-use crate::responses::{AuroriteErrorResponse, CharacterInfo, ClientCharacters, FullCharacterBaseInfo};
-use crate::database::Character;
-use crate::requests::PostCharacterBase;
+use crate::responses::{AuroriteErrorResponse, BackgroundInfo, CharacterInfo, ClassInfo, ClientCharacters, FullCharacterBaseInfo, RaceInfo};
+use crate::database::{Background, Character, Class, Race};
+use crate::requests::{PostCharacterBase, PutCharacterBackground, PutCharacterClass, PutCharacterRace};
 use crate::extractors::AuthorizedClient;
 use crate::state::AuroriteState;
 use axum::extract::{State, Json, Path};
@@ -89,8 +89,208 @@ async fn get_character(
     }
 }
 
+async fn get_character_class(
+    Path(EncodedUuid(character_id)): Path<EncodedUuid>,
+    State(state): State<AuroriteState>,
+    AuthorizedClient(client): AuthorizedClient,
+) -> FailableResponse<Option<ClassInfo>> {
+    let mut db = state.db();
+    let record = Character::filter_by_client_id(client.id)
+        .filter_by_id(character_id)
+        .include(Character::fields().class())
+        .get(&mut db).await
+        .map_err(|err| (StatusCode::NOT_FOUND, AuroriteErrorResponse::new(err).json()))?;
+    Ok((StatusCode::OK, record.class.get().as_ref().map(ClassInfo::from).json()))
+}
+
+async fn put_character_class(
+    Path(EncodedUuid(character_id)): Path<EncodedUuid>,
+    State(state): State<AuroriteState>,
+    AuthorizedClient(client): AuthorizedClient,
+    Json(body): Json<PutCharacterClass>
+) -> FailableResponse<FullCharacterBaseInfo> {
+    let mut db = state.db();
+    let mut record = Character::filter_by_client_id(client.id)
+        .filter_by_id(character_id)
+        .include(Character::fields().class())
+        .include(Character::fields().race())
+        .include(Character::fields().background())
+        .get(&mut db).await
+        .map_err(|err| (StatusCode::NOT_FOUND, AuroriteErrorResponse::new(err).json()))?;
+    let mut dynamic = record.dyn_data.clone();
+    dynamic.get_or_insert_default().chosen_class_skills = body.chosen_skills;
+
+    match Class::get_by_id(&mut db, body.class_id.uuid()).await {
+        Ok(ref class_record) => {
+            record.update()
+                .class(class_record)
+                .dyn_data(dynamic)
+                .exec(&mut db).await
+                .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))?;
+            let response = FullCharacterBaseInfo::try_from(&record)
+                .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.json()))?;
+            Ok((StatusCode::OK, response.json()))
+        },
+        Err(err) => Err((StatusCode::NOT_FOUND, AuroriteErrorResponse::new(err).json()))
+    }
+}
+
+async fn delete_character_class(
+    Path(EncodedUuid(character_id)): Path<EncodedUuid>,
+    State(state): State<AuroriteState>,
+    AuthorizedClient(client): AuthorizedClient,
+) -> FailableResponse<FullCharacterBaseInfo> {
+    let mut db = state.db();
+    let record = Character::filter_by_client_id(client.id)
+        .filter_by_id(character_id)
+        .include(Character::fields().class())
+        .include(Character::fields().race())
+        .include(Character::fields().background())
+        .get(&mut db).await
+        .map_err(AuroriteErrorResponse::new);
+    match record {
+        Err(err) => Err((StatusCode::NOT_FOUND, err.json())),
+        Ok(mut record) => match record.update().class(None).exec(&mut db).await {
+            Ok(_) => FullCharacterBaseInfo::try_from(&record)
+                .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.json()))
+                .map(|record| (StatusCode::OK, record.json())),
+            Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))
+        }
+    }
+}
+
+async fn get_character_race(
+    Path(EncodedUuid(character_id)): Path<EncodedUuid>,
+    State(state): State<AuroriteState>,
+    AuthorizedClient(client): AuthorizedClient,
+) -> FailableResponse<Option<RaceInfo>>{
+    let mut db = state.db();
+    let record = Character::filter_by_client_id(client.id)
+        .filter_by_id(character_id)
+        .include(Character::fields().race())
+        .get(&mut db).await
+        .map_err(|err| (StatusCode::NOT_FOUND, AuroriteErrorResponse::new(err).json()))?;
+    Ok((StatusCode::OK, record.race.get().as_ref().map(RaceInfo::from).json()))
+}
+
+async fn put_character_race(
+    Path(EncodedUuid(character_id)): Path<EncodedUuid>,
+    State(state): State<AuroriteState>,
+    AuthorizedClient(client): AuthorizedClient,
+    Json(body): Json<PutCharacterRace>
+) -> FailableResponse<FullCharacterBaseInfo> {
+    let mut db = state.db();
+    let mut record = Character::filter_by_client_id(client.id)
+        .filter_by_id(character_id)
+        .include(Character::fields().class())
+        .include(Character::fields().race())
+        .include(Character::fields().background())
+        .get(&mut db).await
+        .map_err(|err| (StatusCode::NOT_FOUND, AuroriteErrorResponse::new(err).json()))?;
+
+    match Race::get_by_id(&mut db, body.race_id.uuid()).await {
+        Ok(ref race_record) => {
+            record.update()
+                .race(race_record)
+                .exec(&mut db).await
+                .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))?;
+            let response = FullCharacterBaseInfo::try_from(&record)
+                .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.json()))?;
+            Ok((StatusCode::OK, response.json()))
+        }
+        Err(err) => Err((StatusCode::NOT_FOUND, AuroriteErrorResponse::new(err).json()))
+    }
+}
+
+async fn delete_character_race(
+    Path(EncodedUuid(character_id)): Path<EncodedUuid>,
+    State(state): State<AuroriteState>,
+    AuthorizedClient(client): AuthorizedClient,
+) -> FailableResponse<FullCharacterBaseInfo> {
+    let mut db = state.db();
+    let mut record = Character::filter_by_client_id(client.id)
+        .filter_by_id(character_id)
+        .include(Character::fields().class())
+        .include(Character::fields().race())
+        .include(Character::fields().background())
+        .get(&mut db).await
+        .map_err(|err| (StatusCode::NOT_FOUND, AuroriteErrorResponse::new(err).json()))?;
+    match record.update().race(None).exec(&mut db).await {
+        Ok(_) => FullCharacterBaseInfo::try_from(&record)
+            .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.json()))
+            .map(|record| (StatusCode::OK, record.json())),
+        Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))
+    }
+}
+async fn get_character_background(
+    Path(EncodedUuid(character_id)): Path<EncodedUuid>,
+    State(state): State<AuroriteState>,
+    AuthorizedClient(client): AuthorizedClient,
+) -> FailableResponse<Option<BackgroundInfo>> {
+    let mut db = state.db();
+    let record = Character::filter_by_client_id(client.id)
+        .filter_by_id(character_id)
+        .include(Character::fields().background())
+        .get(&mut db).await
+        .map_err(|err| (StatusCode::NOT_FOUND, AuroriteErrorResponse::new(err).json()))?;
+    Ok((StatusCode::OK, record.background.get().as_ref().map(BackgroundInfo::from).json()))
+}
+
+async fn put_character_background(
+    Path(EncodedUuid(character_id)): Path<EncodedUuid>,
+    State(state): State<AuroriteState>,
+    AuthorizedClient(client): AuthorizedClient,
+    Json(body): Json<PutCharacterBackground>
+) -> FailableResponse<FullCharacterBaseInfo> {
+    let mut db = state.db();
+    let mut record = Character::filter_by_client_id(client.id)
+        .filter_by_id(character_id)
+        .include(Character::fields().class())
+        .include(Character::fields().race())
+        .include(Character::fields().background())
+        .get(&mut db).await
+        .map_err(|err| (StatusCode::NOT_FOUND, AuroriteErrorResponse::new(err).json()))?;
+
+    match Background::get_by_id(&mut db, body.background_id.uuid()).await {
+        Ok(ref background_record) => {
+            record.update()
+                .background(background_record)
+                .exec(&mut db).await
+                .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))?;
+            let response = FullCharacterBaseInfo::try_from(&record)
+                .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.json()))?;
+            Ok((StatusCode::OK, response.json()))
+        }
+        Err(err) => Err((StatusCode::NOT_FOUND, AuroriteErrorResponse::new(err).json()))
+    }
+}
+
+async fn delete_character_background(
+    Path(EncodedUuid(character_id)): Path<EncodedUuid>,
+    State(state): State<AuroriteState>,
+    AuthorizedClient(client): AuthorizedClient,
+) -> FailableResponse<FullCharacterBaseInfo> {
+    let mut db = state.db();
+    let mut record = Character::filter_by_client_id(client.id)
+        .filter_by_id(character_id)
+        .include(Character::fields().class())
+        .include(Character::fields().race())
+        .include(Character::fields().background())
+        .get(&mut db).await
+        .map_err(|err| (StatusCode::NOT_FOUND, AuroriteErrorResponse::new(err).json()))?;
+    match record.update().background(None).exec(&mut db).await {
+        Ok(_) => FullCharacterBaseInfo::try_from(&record)
+            .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.json()))
+            .map(|record| (StatusCode::OK, record.json())),
+        Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))
+    }
+}
+
 pub fn build_characters_routes() -> Router<AuroriteState> {
     Router::new()
         .route("/", get(get_characters).post(post_character))
         .route("/{character_id}", get(get_character))
+        .route("/{character_id}/class", get(get_character_class).put(put_character_class).delete(delete_character_class))
+        .route("/{character_id}/race", get(get_character_race).put(put_character_race).delete(delete_character_race))
+        .route("/{character_id}/background", get(get_character_background).put(put_character_background).delete(delete_character_background))
 }

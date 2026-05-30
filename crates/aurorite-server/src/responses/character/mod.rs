@@ -9,7 +9,7 @@ mod stats;
 use parts::*;
 use crate::responses::background::BackgroundInfo;
 use crate::responses::class::ClassInfo;
-use crate::responses::race::CharacterRaceInfo;
+use crate::responses::race::RaceInfo;
 
 #[derive(Debug, Serialize)]
 pub struct CharacterInfo {
@@ -48,7 +48,7 @@ pub struct FullCharacterBaseInfo {
 
     class: Option<ClassInfo>,
     background: Option<BackgroundInfo>,
-    race: Option<CharacterRaceInfo>,
+    race: Option<RaceInfo>,
     abilities: CharacterAbilitiesInfo,
 }
 
@@ -59,7 +59,7 @@ impl TryFrom<&Character> for FullCharacterBaseInfo {
             return Err(AuroriteErrorResponse::new("failed to collect data"));
         }
         let background = character.background.get().as_ref().map(BackgroundInfo::from);
-        let race = character.race.get().as_ref().map(CharacterRaceInfo::from);
+        let race = character.race.get().as_ref().map(RaceInfo::from);
         let class = character.class.get().as_ref().map(ClassInfo::from);
         let abilities = CharacterAbilitiesInfo::try_from(character)?;
         Ok(Self {
