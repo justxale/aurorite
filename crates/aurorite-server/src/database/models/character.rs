@@ -16,11 +16,11 @@ pub struct Character {
     #[index]
     pub client_id: Uuid,
     #[index]
-    class_id: Uuid,
+    class_id: Option<Uuid>,
     #[index]
-    background_id: Uuid,
+    background_id: Option<Uuid>,
     #[index]
-    race_id: Uuid,
+    race_id: Option<Uuid>,
 
     #[belongs_to(key = client_id, references = id)]
     pub client: toasty::BelongsTo<Client>,
