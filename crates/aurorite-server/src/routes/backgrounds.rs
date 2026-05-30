@@ -1,7 +1,7 @@
 use crate::database::Background;
 use crate::extractors::AuthorizedClient;
 use crate::requests::PostBackground;
-use crate::responses::{AuroriteErrorResponse, FailableResponse, BackgroundInfo};
+use crate::responses::{AuroriteErrorResponse, BackgroundInfo, FailableResponse};
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
 use axum::extract::{Path, State};

@@ -2,13 +2,13 @@ use crate::config::env;
 use crate::routes::build_routes;
 use crate::state::AuroriteState;
 use axum::Router;
+#[cfg(target_os = "windows")]
+use std::io::{Read, Write, stderr, stdin};
 use std::str::FromStr;
 use tracing::Level;
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::{EnvFilter, Registry, fmt, prelude::*};
-#[cfg(target_os = "windows")]
-use std::io::{stderr, stdin, Write, Read};
 
 mod config;
 mod database;

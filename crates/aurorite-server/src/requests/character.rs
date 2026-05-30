@@ -1,6 +1,6 @@
-use serde::Deserialize;
 use crate::enums::Skill;
 use crate::utils::uuid::EncodedUuid;
+use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct PostCharacterBase {
@@ -20,7 +20,7 @@ pub struct PostCharacterBase {
 #[derive(Debug, Deserialize)]
 pub struct PutCharacterClass {
     pub class_id: EncodedUuid,
-    pub chosen_skills: Vec<Skill>
+    pub chosen_skills: Vec<Skill>,
 }
 
 #[derive(Debug, Deserialize)]

@@ -6,10 +6,10 @@ use serde::Serialize;
 mod parts;
 mod stats;
 
-use parts::*;
 use crate::responses::background::BackgroundInfo;
 use crate::responses::class::ClassInfo;
 use crate::responses::race::RaceInfo;
+use parts::*;
 
 #[derive(Debug, Serialize)]
 pub struct CharacterInfo {
@@ -25,17 +25,27 @@ pub struct CharacterInfo {
 impl TryFrom<&Character> for CharacterInfo {
     type Error = AuroriteErrorResponse;
     fn try_from(character: &Character) -> Result<Self, Self::Error> {
-        if character.class.is_unloaded() || character.background.is_unloaded() || character.race.is_unloaded() {
+        if character.class.is_unloaded()
+            || character.background.is_unloaded()
+            || character.race.is_unloaded()
+        {
             return Err(AuroriteErrorResponse::new("failed to collect data"));
         }
         let class_l18n = character.class.get().as_ref().map(|data| &data.l18n_key);
-        let background_l18n = character.background.get().as_ref().map(|data| &data.l18n_key);
+        let background_l18n = character
+            .background
+            .get()
+            .as_ref()
+            .map(|data| &data.l18n_key);
         let race_l18n = character.race.get().as_ref().map(|data| &data.l18n_key);
         Ok(Self {
-            id: EncodedUuid(character.id), level: character.level,
-            name: character.name.clone(), full_name: character.full_name.clone(),
-            class_l18n: class_l18n.cloned(), background_l18n: background_l18n.cloned(),
-            race_l18n: race_l18n.cloned()
+            id: EncodedUuid(character.id),
+            level: character.level,
+            name: character.name.clone(),
+            full_name: character.full_name.clone(),
+            class_l18n: class_l18n.cloned(),
+            background_l18n: background_l18n.cloned(),
+            race_l18n: race_l18n.cloned(),
         })
     }
 }
@@ -50,18 +60,27 @@ pub struct FullCharacterBaseInfo {
     background: Option<BackgroundInfo>,
     race: Option<RaceInfo>,
     abilities: CharacterAbilitiesInfo,
+    skills: CharacterSkillsInfo,
 }
 
 impl TryFrom<&Character> for FullCharacterBaseInfo {
     type Error = AuroriteErrorResponse;
     fn try_from(character: &Character) -> Result<Self, Self::Error> {
-        if character.class.is_unloaded() || character.background.is_unloaded() || character.race.is_unloaded() {
+        if character.class.is_unloaded()
+            || character.background.is_unloaded()
+            || character.race.is_unloaded()
+        {
             return Err(AuroriteErrorResponse::new("failed to collect data"));
         }
-        let background = character.background.get().as_ref().map(BackgroundInfo::from);
+        let background = character
+            .background
+            .get()
+            .as_ref()
+            .map(BackgroundInfo::from);
         let race = character.race.get().as_ref().map(RaceInfo::from);
         let class = character.class.get().as_ref().map(ClassInfo::from);
         let abilities = CharacterAbilitiesInfo::try_from(character)?;
+        let skills = CharacterSkillsInfo::try_from(character)?;
         Ok(Self {
             id: EncodedUuid(character.id),
             level: character.level,
@@ -70,6 +89,7 @@ impl TryFrom<&Character> for FullCharacterBaseInfo {
             class,
             race,
             abilities,
+            skills,
         })
     }
 }

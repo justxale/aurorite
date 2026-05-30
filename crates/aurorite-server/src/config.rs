@@ -3,7 +3,8 @@ use serde::Deserialize;
 use std::net::Ipv4Addr;
 use std::sync::OnceLock;
 
-#[derive(Clone, Debug, Deserialize)]
+#[cfg_attr(test, allow(dead_code))]
+#[derive(Deserialize)]
 pub struct EnvConfig {
     pub host: Ipv4Addr,
     pub port: u16,
@@ -12,7 +13,6 @@ pub struct EnvConfig {
     pub password: String,
     pub secret: String,
     pub log: String,
-    pub auto_exit: bool,
 }
 
 static CONFIG: OnceLock<EnvConfig> = OnceLock::new();

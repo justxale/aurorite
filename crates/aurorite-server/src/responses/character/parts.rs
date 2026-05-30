@@ -1,12 +1,9 @@
-use crate::database::{
-    Background, BackgroundData, Character, Class, ClassData, CreatureSize, CreatureType, Race,
-};
+use crate::database::Character;
 use crate::enums::{Ability, Proficiency, Skill};
 use crate::responses::character::stats::{AbilityInfo, SkillInfo};
 use crate::responses::common::AuroriteErrorResponse;
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
-use uuid::Uuid;
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct CharacterAbilitiesInfo {
@@ -32,7 +29,9 @@ impl TryFrom<&Character> for CharacterAbilitiesInfo {
         let mut constitution = AbilityInfo::new(character.constitution);
         let mut charisma = AbilityInfo::new(character.charisma);
 
-        if let Some(class_data) = character.class.get() && let Some(ref data) = class_data.dyn_data {
+        if let Some(class_data) = character.class.get()
+            && let Some(ref data) = class_data.dyn_data
+        {
             for save_throw in &data.save_throws {
                 match save_throw {
                     Ability::Strength => strength.save_throw = Proficiency::Base,
@@ -111,35 +110,37 @@ impl TryFrom<&Character> for CharacterSkillsInfo {
         }
         let abilities = CharacterAbilitiesInfo::try_from(character)?;
 
-        let mut athletics = SkillInfo::new(abilities.strength.value());
+        let mut athletics = SkillInfo::new(abilities.strength.value);
 
-        let mut acrobatics = SkillInfo::new(abilities.dexterity.value());
-        let mut sleight_of_hand = SkillInfo::new(abilities.dexterity.value());
-        let mut stealth = SkillInfo::new(abilities.dexterity.value());
+        let mut acrobatics = SkillInfo::new(abilities.dexterity.value);
+        let mut sleight_of_hand = SkillInfo::new(abilities.dexterity.value);
+        let mut stealth = SkillInfo::new(abilities.dexterity.value);
 
-        let mut perception = SkillInfo::new(abilities.wisdom.value());
-        let mut survival = SkillInfo::new(abilities.wisdom.value());
-        let mut medicine = SkillInfo::new(abilities.wisdom.value());
-        let mut insight = SkillInfo::new(abilities.wisdom.value());
-        let mut animal_handling = SkillInfo::new(abilities.wisdom.value());
+        let mut perception = SkillInfo::new(abilities.wisdom.value);
+        let mut survival = SkillInfo::new(abilities.wisdom.value);
+        let mut medicine = SkillInfo::new(abilities.wisdom.value);
+        let mut insight = SkillInfo::new(abilities.wisdom.value);
+        let mut animal_handling = SkillInfo::new(abilities.wisdom.value);
 
-        let mut investigation = SkillInfo::new(abilities.intelligence.value());
-        let mut history = SkillInfo::new(abilities.intelligence.value());
-        let mut arcana = SkillInfo::new(abilities.intelligence.value());
-        let mut nature = SkillInfo::new(abilities.intelligence.value());
-        let mut religion = SkillInfo::new(abilities.intelligence.value());
+        let mut investigation = SkillInfo::new(abilities.intelligence.value);
+        let mut history = SkillInfo::new(abilities.intelligence.value);
+        let mut arcana = SkillInfo::new(abilities.intelligence.value);
+        let mut nature = SkillInfo::new(abilities.intelligence.value);
+        let mut religion = SkillInfo::new(abilities.intelligence.value);
 
-        let mut performance = SkillInfo::new(abilities.charisma.value());
-        let mut intimidation = SkillInfo::new(abilities.charisma.value());
-        let mut deception = SkillInfo::new(abilities.charisma.value());
-        let mut persuasion = SkillInfo::new(abilities.charisma.value());
+        let mut performance = SkillInfo::new(abilities.charisma.value);
+        let mut intimidation = SkillInfo::new(abilities.charisma.value);
+        let mut deception = SkillInfo::new(abilities.charisma.value);
+        let mut persuasion = SkillInfo::new(abilities.charisma.value);
 
         let mut selected_skills: Vec<Skill> = Vec::new();
 
         if let Some(data) = &character.dyn_data {
             selected_skills.extend_from_slice(&data.chosen_class_skills)
         }
-        if let Some(class_data) = &character.background.get() && let Some(ref data) = class_data.dyn_data {
+        if let Some(class_data) = &character.background.get()
+            && let Some(ref data) = class_data.dyn_data
+        {
             selected_skills.extend_from_slice(&data.skills)
         }
 
@@ -212,4 +213,3 @@ impl TryFrom<&Character> for CharacterSkillsInfo {
         })
     }
 }
-

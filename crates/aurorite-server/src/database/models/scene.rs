@@ -1,6 +1,6 @@
+use crate::database::Asset;
 use toasty::{BelongsTo, Model};
 use uuid::Uuid;
-use crate::database::Asset;
 
 #[derive(Debug, Clone, Model)]
 pub struct Scene {
@@ -11,5 +11,5 @@ pub struct Scene {
     #[index]
     asset_id: Option<Uuid>,
     #[belongs_to(key = asset_id, references = id)]
-    pub asset: BelongsTo<Option<Asset>>
+    pub asset: BelongsTo<Option<Asset>>,
 }

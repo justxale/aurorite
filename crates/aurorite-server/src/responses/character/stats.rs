@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone)]
 pub struct AbilityInfo {
-    value: u8,
+    pub value: u8,
     modification: i8,
     pub save_throw: Proficiency,
 }
@@ -14,13 +14,9 @@ impl AbilityInfo {
     pub fn new(value: u8) -> Self {
         Self {
             value,
-            modification: get_modification(value.into()),
+            modification: get_modification(value),
             save_throw: Proficiency::None,
         }
-    }
-
-    pub fn value(&self) -> u8 {
-        self.value
     }
 
     pub fn set_value(&mut self, value: u8) {
@@ -49,13 +45,9 @@ impl SkillInfo {
     pub fn new(value: u8) -> Self {
         Self {
             value,
-            modification: get_modification(value.into()),
+            modification: get_modification(value),
             proficiency: Proficiency::None,
         }
-    }
-
-    pub fn value(&self) -> u8 {
-        self.value
     }
 
     pub fn set_value(&mut self, value: u8) {

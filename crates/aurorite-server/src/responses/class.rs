@@ -1,6 +1,6 @@
+use crate::database::{Class, ClassData};
 use serde::Serialize;
 use uuid::Uuid;
-use crate::database::{Class, ClassData};
 
 #[derive(Debug, Serialize)]
 pub struct ClassInfo {

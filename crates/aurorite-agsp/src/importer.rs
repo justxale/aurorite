@@ -1,7 +1,6 @@
 use crate::checksum::compute_hash;
 use crate::{AssetRecord, MAX_PACKAGE_SIZE, ManifestRecord};
 use async_compression::tokio::bufread::ZstdDecoder;
-use sha2::Digest;
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 use std::path::PathBuf;
@@ -9,7 +8,6 @@ use std::sync::Arc;
 use tokio::fs::File;
 use tokio::io::{AsyncRead, AsyncReadExt, BufReader};
 use tokio::task::JoinSet;
-use tokio_stream::StreamExt;
 use tokio_tar::Archive;
 use tokio_util::io::ReaderStream;
 

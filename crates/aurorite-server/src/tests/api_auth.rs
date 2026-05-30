@@ -1,6 +1,6 @@
+use super::utils::auth_client;
 use crate::build_app;
 use crate::responses::ClientInfo;
-use super::utils::auth_client;
 use axum::body::Body;
 use axum::http::{Request, StatusCode, header};
 use http_body_util::BodyExt;
@@ -14,7 +14,10 @@ async fn test_nonexisting_auth() {
     let request = Request::post("/client/auth/login")
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(
-            serde_json::to_vec(&serde_json::json!({ "password": "notexists", "login": "notexists" })).unwrap(),
+            serde_json::to_vec(
+                &serde_json::json!({ "password": "notexists", "login": "notexists" }),
+            )
+            .unwrap(),
         ))
         .unwrap();
     let response = app.oneshot(request).await.unwrap();

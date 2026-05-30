@@ -49,7 +49,8 @@ pub struct CampaignInfo {
 impl From<&Campaign> for CampaignInfo {
     fn from(value: &Campaign) -> Self {
         Self {
-            id: value.id, title: value.title.clone(),
+            id: value.id,
+            title: value.title.clone(),
         }
     }
 }

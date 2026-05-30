@@ -8,5 +8,5 @@ pub struct Asset {
     #[unique]
     pub filename: String,
     #[column(type = varchar(64))]
-    pub hash: String
+    pub hash: String,
 }
