@@ -23,3 +23,8 @@ impl From<&Class> for ClassInfo {
         }
     }
 }
+
+#[derive(Debug, Serialize)]
+pub struct AllClassesInfo {
+    pub classes: Vec<ClassInfo>,
+}
