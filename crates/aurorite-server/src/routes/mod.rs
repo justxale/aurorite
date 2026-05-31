@@ -5,6 +5,7 @@ mod characters;
 mod classes;
 mod client;
 mod races;
+mod rolls;
 
 use crate::state::AuroriteState;
 use axum::extract::{MatchedPath, Request};
@@ -27,6 +28,7 @@ pub fn build_routes() -> Router<AuroriteState> {
         .nest("/classes", classes::build_classes_routes())
         .nest("/campaigns", campaigns::build_campaign_routes())
         .nest("/agsp", agsp::build_agsp_routes())
+        .nest("/rolls", rolls::build_roll_routes())
         .route("/healthcheck", any(async || StatusCode::NO_CONTENT))
         .route_service("/", ServeDir::new("static"))
         .layer(
