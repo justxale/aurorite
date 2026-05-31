@@ -15,6 +15,8 @@ use axum::Router;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::routing::get;
+use toasty::Db;
+use uuid::Uuid;
 
 async fn get_characters(
     State(state): State<AuroriteState>,
@@ -82,20 +84,15 @@ async fn get_character(
     State(state): State<AuroriteState>,
     AuthorizedClient(client): AuthorizedClient,
 ) -> FailableResponse<FullCharacterBaseInfo> {
-    match Character::get_by_id(&mut state.db(), character_id).await {
-        Ok(ref record) => {
-            if record.client_id == client.id {
-                match FullCharacterBaseInfo::try_from(record) {
-                    Ok(info) => Ok((StatusCode::OK, info.json())),
-                    Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, err.json())),
-                }
-            } else {
-                Err((
-                    StatusCode::NOT_FOUND,
-                    AuroriteErrorResponse::new("character not found").json(),
-                ))
-            }
-        }
+    match Character::filter_by_id(character_id)
+        .filter_by_client_id(client.id)
+        .get(&mut state.db())
+        .await
+    {
+        Ok(ref record) => match FullCharacterBaseInfo::try_from(record) {
+            Ok(info) => Ok((StatusCode::OK, info.json())),
+            Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, err.json())),
+        },
         Err(err) => {
             if err.is_record_not_found() {
                 Err((
@@ -110,6 +107,26 @@ async fn get_character(
             }
         }
     }
+}
+
+async fn get_character_record(
+    db: &mut Db,
+    client_id: Uuid,
+    character_id: Uuid,
+) -> Result<Character, (StatusCode, Json<AuroriteErrorResponse>)> {
+    Character::filter_by_client_id(client_id)
+        .filter_by_id(character_id)
+        .include(Character::fields().class())
+        .include(Character::fields().race())
+        .include(Character::fields().background())
+        .get(db)
+        .await
+        .map_err(|err| {
+            (
+                StatusCode::NOT_FOUND,
+                AuroriteErrorResponse::new(err).json(),
+            )
+        })
 }
 
 async fn get_character_class(
@@ -142,19 +159,7 @@ async fn put_character_class(
     Json(body): Json<PutCharacterClass>,
 ) -> FailableResponse<FullCharacterBaseInfo> {
     let mut db = state.db();
-    let mut record = Character::filter_by_client_id(client.id)
-        .filter_by_id(character_id)
-        .include(Character::fields().class())
-        .include(Character::fields().race())
-        .include(Character::fields().background())
-        .get(&mut db)
-        .await
-        .map_err(|err| {
-            (
-                StatusCode::NOT_FOUND,
-                AuroriteErrorResponse::new(err).json(),
-            )
-        })?;
+    let mut record = get_character_record(&mut db, client.id, character_id).await?;
     let mut dynamic = record.dyn_data.clone();
     dynamic.get_or_insert_default().chosen_class_skills = body.chosen_skills;
 
@@ -189,25 +194,15 @@ async fn delete_character_class(
     AuthorizedClient(client): AuthorizedClient,
 ) -> FailableResponse<FullCharacterBaseInfo> {
     let mut db = state.db();
-    let record = Character::filter_by_client_id(client.id)
-        .filter_by_id(character_id)
-        .include(Character::fields().class())
-        .include(Character::fields().race())
-        .include(Character::fields().background())
-        .get(&mut db)
-        .await
-        .map_err(AuroriteErrorResponse::new);
-    match record {
-        Err(err) => Err((StatusCode::NOT_FOUND, err.json())),
-        Ok(mut record) => match record.update().class(None).exec(&mut db).await {
-            Ok(_) => FullCharacterBaseInfo::try_from(&record)
-                .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.json()))
-                .map(|record| (StatusCode::OK, record.json())),
-            Err(err) => Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                AuroriteErrorResponse::new(err).json(),
-            )),
-        },
+    let mut record = get_character_record(&mut db, client.id, character_id).await?;
+    match record.update().class(None).exec(&mut db).await {
+        Ok(_) => FullCharacterBaseInfo::try_from(&record)
+            .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.json()))
+            .map(|record| (StatusCode::OK, record.json())),
+        Err(err) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            AuroriteErrorResponse::new(err).json(),
+        )),
     }
 }
 
@@ -241,20 +236,7 @@ async fn put_character_race(
     Json(body): Json<PutCharacterRace>,
 ) -> FailableResponse<FullCharacterBaseInfo> {
     let mut db = state.db();
-    let mut record = Character::filter_by_client_id(client.id)
-        .filter_by_id(character_id)
-        .include(Character::fields().class())
-        .include(Character::fields().race())
-        .include(Character::fields().background())
-        .get(&mut db)
-        .await
-        .map_err(|err| {
-            (
-                StatusCode::NOT_FOUND,
-                AuroriteErrorResponse::new(err).json(),
-            )
-        })?;
-
+    let mut record = get_character_record(&mut db, client.id, character_id).await?;
     match Race::get_by_id(&mut db, body.race_id.uuid()).await {
         Ok(ref race_record) => {
             record
@@ -285,19 +267,7 @@ async fn delete_character_race(
     AuthorizedClient(client): AuthorizedClient,
 ) -> FailableResponse<FullCharacterBaseInfo> {
     let mut db = state.db();
-    let mut record = Character::filter_by_client_id(client.id)
-        .filter_by_id(character_id)
-        .include(Character::fields().class())
-        .include(Character::fields().race())
-        .include(Character::fields().background())
-        .get(&mut db)
-        .await
-        .map_err(|err| {
-            (
-                StatusCode::NOT_FOUND,
-                AuroriteErrorResponse::new(err).json(),
-            )
-        })?;
+    let mut record = get_character_record(&mut db, client.id, character_id).await?;
     match record.update().race(None).exec(&mut db).await {
         Ok(_) => FullCharacterBaseInfo::try_from(&record)
             .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.json()))
@@ -343,20 +313,7 @@ async fn put_character_background(
     Json(body): Json<PutCharacterBackground>,
 ) -> FailableResponse<FullCharacterBaseInfo> {
     let mut db = state.db();
-    let mut record = Character::filter_by_client_id(client.id)
-        .filter_by_id(character_id)
-        .include(Character::fields().class())
-        .include(Character::fields().race())
-        .include(Character::fields().background())
-        .get(&mut db)
-        .await
-        .map_err(|err| {
-            (
-                StatusCode::NOT_FOUND,
-                AuroriteErrorResponse::new(err).json(),
-            )
-        })?;
-
+    let mut record = get_character_record(&mut db, client.id, character_id).await?;
     match Background::get_by_id(&mut db, body.background_id.uuid()).await {
         Ok(ref background_record) => {
             record
@@ -387,19 +344,7 @@ async fn delete_character_background(
     AuthorizedClient(client): AuthorizedClient,
 ) -> FailableResponse<FullCharacterBaseInfo> {
     let mut db = state.db();
-    let mut record = Character::filter_by_client_id(client.id)
-        .filter_by_id(character_id)
-        .include(Character::fields().class())
-        .include(Character::fields().race())
-        .include(Character::fields().background())
-        .get(&mut db)
-        .await
-        .map_err(|err| {
-            (
-                StatusCode::NOT_FOUND,
-                AuroriteErrorResponse::new(err).json(),
-            )
-        })?;
+    let mut record = get_character_record(&mut db, client.id, character_id).await?;
     match record.update().background(None).exec(&mut db).await {
         Ok(_) => FullCharacterBaseInfo::try_from(&record)
             .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.json()))

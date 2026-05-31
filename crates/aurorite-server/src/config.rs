@@ -3,7 +3,7 @@ use serde::Deserialize;
 use std::net::Ipv4Addr;
 use std::sync::OnceLock;
 
-#[cfg_attr(test, allow(dead_code))]
+#[cfg_attr(test, allow(dead_code))] // omit warn on unused database_path because of in-memory sqlite
 #[derive(Deserialize)]
 pub struct EnvConfig {
     pub host: Ipv4Addr,
