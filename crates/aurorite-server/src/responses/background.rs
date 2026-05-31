@@ -18,3 +18,8 @@ impl From<&Background> for BackgroundInfo {
         }
     }
 }
+
+#[derive(Debug, Clone, Serialize)]
+pub struct AllBackgroundsInfo {
+    pub backgrounds: Vec<BackgroundInfo>,
+}
