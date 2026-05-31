@@ -38,16 +38,18 @@ pub fn build_routes() -> Router<AuroriteState> {
                                 .extensions()
                                 .get::<MatchedPath>()
                                 .map(MatchedPath::as_str);
-
+                            let mut request_id = ['0'; 8];
+                            for c in &mut request_id {
+                                *c = fastrand::alphanumeric();
+                            }
                             tracing::info_span!(
                                 "request",
                                 method = ?request.method(),
                                 matched_path,
+                                request_id = request_id.into_iter().collect::<String>()
                             )
                         })
-                        .on_request(|_request: &Request<_>, _span: &Span| {
-                            // tracing::debug!("started processing request")
-                        })
+                        .on_request(|_request: &Request<_>, _span: &Span| {})
                         .on_response(|response: &Response, latency: Duration, _span: &Span| {
                             tracing::info!(latency = ?latency, status = ?response.status());
                         }),

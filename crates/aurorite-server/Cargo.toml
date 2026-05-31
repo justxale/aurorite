@@ -26,6 +26,7 @@ dotenvy = "0.15.7"
 config = { version = "0.15.22", default-features = false, features = ["convert-case"] }
 tracing-appender = "0.2.5"
 tokio-util = { version = "0.7.18", features = ["compat", "io"] }
+fastrand = "2.4.1"
 
 [dev-dependencies]
 http-body-util = "0.1.3"
