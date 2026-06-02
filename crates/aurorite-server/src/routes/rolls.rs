@@ -7,7 +7,7 @@ use axum::routing::get;
 use crate::responses::{AuroriteErrorResponse, FailableResponse};
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
-use crate::utils::Dice;
+use aurorite_util::formulas::Dice;
 
 async fn get_roll(
     State(_state): State<AuroriteState>,

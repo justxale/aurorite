@@ -1,7 +1,7 @@
 use crate::build_app;
 use crate::responses::{ClientCampaigns, FullCampaignInfo};
 use crate::tests::utils::{auth_client, delete_request, get_request, post_request};
-use crate::utils::uuid::EncodedUuid;
+use aurorite_util::uuid::EncodedUuid;
 use axum::http::StatusCode;
 
 #[tokio::test]

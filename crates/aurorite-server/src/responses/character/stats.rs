@@ -1,6 +1,6 @@
-use crate::database::Overwrite;
-use crate::enums::{Ability, Proficiency, Skill};
-use crate::utils::get_modification;
+use aurorite_dataflow::database::Overwrite;
+use aurorite_dataflow::enums::{Ability, Proficiency, Skill};
+use aurorite_util::formulas::get_modification;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone)]

@@ -1,4 +1,4 @@
-use crate::database::Client;
+use aurorite_dataflow::database::Client;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

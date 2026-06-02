@@ -1,4 +1,4 @@
-use crate::database::{Class, ClassData};
+use aurorite_dataflow::database::{Class, ClassData};
 use serde::Serialize;
 use uuid::Uuid;
 

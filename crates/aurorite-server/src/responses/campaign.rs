@@ -1,4 +1,4 @@
-use crate::database::Campaign;
+use aurorite_dataflow::database::Campaign;
 use crate::responses::{AuroriteErrorResponse, ClientInfo};
 use serde::{Deserialize, Serialize};
 

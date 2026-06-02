@@ -1,4 +1,4 @@
-use crate::database::{Background, Character, Class, Race};
+use aurorite_dataflow::database::{Background, Character, Class, Race, Db};
 use crate::extractors::AuthorizedClient;
 use crate::requests::{
     PostCharacterBase, PutCharacterBackground, PutCharacterClass, PutCharacterRace,
@@ -10,12 +10,11 @@ use crate::responses::{
 };
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
-use crate::utils::uuid::EncodedUuid;
+use aurorite_util::uuid::EncodedUuid;
 use axum::Router;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::routing::get;
-use toasty::Db;
 use uuid::Uuid;
 
 async fn get_characters(

@@ -1,9 +1,6 @@
-use crate::config::env;
-use crate::database::Client;
-use crate::utils::auth::hash_password;
+use aurorite_dataflow::{database::Db, build_connection};
 use axum::extract::ws::Message;
 use std::sync::Arc;
-use toasty::Db;
 use tokio::sync::broadcast;
 use tokio::sync::broadcast::Sender;
 use vismut_core::VismutExecutionEnvironment;
@@ -21,7 +18,7 @@ impl AuroriteState {
         let mut executor = VismutExecutionEnvironment::default();
         executor.get_schema_mut();
 
-        let connection = Self::build_connection().await;
+        let connection = build_connection().await;
         AuroriteState {
             db: connection,
             executor: Arc::new(executor),
@@ -37,55 +34,5 @@ impl AuroriteState {
     }
     pub fn sender(&self) -> &Sender<Message> {
         &self.sender
-    }
-
-    #[cfg(not(test))]
-    async fn build_connection() -> Db {
-        let mut connection = Db::builder()
-            .models(toasty::models!(crate::*))
-            .connect(format!("sqlite:///{}?mode=rwc", env().database_path).as_str())
-            .await
-            .unwrap();
-        let _ = connection.push_schema().await;
-        if let Ok(None) = Client::filter(Client::fields().is_admin().eq(true))
-            .first()
-            .exec(&mut connection)
-            .await
-        {
-            toasty::create!(Client {
-                username: env().admin.clone(),
-                pwd: hash_password(&env().password).unwrap(),
-                is_admin: true
-            })
-            .exec(&mut connection)
-            .await
-            .unwrap();
-        }
-        connection
-    }
-
-    #[cfg(test)]
-    async fn build_connection() -> Db {
-        let mut connection = Db::builder()
-            .models(toasty::models!(crate::*))
-            .connect("sqlite::memory:")
-            .await
-            .unwrap();
-        let _ = connection.push_schema().await;
-        if let Ok(None) = Client::filter(Client::fields().is_admin().eq(true))
-            .first()
-            .exec(&mut connection)
-            .await
-        {
-            toasty::create!(Client {
-                username: env().admin.clone(),
-                pwd: hash_password(&env().password).unwrap(),
-                is_admin: true
-            })
-            .exec(&mut connection)
-            .await
-            .unwrap();
-        }
-        connection
     }
 }

@@ -13,20 +13,17 @@ tokio = { version = "1.52.0", features = ["fs", "macros", "parking_lot", "rt-mul
 tracing = "0.1.44"
 vismut-core = { git = "https://github.com/justxale/vismut-core.git", version = "0.1.0", features = ["nodes", "serde"] }
 aurorite-agsp = { path = "../aurorite-agsp" }
-uuid = { version = "1.23.1", features = ["serde", "v4"] }
+aurorite-dataflow = { path = "../aurorite-dataflow" }
+aurorite-util = { path = "../aurorite-util" }
+uuid = { version = "1.23.1", features = ["serde"] }
 tower = "0.5.3"
 tower-http = { version = "0.6.8", features = ["fs", "timeout", "trace"] }
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 axum-extra = { version = "0.12.6", features = ["typed-header"] }
-jsonwebtoken = { version = "10.3.0", features = ["rust_crypto"] }
-argon2 = { version = "0.5.3", features = ["std"] }
-toasty = { version = "0.4.0", features = ["jiff", "serde", "sqlite"] }
 jiff = "0.2.24"
 dotenvy = "0.15.7"
-config = { version = "0.15.22", default-features = false, features = ["convert-case"] }
 tracing-appender = "0.2.5"
 tokio-util = { version = "0.7.18", features = ["compat", "io"] }
-fastrand = "2.4.1"
 
 [dev-dependencies]
 http-body-util = "0.1.3"

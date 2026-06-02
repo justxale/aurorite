@@ -53,10 +53,10 @@ pub fn env() -> &'static EnvConfig {
             Err(ConfigError::Message(msg)) => panic!("{msg}"),
             Err(ConfigError::NotFound(field)) => panic!("{field} must be set"),
             Err(ConfigError::At {
-                origin: _,
-                key,
-                error,
-            }) => panic!("invalid value of {} field: {error}", key.unwrap()),
+                    origin: _,
+                    key,
+                    error,
+                }) => panic!("invalid value of {} field: {error}", key.unwrap()),
             Err(_) => panic!("unspecified error in configuration"),
         }
     })

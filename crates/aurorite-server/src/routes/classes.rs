@@ -1,10 +1,10 @@
-use crate::database::Class;
+use aurorite_dataflow::database::Class;
 use crate::extractors::{AuthorizedAdmin, AuthorizedClient};
 use crate::requests::PostClass;
 use crate::responses::{AllClassesInfo, AuroriteErrorResponse, ClassInfo, FailableResponse};
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
-use crate::utils::uuid::EncodedUuid;
+use aurorite_util::uuid::EncodedUuid;
 use axum::Router;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;

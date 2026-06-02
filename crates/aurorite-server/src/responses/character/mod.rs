@@ -1,6 +1,6 @@
-use crate::database::Character;
+use aurorite_dataflow::database::Character;
 use crate::responses::AuroriteErrorResponse;
-use crate::utils::uuid::EncodedUuid;
+use aurorite_util::uuid::EncodedUuid;
 use serde::Serialize;
 
 mod parts;

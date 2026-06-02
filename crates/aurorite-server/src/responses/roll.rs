@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::utils::DiceRollResult;
+use aurorite_util::formulas::DiceRollResult;
 
 #[derive(Serialize, Deserialize)]
 pub struct RollResult {

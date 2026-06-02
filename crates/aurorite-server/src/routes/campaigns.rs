@@ -1,4 +1,4 @@
-use crate::database::{Campaign, CampaignClient};
+use aurorite_dataflow::database::{Campaign, CampaignClient};
 use crate::extractors::{AuthorizedAdmin, AuthorizedClient, AuthorizedMaster};
 use crate::requests::PostCampaign;
 use crate::responses::{
@@ -6,7 +6,7 @@ use crate::responses::{
 };
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
-use crate::utils::uuid::EncodedUuid;
+use aurorite_util::uuid::EncodedUuid;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::routing::get;

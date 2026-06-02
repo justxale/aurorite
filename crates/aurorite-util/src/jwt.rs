@@ -1,9 +1,5 @@
 use crate::env;
-use crate::responses::AuroriteErrorResponse;
-use crate::traits::IntoJson;
-use crate::utils::uuid::serde_support;
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
+use crate::uuid::serde_support;
 use jiff::ToSpan;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
@@ -23,25 +19,16 @@ pub enum TokenError {
     NotFound(String),
 }
 
-impl IntoResponse for TokenError {
-    fn into_response(self) -> Response {
-        let (status, msg) = match self {
-            TokenError::InvalidToken => (StatusCode::UNAUTHORIZED, "invalid token".into()),
-            TokenError::Failed(reason) => (StatusCode::INTERNAL_SERVER_ERROR, reason),
-            TokenError::MissingToken => (StatusCode::UNAUTHORIZED, "missing token".into()),
-            TokenError::NotAdmin | TokenError::NotMaster => (
-                StatusCode::FORBIDDEN,
-                "you cannot perform this action".into(),
-            ),
-            TokenError::NotFound(msg) => (StatusCode::NOT_FOUND, msg),
-        };
-        (status, AuroriteErrorResponse::new(msg).json()).into_response()
-    }
-}
-
 impl fmt::Display for TokenError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("{:?}", self))
+        match self {
+            TokenError::Failed(msg) => write!(f, "failure: {}", msg),
+            TokenError::NotFound(msg) => write!(f, "{} not found", msg),
+            TokenError::InvalidToken => write!(f, "invalid token"),
+            TokenError::MissingToken => write!(f, "missing token"),
+            TokenError::NotAdmin => write!(f, "not admin"),
+            TokenError::NotMaster => write!(f, "not master"),
+        }
     }
 }
 

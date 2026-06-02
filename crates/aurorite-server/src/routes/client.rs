@@ -1,20 +1,21 @@
-use crate::database::Client;
+use aurorite_dataflow::database::Client;
 use crate::requests::{ClientAuth, NewClientData, UpdatedClientData};
 use crate::responses::ClientToken;
 use crate::responses::{AuroriteErrorResponse, ClientInfo, FailableResponse};
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
-use crate::utils::auth::{generate_password, hash_password, verify};
-use crate::utils::jwt::{Authorization, encode_key};
+use aurorite_util::auth::{generate_password, hash_password, verify};
+use aurorite_util::jwt::encode_key;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::routing::{get, post};
 use axum::{Json, Router};
+use crate::extractors::AuthorizedUnchecked;
 
 #[tracing::instrument]
 async fn get_self(
     State(state): State<AuroriteState>,
-    user: Authorization,
+    AuthorizedUnchecked(user): AuthorizedUnchecked,
 ) -> FailableResponse<ClientInfo> {
     match Client::get_by_id(&mut state.db(), user.id()).await {
         Err(_) => Err((
@@ -37,7 +38,7 @@ async fn get_self(
 #[tracing::instrument]
 async fn edit_self(
     State(state): State<AuroriteState>,
-    user: Authorization,
+    AuthorizedUnchecked(user): AuthorizedUnchecked,
     Json(fields): Json<UpdatedClientData>,
 ) -> FailableResponse<ClientInfo> {
     let mut db = state.db();
@@ -124,7 +125,7 @@ async fn login_client(
 #[tracing::instrument]
 async fn register_client(
     State(state): State<AuroriteState>,
-    user: Authorization,
+    AuthorizedUnchecked(user): AuthorizedUnchecked,
     Json(body): Json<NewClientData>,
 ) -> FailableResponse<ClientInfo> {
     let mut db = state.db();

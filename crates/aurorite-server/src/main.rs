@@ -1,4 +1,4 @@
-use crate::config::env;
+use aurorite_util::env;
 use crate::routes::build_routes;
 use crate::state::AuroriteState;
 use axum::Router;
@@ -10,9 +10,6 @@ use tracing_appender::non_blocking::WorkerGuard;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::{EnvFilter, Registry, fmt, prelude::*};
 
-mod config;
-mod database;
-mod enums;
 pub mod extractors;
 pub mod requests;
 pub mod responses;
@@ -21,7 +18,6 @@ mod state;
 #[cfg(test)]
 mod tests;
 mod traits;
-pub mod utils;
 
 async fn build_app() -> Router {
     let state = AuroriteState::new().await;

@@ -1,5 +1,5 @@
-use crate::database::Character;
-use crate::enums::{Ability, Proficiency, Skill};
+use aurorite_dataflow::database::Character;
+use aurorite_dataflow::enums::{Ability, Proficiency, Skill};
 use crate::responses::character::stats::{AbilityInfo, SkillInfo};
 use crate::responses::common::AuroriteErrorResponse;
 use serde::{Deserialize, Serialize};

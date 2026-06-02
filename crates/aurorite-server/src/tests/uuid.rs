@@ -1,5 +1,4 @@
-use crate::utils::uuid::encode_uuid;
-use crate::utils::uuid::{EncodedUuid, decode_uuid};
+use aurorite_util::uuid::{EncodedUuid, decode_uuid, encode_uuid};
 
 #[test]
 fn test_decode_uuid() {

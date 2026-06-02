@@ -19,6 +19,7 @@ use tower_http::services::ServeDir;
 use tower_http::timeout::TimeoutLayer;
 use tower_http::trace::TraceLayer;
 use tracing::Span;
+use aurorite_util::common::create_request_id;
 
 pub fn build_routes() -> Router<AuroriteState> {
     Router::new()
@@ -40,15 +41,11 @@ pub fn build_routes() -> Router<AuroriteState> {
                                 .extensions()
                                 .get::<MatchedPath>()
                                 .map(MatchedPath::as_str);
-                            let mut request_id = ['0'; 8];
-                            for c in &mut request_id {
-                                *c = fastrand::alphanumeric();
-                            }
                             tracing::info_span!(
                                 "request",
                                 method = ?request.method(),
                                 matched_path,
-                                request_id = request_id.into_iter().collect::<String>()
+                                request_id = create_request_id()
                             )
                         })
                         .on_request(|_request: &Request<_>, _span: &Span| {})

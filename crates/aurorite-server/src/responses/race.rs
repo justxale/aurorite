@@ -1,4 +1,4 @@
-use crate::database::{CreatureSize, CreatureType, Race};
+use aurorite_dataflow::database::{CreatureSize, CreatureType, Race};
 use serde::Serialize;
 use uuid::Uuid;
 

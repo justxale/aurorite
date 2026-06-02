@@ -1,4 +1,4 @@
-use crate::database::BackgroundData;
+use aurorite_dataflow::database::BackgroundData;
 use serde::Deserialize;
 
 #[derive(Clone, Debug, Deserialize)]

@@ -1,5 +1,5 @@
-use crate::enums::Skill;
-use crate::utils::uuid::EncodedUuid;
+use aurorite_dataflow::enums::Skill;
+use aurorite_util::uuid::EncodedUuid;
 use serde::Deserialize;
 
 #[derive(Deserialize)]

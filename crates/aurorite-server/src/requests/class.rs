@@ -1,4 +1,4 @@
-use crate::database::ClassData;
+use aurorite_dataflow::database::ClassData;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
