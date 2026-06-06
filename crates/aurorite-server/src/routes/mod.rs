@@ -19,7 +19,7 @@ use tower_http::services::ServeDir;
 use tower_http::timeout::TimeoutLayer;
 use tower_http::trace::TraceLayer;
 use tracing::Span;
-use aurorite_util::common::create_request_id;
+use aurorite_util::common::create_hex;
 
 pub fn build_routes() -> Router<AuroriteState> {
     Router::new()
@@ -45,7 +45,7 @@ pub fn build_routes() -> Router<AuroriteState> {
                                 "request",
                                 method = ?request.method(),
                                 matched_path,
-                                request_id = create_request_id()
+                                request_id = create_hex::<8>()
                             )
                         })
                         .on_request(|_request: &Request<_>, _span: &Span| {})
