@@ -1,4 +1,4 @@
-name: Rust
+name: Test Check
 
 on:
   push:
@@ -15,12 +15,15 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: check if source compiles
-        run: cargo check --verbose
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run clippy
+        run: cargo clippy --all-targets
         env:
           AURORITE_SECRET: totallysecret
 
-      - name: run tests in test mode
-        run: cargo test --profile test
+      - name: Run test
+        run: cargo test --profile test --all-targets --verbose
         env:
           AURORITE_SECRET: totallysecret
