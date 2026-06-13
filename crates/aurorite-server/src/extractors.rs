@@ -100,10 +100,8 @@ impl<const LOAD_CAMPAIGN: bool> FromRequestParts<AuroriteState>
                 .include(CampaignClient::fields().campaign().classes())
                 .include(CampaignClient::fields().campaign().races())
                 .include(CampaignClient::fields().campaign().clients()),
-            false => CampaignClient::filter_by_client_id_and_campaign_id(
-                client.id,
-                campaign_id,
-            )
+            false => CampaignClient::filter_by_client_id_and_campaign_id(client.id, campaign_id, )
+                .include(CampaignClient::fields().campaign())
         };
         let record = record
             .get(&mut db)
