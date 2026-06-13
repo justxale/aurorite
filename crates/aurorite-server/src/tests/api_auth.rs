@@ -1,10 +1,10 @@
 use super::utils::auth_client;
 use crate::build_app;
-use crate::responses::ClientInfo;
 use axum::body::Body;
 use axum::http::{Request, StatusCode, header};
 use http_body_util::BodyExt;
 use tower::{Service, ServiceExt};
+use aurorite_dataflow::dto::ClientDto;
 
 #[tokio::test]
 async fn test_nonexisting_auth() {
@@ -46,7 +46,7 @@ async fn test_existing_auth() {
         .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let res = serde_json::from_slice::<ClientInfo>(&body).unwrap();
+    let res = serde_json::from_slice::<ClientDto>(&body).unwrap();
     assert_eq!(res.username, "aurorite");
     assert_eq!(res.display_name, None);
 }

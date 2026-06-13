@@ -1,16 +1,14 @@
 use aurorite_dataflow::database::{Campaign, CampaignClient};
 use crate::extractors::{AuthorizedAdmin, AuthorizedClient, AuthorizedMaster};
 use crate::requests::PostCampaign;
-use crate::responses::{
-    AuroriteErrorResponse, ClientCampaigns, FailableResponse, FullCampaignInfo,
-};
+use crate::responses::{AuroriteErrorResponse, ClientCampaigns, FailableResponse};
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
-use aurorite_util::uuid::EncodedUuid;
-use axum::extract::{Path, State};
+use axum::extract::State;
 use axum::http::StatusCode;
 use axum::routing::get;
 use axum::{Json, Router};
+use aurorite_dataflow::dto::CampaignDto;
 
 async fn get_campaigns(
     State(state): State<AuroriteState>,
@@ -39,7 +37,7 @@ async fn post_campaign(
     State(state): State<AuroriteState>,
     AuthorizedAdmin(client): AuthorizedAdmin,
     Json(body): Json<PostCampaign>,
-) -> FailableResponse<FullCampaignInfo> {
+) -> FailableResponse<CampaignDto> {
     let mut db = state.db();
     let record = Campaign::create()
         .title(body.title)
@@ -65,9 +63,9 @@ async fn post_campaign(
                 .get(&mut db)
                 .await;
             match res {
-                Ok(ref record) => match FullCampaignInfo::try_from(record) {
+                Ok(ref record) => match CampaignDto::try_from(record) {
                     Ok(res) => Ok((StatusCode::CREATED, res.json())),
-                    Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, err.json())),
+                    Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json())),
                 },
                 Err(err) => Err((
                     StatusCode::INTERNAL_SERVER_ERROR,
@@ -81,8 +79,8 @@ async fn post_campaign(
 async fn get_campaign(
     State(_state): State<AuroriteState>,
     AuthorizedMaster(_client, campaign): AuthorizedMaster<true>,
-) -> FailableResponse<FullCampaignInfo> {
-    match FullCampaignInfo::try_from(&campaign) {
+) -> FailableResponse<CampaignDto> {
+    match CampaignDto::try_from(&campaign) {
         Ok(res) => Ok((StatusCode::OK, res.json())),
         Err(_) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
