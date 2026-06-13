@@ -90,27 +90,15 @@ async fn get_campaign(
 }
 
 async fn delete_campaign(
-    Path(EncodedUuid(id)): Path<EncodedUuid>,
-    AuthorizedClient(client): AuthorizedClient,
+    AuthorizedMaster(_client, mut campaign): AuthorizedMaster<false>,
     State(state): State<AuroriteState>,
 ) -> Result<(StatusCode, ()), (StatusCode, Json<AuroriteErrorResponse>)> {
-    let mut db = state.db();
-    match Campaign::filter_by_id(id)
-        .filter(Campaign::fields().owner_id().eq(client.id))
-        .get(&mut db)
-        .await
-    {
+    match campaign.update().is_active(false).exec(&mut state.db()).await {
         Err(err) => Err((
-            StatusCode::NOT_FOUND,
+            StatusCode::INTERNAL_SERVER_ERROR,
             AuroriteErrorResponse::new(err).json(),
         )),
-        Ok(mut record) => match record.update().is_active(false).exec(&mut db).await {
-            Err(err) => Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                AuroriteErrorResponse::new(err).json(),
-            )),
-            Ok(_) => Ok((StatusCode::NO_CONTENT, ())),
-        },
+        Ok(_) => Ok((StatusCode::NO_CONTENT, ())),
     }
 }
 

@@ -9,14 +9,14 @@ pub struct Campaign {
     #[auto]
     pub id: Uuid,
 
+    pub title: String,
     #[default(true)]
     pub is_active: bool,
-    pub title: String,
 
     #[index]
     owner_id: Uuid,
     #[belongs_to(key = owner_id, references = id)]
-    owner: BelongsTo<Client>,
+    pub owner: BelongsTo<Client>,
 
     #[default(jiff::Timestamp::now())]
     pub last_played_at: Timestamp,
