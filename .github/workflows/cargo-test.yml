@@ -15,15 +15,16 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Cache Cargo
-        uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: . -> target
 
-      - name: Run clippy
+      - name: cargo clippy
         run: cargo clippy --all-targets
         env:
           AURORITE_SECRET: totallysecret
 
-      - name: Run test
+      - name: cargo test
         run: cargo test --profile test --all-targets --verbose
         env:
           AURORITE_SECRET: totallysecret
