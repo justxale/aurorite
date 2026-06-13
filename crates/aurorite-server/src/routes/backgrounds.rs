@@ -2,7 +2,7 @@ use aurorite_dataflow::database::Background;
 use crate::extractors::{AuthorizedAdmin, AuthorizedClient};
 use crate::requests::PostBackground;
 use crate::responses::{
-    AllBackgroundsInfo, AuroriteErrorResponse, FailableResponse,
+    AllBackgroundsInfo, AuroriteErrorResponse, BackgroundInfo, FailableResponse,
 };
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
@@ -11,7 +11,6 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::routing::get;
 use axum::{Json, Router};
-use aurorite_dataflow::dto::BackgroundDto;
 
 async fn get_backgrounds(
     State(state): State<AuroriteState>,
@@ -31,7 +30,7 @@ async fn get_backgrounds(
         AllBackgroundsInfo {
             backgrounds: records
                 .into_iter()
-                .map(|v| BackgroundDto::from(&v))
+                .map(|v| BackgroundInfo::from(&v))
                 .collect(),
         }
         .json(),
@@ -42,12 +41,12 @@ async fn post_background(
     State(state): State<AuroriteState>,
     AuthorizedAdmin(_client): AuthorizedAdmin,
     Json(body): Json<PostBackground>,
-) -> FailableResponse<BackgroundDto> {
+) -> FailableResponse<BackgroundInfo> {
     let record = Background::create()
         .dyn_data(body.dynamic)
         .l18n_key(body.l18n);
     match record.exec(&mut state.db()).await {
-        Ok(ref result) => Ok((StatusCode::OK, BackgroundDto::from(result).json())),
+        Ok(ref result) => Ok((StatusCode::OK, BackgroundInfo::from(result).json())),
         Err(err) => Err((StatusCode::CONFLICT, AuroriteErrorResponse::new(err).json())),
     }
 }
@@ -56,9 +55,9 @@ async fn get_background(
     Path(EncodedUuid(id)): Path<EncodedUuid>,
     AuthorizedClient(_client): AuthorizedClient,
     State(state): State<AuroriteState>,
-) -> FailableResponse<BackgroundDto> {
+) -> FailableResponse<BackgroundInfo> {
     match Background::get_by_id(&mut state.db(), id).await {
-        Ok(ref record) => Ok((StatusCode::OK, BackgroundDto::from(record).json())),
+        Ok(ref record) => Ok((StatusCode::OK, BackgroundInfo::from(record).json())),
         Err(err) => Err((
             StatusCode::NOT_FOUND,
             AuroriteErrorResponse::new(err).json(),

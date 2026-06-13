@@ -1,6 +1,5 @@
 pub mod database;
 pub mod enums;
-mod state;
-pub mod dto;
+pub mod state;
 
 pub use state::build_connection;

@@ -1,7 +1,7 @@
 use aurorite_dataflow::database::Client;
 use crate::requests::{ClientAuth, NewClientData, UpdatedClientData};
 use crate::responses::ClientToken;
-use crate::responses::{AuroriteErrorResponse, FailableResponse};
+use crate::responses::{AuroriteErrorResponse, ClientInfo, FailableResponse};
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
 use aurorite_util::auth::{generate_password, hash_password, verify};
@@ -10,13 +10,13 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::routing::{get, post};
 use axum::{Json, Router};
-use aurorite_dataflow::dto::ClientDto;
 use crate::extractors::AuthorizedUnchecked;
 
+#[tracing::instrument]
 async fn get_self(
     State(state): State<AuroriteState>,
     AuthorizedUnchecked(user): AuthorizedUnchecked,
-) -> FailableResponse<ClientDto> {
+) -> FailableResponse<ClientInfo> {
     match Client::get_by_id(&mut state.db(), user.id()).await {
         Err(_) => Err((
             StatusCode::NOT_FOUND,
@@ -27,7 +27,7 @@ async fn get_self(
         )),
         Ok(record) => Ok((
             StatusCode::OK,
-            Json(ClientDto {
+            Json(ClientInfo {
                 display_name: record.display_name,
                 username: record.username,
             }),
@@ -35,11 +35,12 @@ async fn get_self(
     }
 }
 
+#[tracing::instrument]
 async fn edit_self(
     State(state): State<AuroriteState>,
     AuthorizedUnchecked(user): AuthorizedUnchecked,
     Json(fields): Json<UpdatedClientData>,
-) -> FailableResponse<ClientDto> {
+) -> FailableResponse<ClientInfo> {
     let mut db = state.db();
     let record = Client::get_by_id(&mut db, user.id()).await;
     if record.is_err() {
@@ -72,13 +73,14 @@ async fn edit_self(
     }
     Ok((
         StatusCode::OK,
-        Json(ClientDto {
+        Json(ClientInfo {
             display_name: record.display_name,
             username: record.username,
         }),
     ))
 }
 
+#[tracing::instrument]
 async fn login_client(
     State(state): State<AuroriteState>,
     Json(body): Json<ClientAuth>,
@@ -120,11 +122,12 @@ async fn login_client(
     }
 }
 
+#[tracing::instrument]
 async fn register_client(
     State(state): State<AuroriteState>,
     AuthorizedUnchecked(user): AuthorizedUnchecked,
     Json(body): Json<NewClientData>,
-) -> FailableResponse<ClientDto> {
+) -> FailableResponse<ClientInfo> {
     let mut db = state.db();
     if Client::get_by_username(&mut db, &body.nickname)
         .await
@@ -146,7 +149,7 @@ async fn register_client(
     let record = record.exec(&mut db).await.unwrap();
     Ok((
         StatusCode::CREATED,
-        Json(ClientDto {
+        Json(ClientInfo {
             username: record.username,
             display_name: record.display_name,
         }),

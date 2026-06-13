@@ -1,14 +1,16 @@
-use aurorite_dataflow::database::{AccessState, Campaign, CampaignClient, Visibility};
+use aurorite_dataflow::database::{Campaign, CampaignClient};
 use crate::extractors::{AuthorizedAdmin, AuthorizedClient, AuthorizedMaster};
-use crate::requests::{PostCampaign, PutCampaignSession};
-use crate::responses::{AuroriteErrorResponse, ClientCampaigns, FailableResponse};
+use crate::requests::PostCampaign;
+use crate::responses::{
+    AuroriteErrorResponse, ClientCampaigns, FailableResponse, FullCampaignInfo,
+};
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
-use axum::extract::State;
+use aurorite_util::uuid::EncodedUuid;
+use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::routing::get;
 use axum::{Json, Router};
-use aurorite_dataflow::dto::CampaignDto;
 
 async fn get_campaigns(
     State(state): State<AuroriteState>,
@@ -37,7 +39,7 @@ async fn post_campaign(
     State(state): State<AuroriteState>,
     AuthorizedAdmin(client): AuthorizedAdmin,
     Json(body): Json<PostCampaign>,
-) -> FailableResponse<CampaignDto> {
+) -> FailableResponse<FullCampaignInfo> {
     let mut db = state.db();
     let record = Campaign::create()
         .title(body.title)
@@ -63,9 +65,9 @@ async fn post_campaign(
                 .get(&mut db)
                 .await;
             match res {
-                Ok(ref record) => match CampaignDto::try_from(record) {
+                Ok(ref record) => match FullCampaignInfo::try_from(record) {
                     Ok(res) => Ok((StatusCode::CREATED, res.json())),
-                    Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json())),
+                    Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, err.json())),
                 },
                 Err(err) => Err((
                     StatusCode::INTERNAL_SERVER_ERROR,
@@ -79,8 +81,8 @@ async fn post_campaign(
 async fn get_campaign(
     State(_state): State<AuroriteState>,
     AuthorizedMaster(_client, campaign): AuthorizedMaster<true>,
-) -> FailableResponse<CampaignDto> {
-    match CampaignDto::try_from(&campaign) {
+) -> FailableResponse<FullCampaignInfo> {
+    match FullCampaignInfo::try_from(&campaign) {
         Ok(res) => Ok((StatusCode::OK, res.json())),
         Err(_) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -90,36 +92,27 @@ async fn get_campaign(
 }
 
 async fn delete_campaign(
-    AuthorizedMaster(_client, mut campaign): AuthorizedMaster<false>,
+    Path(EncodedUuid(id)): Path<EncodedUuid>,
+    AuthorizedClient(client): AuthorizedClient,
     State(state): State<AuroriteState>,
 ) -> Result<(StatusCode, ()), (StatusCode, Json<AuroriteErrorResponse>)> {
-    match campaign.update().is_active(false).exec(&mut state.db()).await {
+    let mut db = state.db();
+    match Campaign::filter_by_id(id)
+        .filter(Campaign::fields().owner_id().eq(client.id))
+        .get(&mut db)
+        .await
+    {
         Err(err) => Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
+            StatusCode::NOT_FOUND,
             AuroriteErrorResponse::new(err).json(),
         )),
-        Ok(_) => Ok((StatusCode::NO_CONTENT, ())),
-    }
-}
-
-async fn get_campaign_session(
-    AuthorizedMaster(_client, campaign): AuthorizedMaster<false>,
-) -> FailableResponse<AccessState> {
-    Ok((StatusCode::OK, campaign.access_state.json()))
-}
-
-async fn put_campaign_session(
-    AuthorizedMaster(_client, mut campaign): AuthorizedMaster<false>,
-    State(state): State<AuroriteState>,
-    Json(body): Json<PutCampaignSession>,
-) -> FailableResponse<AccessState> {
-    let record = match body.visibility {
-        Visibility::Private =>  campaign.update().access_state(AccessState::private()),
-        Visibility::InviteOnly => campaign.update().access_state(AccessState::invite_only())
-    };
-    match record.exec(&mut state.db()).await {
-        Ok(_) => Ok((StatusCode::OK, campaign.access_state.json())),
-        Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json())),
+        Ok(mut record) => match record.update().is_active(false).exec(&mut db).await {
+            Err(err) => Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                AuroriteErrorResponse::new(err).json(),
+            )),
+            Ok(_) => Ok((StatusCode::NO_CONTENT, ())),
+        },
     }
 }
 
@@ -127,5 +120,4 @@ pub fn build_campaign_routes() -> Router<AuroriteState> {
     Router::new()
         .route("/", get(get_campaigns).post(post_campaign))
         .route("/{campaign_id}", get(get_campaign).delete(delete_campaign))
-        .route("/{campaign_id}/session", get(get_campaign_session).put(put_campaign_session))
 }

@@ -1,9 +1,9 @@
+use aurorite_dataflow::database::{CreatureSize, CreatureType, Race};
 use serde::Serialize;
 use uuid::Uuid;
-use crate::database::{CreatureSize, CreatureType, Race};
 
 #[derive(Debug, Serialize)]
-pub struct RaceDto {
+pub struct RaceInfo {
     id: Uuid,
     l18n: String,
     size: CreatureSize,
@@ -20,7 +20,7 @@ pub struct RaceDto {
     charisma: u8,
 }
 
-impl From<&Race> for RaceDto {
+impl From<&Race> for RaceInfo {
     fn from(race: &Race) -> Self {
         Self {
             id: race.id,

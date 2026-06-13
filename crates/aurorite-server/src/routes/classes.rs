@@ -1,7 +1,7 @@
 use aurorite_dataflow::database::Class;
 use crate::extractors::{AuthorizedAdmin, AuthorizedClient};
 use crate::requests::PostClass;
-use crate::responses::{AllClassesInfo, AuroriteErrorResponse, FailableResponse};
+use crate::responses::{AllClassesInfo, AuroriteErrorResponse, ClassInfo, FailableResponse};
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
 use aurorite_util::uuid::EncodedUuid;
@@ -9,7 +9,6 @@ use axum::Router;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::routing::get;
-use aurorite_dataflow::dto::ClassObj;
 
 async fn get_classes(
     State(state): State<AuroriteState>,
@@ -24,7 +23,7 @@ async fn get_classes(
     Ok((
         StatusCode::OK,
         AllClassesInfo {
-            classes: records.into_iter().map(|v| ClassObj::from(&v)).collect(),
+            classes: records.into_iter().map(|v| ClassInfo::from(&v)).collect(),
         }
         .json(),
     ))
@@ -34,7 +33,7 @@ async fn post_class(
     State(state): State<AuroriteState>,
     AuthorizedAdmin(_client): AuthorizedAdmin,
     Json(body): Json<PostClass>,
-) -> FailableResponse<ClassObj> {
+) -> FailableResponse<ClassInfo> {
     let record = Class::create()
         .l18n_key(body.l18n)
         .base_hits(body.base_hits)
@@ -48,14 +47,14 @@ async fn post_class(
                 AuroriteErrorResponse::new(err).json(),
             )
         })?;
-    Ok((StatusCode::CREATED, ClassObj::from(&record).json()))
+    Ok((StatusCode::CREATED, ClassInfo::from(&record).json()))
 }
 
 async fn get_class(
     State(state): State<AuroriteState>,
     AuthorizedClient(_client): AuthorizedClient,
     Path(EncodedUuid(class_id)): Path<EncodedUuid>,
-) -> FailableResponse<ClassObj> {
+) -> FailableResponse<ClassInfo> {
     let record = Class::get_by_id(&mut state.db(), class_id)
         .await
         .map_err(|err| {
@@ -64,7 +63,7 @@ async fn get_class(
                 AuroriteErrorResponse::new(err).json(),
             )
         })?;
-    Ok((StatusCode::OK, ClassObj::from(&record).json()))
+    Ok((StatusCode::OK, ClassInfo::from(&record).json()))
 }
 
 pub fn build_classes_routes() -> Router<AuroriteState> {
