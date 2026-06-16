@@ -7,7 +7,8 @@ use crate::tests::utils::get_request;
 async fn test_invalid_rolls() {
     dotenvy::dotenv().ok();
 
-    let mut app = build_app().await.into_service();
+    let (_, app) = build_app().await;
+    let mut app = app.into_service();
     let (status, _) = get_request(&mut app, "/rolls?line=1n29", None).await;
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
     let (status, _) = get_request(&mut app, "/rolls?line=1dk+2", None).await;
@@ -21,7 +22,8 @@ async fn test_invalid_rolls() {
 #[tokio::test]
 async fn test_valid_rolls() {
     dotenvy::dotenv().ok();
-    let mut app = build_app().await.into_service();
+    let (_, app) = build_app().await;
+    let mut app = app.into_service();
 
     let (status, body) = get_request(&mut app, "/rolls?line=1d10", None).await;
     assert_eq!(status, StatusCode::OK);

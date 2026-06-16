@@ -12,11 +12,12 @@ const TOKEN_LIFETIME: i8 = 24;
 #[derive(Debug)]
 pub enum TokenError {
     InvalidToken,
-    Failed(String),
     MissingToken,
+    Failed(String),
+    NotFound(String),
     NotAdmin,
     NotMaster,
-    NotFound(String),
+    NotClient,
 }
 
 impl fmt::Display for TokenError {
@@ -28,6 +29,7 @@ impl fmt::Display for TokenError {
             TokenError::MissingToken => write!(f, "missing token"),
             TokenError::NotAdmin => write!(f, "not admin"),
             TokenError::NotMaster => write!(f, "not master"),
+            TokenError::NotClient => write!(f, "guest token"),
         }
     }
 }
@@ -38,20 +40,25 @@ impl error::Error for TokenError {}
 pub struct Authorization {
     #[serde(with = "serde_support")]
     sub: uuid::Uuid,
-    exp: usize,
+    iat: i64,
+    exp: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_guest: Option<bool>,
 }
 
 impl Authorization {
     pub fn new(sub: uuid::Uuid) -> Self {
-        let exp = jiff::Timestamp::now() + TOKEN_LIFETIME.hours();
+        let now = jiff::Timestamp::now();
+        let exp = now + TOKEN_LIFETIME.hours();
         Self {
-            sub,
-            exp: exp.as_second() as usize,
+            sub, is_guest: None,
+            iat: now.as_second(),
+            exp: exp.as_second(),
         }
     }
 
-    pub fn id(&self) -> &uuid::Uuid {
-        &self.sub
+    pub fn id(&self) -> uuid::Uuid {
+        self.sub
     }
 }
 

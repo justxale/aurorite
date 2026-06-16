@@ -9,7 +9,8 @@ use aurorite_dataflow::dto::CampaignDto;
 #[tracing_test::traced_test]
 async fn test_creating_campaign() {
     dotenvy::dotenv().ok();
-    let mut app = build_app().await.into_service();
+    let (_, app) = build_app().await;
+    let mut app = app.into_service();
     let token = auth_client(&mut app).await;
     let (status, body) = get_request(&mut app, "/campaigns", Some(&token.access_token)).await;
     let res = serde_json::from_slice::<ClientCampaigns>(&body).unwrap();

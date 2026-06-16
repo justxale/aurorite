@@ -4,13 +4,13 @@ use aurorite_util::formulas::get_modification;
 use serde::{Deserialize, Serialize};
 use aurorite_util::uuid::EncodedUuid;
 use crate::dto::background::BackgroundDto;
-use crate::dto::class::ClassObj;
+use crate::dto::class::ClassDto;
 use crate::dto::race::RaceDto;
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone)]
 pub struct AbilityDto {
     pub value: u8,
-    modification: i8,
+    pub modification: i8,
     pub save_throw: Proficiency,
 }
 
@@ -40,8 +40,8 @@ impl AbilityDto {
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone)]
 pub struct SkillDto {
-    value: u8,
-    modification: i8,
+    pub value: u8,
+    pub modification: i8,
     pub proficiency: Proficiency,
 }
 
@@ -72,12 +72,12 @@ impl SkillDto {
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct AbilitiesDto {
-    strength: AbilityDto,
-    intelligence: AbilityDto,
-    wisdom: AbilityDto,
-    dexterity: AbilityDto,
-    constitution: AbilityDto,
-    charisma: AbilityDto,
+    pub strength: AbilityDto,
+    pub intelligence: AbilityDto,
+    pub wisdom: AbilityDto,
+    pub dexterity: AbilityDto,
+    pub constitution: AbilityDto,
+    pub charisma: AbilityDto,
 }
 
 impl TryFrom<&Character> for AbilitiesDto {
@@ -142,26 +142,26 @@ impl TryFrom<&Character> for AbilitiesDto {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct SkillsDto {
-    acrobatics: SkillDto,
-    athletics: SkillDto,
-    perception: SkillDto,
-    survival: SkillDto,
-    performance: SkillDto,
-    intimidation: SkillDto,
-    history: SkillDto,
-    sleight_of_hand: SkillDto,
-    medicine: SkillDto,
-    deception: SkillDto,
-    animal_handling: SkillDto,
-    nature: SkillDto,
-    insight: SkillDto,
-    investigation: SkillDto,
-    religion: SkillDto,
-    stealth: SkillDto,
-    arcana: SkillDto,
-    persuasion: SkillDto,
+    pub acrobatics: SkillDto,
+    pub athletics: SkillDto,
+    pub perception: SkillDto,
+    pub survival: SkillDto,
+    pub performance: SkillDto,
+    pub intimidation: SkillDto,
+    pub history: SkillDto,
+    pub sleight_of_hand: SkillDto,
+    pub medicine: SkillDto,
+    pub deception: SkillDto,
+    pub animal_handling: SkillDto,
+    pub nature: SkillDto,
+    pub insight: SkillDto,
+    pub investigation: SkillDto,
+    pub religion: SkillDto,
+    pub stealth: SkillDto,
+    pub arcana: SkillDto,
+    pub persuasion: SkillDto,
 }
 
 impl TryFrom<&Character> for SkillsDto {
@@ -279,19 +279,20 @@ impl TryFrom<&Character> for SkillsDto {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CharacterDto {
-    id: EncodedUuid,
-    name: Option<String>,
-    full_name: String,
-    level: u8,
-    max_hits_overwrite: Option<u16>,
+    pub id: EncodedUuid,
+    pub name: Option<String>,
+    pub full_name: String,
+    pub level: u8,
+    pub max_hits: u16,
+    pub max_hits_overwrite: Option<u16>,
 
-    class: Option<ClassObj>,
-    background: Option<BackgroundDto>,
-    race: Option<RaceDto>,
-    abilities: AbilitiesDto,
-    skills: SkillsDto,
+    pub class: Option<ClassDto>,
+    pub background: Option<BackgroundDto>,
+    pub race: Option<RaceDto>,
+    pub abilities: AbilitiesDto,
+    pub skills: SkillsDto,
 }
 
 impl TryFrom<&Character> for CharacterDto {
@@ -309,14 +310,18 @@ impl TryFrom<&Character> for CharacterDto {
             .as_ref()
             .map(BackgroundDto::from);
         let race = character.race.get().as_ref().map(RaceDto::from);
-        let class = character.class.get().as_ref().map(ClassObj::from);
+        let class = character.class.get().as_ref().map(ClassDto::from);
         let abilities = AbilitiesDto::try_from(character)?;
         let skills = SkillsDto::try_from(character)?;
+        let max_hits = character.max_hits_overwrite.unwrap_or(
+            class.as_ref().map(|c| c.base_hits).unwrap_or(0)
+        );
         Ok(Self {
             full_name: character.full_name.clone(),
             name: character.name.clone(),
             id: EncodedUuid(character.id),
             level: character.level,
+            max_hits,
             max_hits_overwrite: character.max_hits_overwrite,
             background,
             class,

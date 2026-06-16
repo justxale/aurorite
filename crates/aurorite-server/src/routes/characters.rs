@@ -13,7 +13,7 @@ use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::routing::get;
 use uuid::Uuid;
-use aurorite_dataflow::dto::{BackgroundDto, CharacterDto, ClassObj, RaceDto};
+use aurorite_dataflow::dto::{BackgroundDto, CharacterDto, ClassDto, RaceDto};
 
 async fn get_characters(
     State(state): State<AuroriteState>,
@@ -130,7 +130,7 @@ async fn get_character_class(
     Path(EncodedUuid(character_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
     AuthorizedClient(client): AuthorizedClient,
-) -> FailableResponse<Option<ClassObj>> {
+) -> FailableResponse<Option<ClassDto>> {
     let mut db = state.db();
     let record = Character::filter_by_client_id(client.id)
         .filter_by_id(character_id)
@@ -145,7 +145,7 @@ async fn get_character_class(
         })?;
     Ok((
         StatusCode::OK,
-        record.class.get().as_ref().map(ClassObj::from).json(),
+        record.class.get().as_ref().map(ClassDto::from).json(),
     ))
 }
 

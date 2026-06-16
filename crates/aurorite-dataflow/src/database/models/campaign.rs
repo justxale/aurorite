@@ -1,7 +1,46 @@
-use crate::database::{Background, Character, Class, Client, Race, Scene};
+use crate::database::{Asset, Background, Character, Class, Client, Race};
 use jiff::Timestamp;
-use toasty::{BelongsTo, HasMany, Model};
+use serde::{Deserialize, Serialize};
+use toasty::{BelongsTo, HasMany, Model, Embed};
 use uuid::Uuid;
+use aurorite_util::common::create_hex;
+
+#[derive(Clone, Debug, Embed, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Visibility {
+    #[column(variant = 0)]
+    Private,
+    #[column(variant = 1)]
+    InviteOnly,
+}
+
+#[derive(Clone, Debug, Embed, Deserialize, Serialize)]
+pub struct AccessState {
+    pub visibility: Visibility,
+    pub code: Option<String>
+}
+
+impl AccessState {
+    pub fn invite_only() -> Self {
+        Self {
+            visibility: Visibility::InviteOnly,
+            code: Some(create_hex::<12>())
+        }
+    }
+
+    pub fn private() -> Self {
+        Self {
+            visibility: Visibility::Private,
+            code: None
+        }
+    }
+}
+
+impl Default for AccessState {
+    fn default() -> Self {
+        Self::private()
+    }
+}
 
 #[derive(Clone, Debug, Model)]
 pub struct Campaign {
@@ -12,11 +51,18 @@ pub struct Campaign {
     pub title: String,
     #[default(true)]
     pub is_active: bool,
+    #[default(AccessState::default())]
+    pub access_state: AccessState,
 
     #[index]
     owner_id: Uuid,
+    #[index]
+    scene_id: Option<Uuid>,
+
     #[belongs_to(key = owner_id, references = id)]
     pub owner: BelongsTo<Client>,
+    #[belongs_to(key = scene_id, references = id)]
+    pub scene: BelongsTo<Option<Scene>>,
 
     #[default(jiff::Timestamp::now())]
     pub last_played_at: Timestamp,
@@ -35,10 +81,7 @@ pub struct Campaign {
 
 #[derive(Clone, Debug, Model)]
 pub struct CampaignCharacter {
-    current_hp: u16,
-    #[auto]
-    #[key]
-    pub id: Uuid,
+    current_hits: u16,
     #[index]
     #[key]
     character_id: Uuid,
@@ -116,36 +159,43 @@ pub struct CampaignClient {
 }
 
 #[derive(Clone, Debug, Model)]
-pub struct CampaignScene {
+pub struct Scene {
     #[key]
     #[auto]
     pub id: Uuid,
+    pub l18n_key: Option<String>,
+
     #[index]
-    #[key]
-    scene_id: Uuid,
+    asset_id: Option<Uuid>,
     #[index]
-    #[key]
     campaign_id: Uuid,
 
-    #[belongs_to(key = scene_id, references = id)]
-    pub client: BelongsTo<Scene>,
     #[belongs_to(key = campaign_id, references = id)]
     pub campaign: BelongsTo<Campaign>,
+    #[belongs_to(key = asset_id, references = id)]
+    pub asset: BelongsTo<Option<Asset>>,
 
     #[has_many]
-    pub preloads: HasMany<PreloadedObjects>,
+    pub preloads: HasMany<PreloadedObject>,
 }
 
 #[derive(Clone, Debug, Model)]
-pub struct PreloadedObjects {
+pub struct PreloadedObject {
     #[index]
     #[key]
     scene_id: Uuid,
+    #[index]
     #[key]
-    character_id: Uuid,
+    pub character_id: Uuid,
+    #[index]
+    #[key]
+    pub campaign_id: Uuid,
+
+    #[default(true)]
+    pub is_visible: bool,
 
     #[belongs_to(key = scene_id, references = id)]
-    pub campaign_scene: BelongsTo<CampaignScene>,
-    #[belongs_to(key = character_id, references = id)]
+    pub scene: BelongsTo<Scene>,
+    #[belongs_to(key = character_id, key = campaign_id, references = character_id, references = campaign_id)]
     pub character: BelongsTo<CampaignCharacter>,
 }

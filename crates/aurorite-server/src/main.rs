@@ -18,10 +18,11 @@ mod state;
 #[cfg(test)]
 mod tests;
 mod traits;
+mod session;
 
-async fn build_app() -> Router {
+async fn build_app() -> (AuroriteState, Router) {
     let state = AuroriteState::new().await;
-    build_routes().with_state(state)
+    (state.clone(), build_routes().with_state(state))
 }
 
 fn setup_tracing() -> (WorkerGuard, WorkerGuard, WorkerGuard) {
@@ -65,16 +66,15 @@ fn setup_tracing() -> (WorkerGuard, WorkerGuard, WorkerGuard) {
 }
 
 async fn serve() -> () {
-    let span = tracing::info_span!("startup");
-    let _enter = span.enter();
+    let span = tracing::info_span!("startup").entered();
     tracing::info!("performing Aurorite startup...");
 
     let listener = tokio::net::TcpListener::bind(format!("{}:{}", env().host, env().port))
         .await
         .unwrap();
 
-    let app = build_app().await;
-    drop(_enter);
+    let (state, app) = build_app().await;
+    drop(span);
     tracing::info!(
         "Aurorite (v{}) is ready. Listening on {}",
         env!("CARGO_PKG_VERSION"),
@@ -84,6 +84,9 @@ async fn serve() -> () {
         .with_graceful_shutdown(shutdown_signal())
         .await
         .unwrap();
+    let span = tracing::info_span!("shutdown").entered();
+    state.cleanup().await;
+    drop(span)
 }
 
 async fn shutdown_signal() {

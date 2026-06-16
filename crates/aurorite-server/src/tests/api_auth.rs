@@ -9,7 +9,8 @@ use aurorite_dataflow::dto::ClientDto;
 #[tokio::test]
 async fn test_nonexisting_auth() {
     dotenvy::dotenv().ok();
-    let app = build_app().await;
+    let (_, app) = build_app().await;
+    let app = app.into_service();
 
     let request = Request::post("/client/auth/login")
         .header(header::CONTENT_TYPE, "application/json")
@@ -28,7 +29,8 @@ async fn test_nonexisting_auth() {
 async fn test_existing_auth() {
     dotenvy::dotenv().ok();
 
-    let mut app = build_app().await.into_service();
+    let (_, mut app) = build_app().await;
+    let mut app = app.into_service();
     let token = auth_client(&mut app).await;
 
     let request = Request::get("/client/me")

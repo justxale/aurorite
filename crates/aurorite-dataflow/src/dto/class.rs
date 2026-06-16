@@ -1,18 +1,18 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use crate::database::{Class, ClassData};
 
-#[derive(Debug, Serialize)]
-pub struct ClassObj {
-    id: Uuid,
-    l18n_key: String,
-    dynamic: Option<ClassData>,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClassDto {
+    pub id: Uuid,
+    pub l18n_key: String,
+    pub dynamic: Option<ClassData>,
 
-    base_hits: u16,
-    base_hit_dice: String,
+    pub base_hits: u16,
+    pub base_hit_dice: String,
 }
 
-impl From<&Class> for ClassObj {
+impl From<&Class> for ClassDto {
     fn from(class: &Class) -> Self {
         Self {
             id: class.id,

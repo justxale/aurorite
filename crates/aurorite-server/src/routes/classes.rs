@@ -9,7 +9,7 @@ use axum::Router;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::routing::get;
-use aurorite_dataflow::dto::ClassObj;
+use aurorite_dataflow::dto::ClassDto;
 
 async fn get_classes(
     State(state): State<AuroriteState>,
@@ -24,7 +24,7 @@ async fn get_classes(
     Ok((
         StatusCode::OK,
         AllClassesInfo {
-            classes: records.into_iter().map(|v| ClassObj::from(&v)).collect(),
+            classes: records.into_iter().map(|v| ClassDto::from(&v)).collect(),
         }
         .json(),
     ))
@@ -34,7 +34,7 @@ async fn post_class(
     State(state): State<AuroriteState>,
     AuthorizedAdmin(_client): AuthorizedAdmin,
     Json(body): Json<PostClass>,
-) -> FailableResponse<ClassObj> {
+) -> FailableResponse<ClassDto> {
     let record = Class::create()
         .l18n_key(body.l18n)
         .base_hits(body.base_hits)
@@ -48,14 +48,14 @@ async fn post_class(
                 AuroriteErrorResponse::new(err).json(),
             )
         })?;
-    Ok((StatusCode::CREATED, ClassObj::from(&record).json()))
+    Ok((StatusCode::CREATED, ClassDto::from(&record).json()))
 }
 
 async fn get_class(
     State(state): State<AuroriteState>,
     AuthorizedClient(_client): AuthorizedClient,
     Path(EncodedUuid(class_id)): Path<EncodedUuid>,
-) -> FailableResponse<ClassObj> {
+) -> FailableResponse<ClassDto> {
     let record = Class::get_by_id(&mut state.db(), class_id)
         .await
         .map_err(|err| {
@@ -64,7 +64,7 @@ async fn get_class(
                 AuroriteErrorResponse::new(err).json(),
             )
         })?;
-    Ok((StatusCode::OK, ClassObj::from(&record).json()))
+    Ok((StatusCode::OK, ClassDto::from(&record).json()))
 }
 
 pub fn build_classes_routes() -> Router<AuroriteState> {

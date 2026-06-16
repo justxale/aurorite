@@ -41,6 +41,9 @@ impl FromRequestParts<AuroriteState> for AuthorizedClient {
         state: &AuroriteState,
     ) -> Result<Self, Self::Rejection> {
         let AuthorizedUnchecked(payload) = AuthorizedUnchecked::from_request_parts(parts, state).await?;
+        if let Some(is_guest) = payload.is_guest && is_guest {
+            return Err((StatusCode::UNAUTHORIZED, AuroriteErrorResponse::new(TokenError::NotClient).json()));
+        }
         let record = Client::get_by_id(&mut state.db(), payload.id())
             .await
             .map_err(|_| (StatusCode::UNAUTHORIZED, AuroriteErrorResponse::new(TokenError::InvalidToken).json()))?;
