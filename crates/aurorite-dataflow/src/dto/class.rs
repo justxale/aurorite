@@ -17,7 +17,7 @@ impl From<&Class> for ClassDto {
         Self {
             id: class.id,
             l18n_key: class.l18n_key.clone(),
-            dynamic: class.dyn_data.clone(),
+            dynamic: class.dyn_data.as_ref().map(|v| v.0.clone()),
             base_hits: class.base_hits,
             base_hit_dice: class.base_hit_dice.clone(),
         }

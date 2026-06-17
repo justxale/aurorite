@@ -14,7 +14,7 @@ impl From<&Background> for BackgroundDto {
         Self {
             id: background.id,
             l18n_key: background.l18n_key.clone(),
-            dynamic: background.dyn_data.clone(),
+            dynamic: background.dyn_data.as_ref().map(|v| v.0.clone()),
         }
     }
 }

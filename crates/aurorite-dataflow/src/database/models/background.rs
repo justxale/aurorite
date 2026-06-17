@@ -1,7 +1,8 @@
 use crate::database::{BackgroundData, Character};
+use toasty::{Model, Deferred, Json};
 use uuid::Uuid;
 
-#[derive(Clone, Debug, toasty::Model)]
+#[derive(Clone, Debug, Model)]
 pub struct Background {
     #[key]
     #[auto]
@@ -9,7 +10,6 @@ pub struct Background {
     pub l18n_key: String,
 
     #[has_many]
-    pub characters: toasty::HasMany<Character>,
-    #[serialize(json, nullable)]
-    pub dyn_data: Option<BackgroundData>,
+    pub characters: Deferred<Vec<Character>>,
+    pub dyn_data: Option<Json<BackgroundData>>,
 }

@@ -20,8 +20,11 @@ pub struct CampaignDto {
 impl TryFrom<Campaign> for CampaignDto {
     type Error = &'static str;
     fn try_from(value: Campaign) -> Result<Self, Self::Error> {
-        if value.clients.is_unloaded() || value.scene.is_unloaded() {
-            return Err("failed to fetch data");
+        if value.clients.is_unloaded() {
+            return Err("failed to fetch clients data");
+        }
+        if value.scene.is_unloaded() {
+            return Err("failed to fetch scene data");
         }
         let masters: Vec<ClientDto> = value
             .clients

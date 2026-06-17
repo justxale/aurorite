@@ -59,6 +59,7 @@ async fn post_campaign(
                 .await;
             let res = Campaign::filter_by_id(record.id)
                 .include(Campaign::fields().clients())
+                .include(Campaign::fields().scene())
                 .include(Campaign::fields().clients().client())
                 .get(&mut db)
                 .await;

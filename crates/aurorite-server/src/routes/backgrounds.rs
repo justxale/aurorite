@@ -1,4 +1,4 @@
-use aurorite_dataflow::database::Background;
+use aurorite_dataflow::database::{Background, ToastyJson};
 use crate::extractors::{AuthorizedAdmin, AuthorizedClient};
 use crate::requests::PostBackground;
 use crate::responses::{
@@ -44,7 +44,7 @@ async fn post_background(
     Json(body): Json<PostBackground>,
 ) -> FailableResponse<BackgroundDto> {
     let record = Background::create()
-        .dyn_data(body.dynamic)
+        .dyn_data(body.dynamic.map(|v| ToastyJson(v)))
         .l18n_key(body.l18n);
     match record.exec(&mut state.db()).await {
         Ok(ref result) => Ok((StatusCode::OK, BackgroundDto::from(result).json())),

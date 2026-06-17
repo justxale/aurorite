@@ -1,5 +1,6 @@
 use crate::database::{CampaignClient, Character};
 use jiff::Timestamp;
+use toasty::Deferred;
 use uuid::Uuid;
 
 #[derive(Clone, Debug, toasty::Model)]
@@ -21,7 +22,7 @@ pub struct Client {
     pub created_at: Timestamp,
 
     #[has_many]
-    pub characters: toasty::HasMany<Character>,
+    pub characters: Deferred<Vec<Character>>,
     #[has_many]
-    pub campaigns: toasty::HasMany<CampaignClient>,
+    pub campaigns: Deferred<Vec<CampaignClient>>,
 }

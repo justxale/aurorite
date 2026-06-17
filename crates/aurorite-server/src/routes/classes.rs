@@ -1,4 +1,4 @@
-use aurorite_dataflow::database::Class;
+use aurorite_dataflow::database::{Class, ToastyJson};
 use crate::extractors::{AuthorizedAdmin, AuthorizedClient};
 use crate::requests::PostClass;
 use crate::responses::{AllClassesInfo, AuroriteErrorResponse, FailableResponse};
@@ -39,7 +39,7 @@ async fn post_class(
         .l18n_key(body.l18n)
         .base_hits(body.base_hits)
         .base_hit_dice(body.base_hit_dice)
-        .dyn_data(body.dyn_data)
+        .dyn_data(body.dyn_data.map(|v| ToastyJson(v)))
         .exec(&mut state.db())
         .await
         .map_err(|err| {

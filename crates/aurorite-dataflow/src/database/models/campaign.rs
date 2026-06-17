@@ -1,7 +1,7 @@
 use crate::database::{Asset, Background, Character, Class, Client, Race};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
-use toasty::{BelongsTo, HasMany, Model, Embed};
+use toasty::{Deferred, Model, Embed};
 use uuid::Uuid;
 use aurorite_util::common::create_hex;
 
@@ -60,9 +60,9 @@ pub struct Campaign {
     scene_id: Option<Uuid>,
 
     #[belongs_to(key = owner_id, references = id)]
-    pub owner: BelongsTo<Client>,
+    pub owner: Deferred<Client>,
     #[belongs_to(key = scene_id, references = id)]
-    pub scene: BelongsTo<Option<Scene>>,
+    pub scene: Deferred<Option<Scene>>,
 
     #[default(jiff::Timestamp::now())]
     pub last_played_at: Timestamp,
@@ -70,13 +70,13 @@ pub struct Campaign {
     pub created_at: Timestamp,
 
     #[has_many]
-    pub clients: HasMany<CampaignClient>,
+    pub clients: Deferred<Vec<CampaignClient>>,
     #[has_many]
-    pub races: HasMany<CampaignRace>,
+    pub races: Deferred<Vec<CampaignRace>>,
     #[has_many]
-    pub classes: HasMany<CampaignClass>,
+    pub classes: Deferred<Vec<CampaignClass>>,
     #[has_many]
-    pub characters: HasMany<CampaignCharacter>,
+    pub characters: Deferred<Vec<CampaignCharacter>>,
 }
 
 #[derive(Clone, Debug, Model)]
@@ -90,9 +90,9 @@ pub struct CampaignCharacter {
     campaign_id: Uuid,
 
     #[belongs_to(key = character_id, references = id)]
-    base: BelongsTo<Character>,
+    base: Deferred<Character>,
     #[belongs_to(key = campaign_id, references = id)]
-    campaign: BelongsTo<Campaign>,
+    campaign: Deferred<Campaign>,
 }
 
 #[derive(Clone, Debug, Model)]
@@ -105,9 +105,9 @@ pub struct CampaignRace {
     campaign_id: Uuid,
 
     #[belongs_to(key = race_id, references = id)]
-    race: BelongsTo<Race>,
+    race: Deferred<Race>,
     #[belongs_to(key = campaign_id, references = id)]
-    campaign: BelongsTo<Campaign>,
+    campaign: Deferred<Campaign>,
 }
 
 #[derive(Clone, Debug, Model)]
@@ -120,9 +120,9 @@ pub struct CampaignClass {
     campaign_id: Uuid,
 
     #[belongs_to(key = class_id, references = id)]
-    class: BelongsTo<Class>,
+    class: Deferred<Class>,
     #[belongs_to(key = campaign_id, references = id)]
-    campaign: BelongsTo<Campaign>,
+    campaign: Deferred<Campaign>,
 }
 
 #[derive(Clone, Debug, Model)]
@@ -135,9 +135,9 @@ pub struct CampaignBackground {
     campaign_id: Uuid,
 
     #[belongs_to(key = background_id, references = id)]
-    class: BelongsTo<Race>,
+    class: Deferred<Race>,
     #[belongs_to(key = campaign_id, references = id)]
-    background: BelongsTo<Background>,
+    background: Deferred<Background>,
 }
 
 #[derive(Clone, Debug, Model)]
@@ -153,9 +153,9 @@ pub struct CampaignClient {
     pub is_master: bool,
 
     #[belongs_to(key = client_id, references = id)]
-    pub client: BelongsTo<Client>,
+    pub client: Deferred<Client>,
     #[belongs_to(key = campaign_id, references = id)]
-    pub campaign: BelongsTo<Campaign>,
+    pub campaign: Deferred<Campaign>,
 }
 
 #[derive(Clone, Debug, Model)]
@@ -171,12 +171,12 @@ pub struct Scene {
     campaign_id: Uuid,
 
     #[belongs_to(key = campaign_id, references = id)]
-    pub campaign: BelongsTo<Campaign>,
+    pub campaign: Deferred<Campaign>,
     #[belongs_to(key = asset_id, references = id)]
-    pub asset: BelongsTo<Option<Asset>>,
+    pub asset: Deferred<Option<Asset>>,
 
     #[has_many]
-    pub preloads: HasMany<PreloadedObject>,
+    pub preloads: Deferred<Vec<PreloadedObject>>,
 }
 
 #[derive(Clone, Debug, Model)]
@@ -195,7 +195,7 @@ pub struct PreloadedObject {
     pub is_visible: bool,
 
     #[belongs_to(key = scene_id, references = id)]
-    pub scene: BelongsTo<Scene>,
-    #[belongs_to(key = character_id, key = campaign_id, references = character_id, references = campaign_id)]
-    pub character: BelongsTo<CampaignCharacter>,
+    pub scene: Deferred<Scene>,
+    #[belongs_to(key = [character_id, campaign_id], references = [character_id, campaign_id])]
+    pub character: Deferred<CampaignCharacter>,
 }
