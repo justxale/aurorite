@@ -10,7 +10,7 @@ use crate::dto::race::RaceDto;
 #[derive(Debug, Serialize, Deserialize, Copy, Clone)]
 pub struct AbilityDto {
     pub value: u8,
-    pub modification: i8,
+    pub modification: i16,
     pub save_throw: Proficiency,
 }
 
@@ -41,7 +41,7 @@ impl AbilityDto {
 #[derive(Debug, Serialize, Deserialize, Copy, Clone)]
 pub struct SkillDto {
     pub value: u8,
-    pub modification: i8,
+    pub modification: i16,
     pub proficiency: Proficiency,
 }
 

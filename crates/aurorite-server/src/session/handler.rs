@@ -52,12 +52,25 @@ impl Session {
         }
     }
 
+    #[inline]
     pub fn clients(&self) -> &DashMap<Uuid, SessionClient> {
         &self.clients
     }
 
+    #[inline]
     pub fn guests(&self) -> &DashMap<Uuid, SessionClient> {
         &self.guests
+    }
+
+    #[inline]
+    pub fn characters(&self) -> &DashMap<Uuid, Character> {
+        &self.characters
+    }
+
+    #[inline]
+    pub fn character(&self, character_id: Uuid) ->  Option<Ref<'_, Uuid, Character>>
+    {
+        self.characters.get(&character_id)
     }
 
     pub async fn attach(&self, mut socket: WebSocket) {

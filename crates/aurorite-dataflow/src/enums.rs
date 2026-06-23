@@ -57,7 +57,17 @@ pub enum InstrumentType {
 
 #[derive(Clone, Copy, Debug, PartialEq, Deserialize, Serialize)]
 pub enum Proficiency {
-    None = 0,
-    Base = 1,
-    Expert = 2,
+    None,
+    Base,
+    Expert,
+}
+
+impl Proficiency {
+    pub fn as_u8(&self) -> u8 {
+        match self {
+            Proficiency::None => 0,
+            Proficiency::Base => 1,
+            Proficiency::Expert => 2,
+        }
+    }
 }

@@ -17,7 +17,7 @@ async fn get_session(
 ) -> FailableResponse<SessionInfo> {
     let session = state.manager.sessions().get(&id);
     if session.is_none() {
-        return Err((StatusCode::NOT_FOUND, AuroriteErrorResponse::new("session not found").json()));
+        return Err((StatusCode::NOT_FOUND, AuroriteErrorResponse::new("root not found").json()));
     };
     Ok((StatusCode::OK, SessionInfo::from(session.unwrap().value()).json()))
 }
@@ -28,7 +28,7 @@ async fn handle_ws(
     ws: WebSocketUpgrade
 ) -> Result<Response, (StatusCode, Json<AuroriteErrorResponse>)> {
     if state.manager.sessions().get(&id).is_none() {
-        return Err((StatusCode::NOT_FOUND, AuroriteErrorResponse::new("session not found").json()));
+        return Err((StatusCode::NOT_FOUND, AuroriteErrorResponse::new("root not found").json()));
     }
     Ok(ws.on_upgrade(async move |socket| {
         state.manager.sessions()
@@ -47,7 +47,7 @@ async fn post_message(
     Json(body): Json<PostSessionMessage>
 ) -> FailableResponse<MessageInfo> {
     if state.manager.session(id).is_none() {
-        return Err((StatusCode::NOT_FOUND, AuroriteErrorResponse::new("session not found").json()));
+        return Err((StatusCode::NOT_FOUND, AuroriteErrorResponse::new("root not found").json()));
     }
     let now = jiff::Timestamp::now();
     let info = SessionClientInfo {
@@ -70,7 +70,7 @@ async fn post_message(
     Ok((StatusCode::ACCEPTED, response.json()))
 }
 
-pub fn build_sessions_routes() -> Router<AuroriteState> {
+pub fn build_root_routes() -> Router<AuroriteState> {
     let id_router = Router::new()
         .route("/", get(get_session))
         .route("/ws", any(handle_ws))

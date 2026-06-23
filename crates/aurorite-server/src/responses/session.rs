@@ -2,6 +2,7 @@ use jiff::Timestamp;
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 use crate::session::{Session, SessionClient};
+use crate::session::character::Character;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct SessionClientInfo {
@@ -55,4 +56,9 @@ impl From<&Session> for SessionInfo {
             started_at: session.started_at,
         }
     }
+}
+
+#[derive(Serialize)]
+pub struct SessionCharacters {
+    pub characters: Vec<Character>
 }

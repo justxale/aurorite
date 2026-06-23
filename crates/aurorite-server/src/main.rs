@@ -124,6 +124,7 @@ async fn main() {
     let _guards = setup_tracing();
 
     // Not using env() here because of probability of wrong env configuration
+    // FIXME: maybe rework that stuff
     #[cfg(target_os = "windows")]
     if std::env::var("AURORITE_AUTOEXIT")
         .ok()
