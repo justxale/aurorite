@@ -1,0 +1,30 @@
+name: tests
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: . -> target
+
+      - name: cargo clippy
+        run: cargo clippy --all-targets
+        env:
+          AURORITE_SECRET: totallysecret
+
+      - name: cargo test
+        run: cargo test --profile test --all-targets --verbose
+        env:
+          AURORITE_SECRET: totallysecret

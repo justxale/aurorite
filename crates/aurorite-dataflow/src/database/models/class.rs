@@ -1,7 +1,8 @@
+use toasty::{Deferred, Json, Model};
 use crate::database::{Character, ClassData};
 use uuid::Uuid;
 
-#[derive(Clone, Debug, toasty::Model)]
+#[derive(Clone, Debug, Model)]
 pub struct Class {
     #[key]
     pub id: Uuid,
@@ -11,7 +12,6 @@ pub struct Class {
     pub base_hit_dice: String,
 
     #[has_many]
-    pub characters: toasty::HasMany<Character>,
-    #[serialize(json, nullable)]
-    pub dyn_data: Option<ClassData>,
+    pub characters: Deferred<Vec<Character>>,
+    pub dyn_data: Option<Json<ClassData>>,
 }

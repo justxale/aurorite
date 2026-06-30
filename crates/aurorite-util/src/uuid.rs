@@ -2,6 +2,7 @@ use serde::de::{Error, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 use std::iter::Iterator;
+use std::str::FromStr;
 use uuid::Uuid;
 
 const ALPHABET_LEN: u128 = 64;
@@ -14,11 +15,11 @@ pub const ALPHABET: [char; ALPHABET_LEN as usize] = [
 
 fn get_number(digit: char) -> u8 {
     if digit.is_ascii_digit() {
-        (digit as u8) - ('0' as u8)
+        (digit as u8) - b'0'
     } else if digit.is_ascii_uppercase() {
-        (digit as u8) - ('A' as u8) + 10
+        (digit as u8) - b'A' + 10
     } else if digit.is_ascii_lowercase() {
-        (digit as u8) - ('a' as u8) + 36
+        (digit as u8) - b'a' + 36
     } else if digit == '_' {
         62
     } else {
@@ -69,12 +70,15 @@ impl EncodedUuid {
         Self(Uuid::now_v7())
     }
 
-    pub fn from_str(encoded: &str) -> Self {
-        EncodedUuid(decode_uuid(encoded))
-    }
-
     pub fn uuid(&self) -> Uuid {
         self.0
+    }
+}
+
+impl FromStr for EncodedUuid {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(EncodedUuid(decode_uuid(s)))
     }
 }
 
@@ -89,7 +93,7 @@ impl Serialize for EncodedUuid {
     where
         S: Serializer,
     {
-        serializer.collect_str(&format_args!("{}", self.to_string()))
+        serializer.collect_str(&format_args!("{}", self))
     }
 }
 
@@ -135,5 +139,32 @@ pub mod serde_support {
         D: Deserializer<'de>,
     {
         deserialize_encoded_uuid(des)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::uuid::{decode_uuid, encode_uuid, EncodedUuid};
+    const LOOPS: usize = 300_000;
+
+    #[test]
+    fn test_decode_uuid() {
+        for _ in 0..LOOPS {
+            let id = uuid::Uuid::now_v7();
+            let encoded = encode_uuid(&id);
+            let decoded = decode_uuid(&encoded);
+            assert_eq!(id, decoded);
+        }
+    }
+
+    #[test]
+    fn test_serde_support() -> Result<(), serde_json::Error> {
+        for _ in 0..LOOPS {
+            let id = EncodedUuid::now_v7();
+            let deserialized = serde_json::to_string(&id)?;
+            let id2 = serde_json::from_str::<EncodedUuid>(&deserialized)?;
+            assert_eq!(id, id2);
+        }
+        Ok(())
     }
 }

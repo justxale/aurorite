@@ -3,8 +3,7 @@ use aurorite_util::{env, auth::hash_password};
 use crate::database::Client;
 
 #[cfg(debug_assertions)]
-async fn _build() -> Db {
-    println!("test one!");
+async fn build() -> Db {
     Db::builder()
         .models(toasty::models!(crate::*))
         .connect("sqlite::memory:")
@@ -13,8 +12,7 @@ async fn _build() -> Db {
 }
 
 #[cfg(not(debug_assertions))]
-async fn _build() -> Db {
-    println!("not test one!");
+async fn build() -> Db {
     Db::builder()
         .models(toasty::models!(crate::*))
         .connect(format!("sqlite:///{}?mode=rwc", env().database_path).as_str())
@@ -23,7 +21,7 @@ async fn _build() -> Db {
 }
 
 pub async fn build_connection() -> Db {
-    let mut connection = _build().await;
+    let mut connection = build().await;
 
     let _ = connection.push_schema().await;
     if let Ok(None) = Client::filter(Client::fields().is_admin().eq(true))

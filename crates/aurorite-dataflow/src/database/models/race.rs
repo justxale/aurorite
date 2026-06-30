@@ -1,6 +1,6 @@
 use crate::database::{Character, RaceData, Spell};
 use serde::{Deserialize, Serialize};
-use toasty::{Embed, Model};
+use toasty::{Deferred, Json, Embed, Model};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, Embed, Serialize, Deserialize)]
@@ -56,11 +56,10 @@ pub struct Race {
     pub charisma: u8,
 
     #[has_many]
-    pub spells: toasty::HasMany<RaceSpell>,
+    pub spells: Deferred<Vec<RaceSpell>>,
     #[has_many]
-    pub characters: toasty::HasMany<Character>,
-    #[serialize(json, nullable)]
-    pub dyn_data: Option<RaceData>,
+    pub characters: Deferred<Vec<Character>>,
+    pub dyn_data: Option<Json<RaceData>>,
 }
 
 #[derive(Clone, Debug, toasty::Model)]
@@ -75,7 +74,7 @@ pub struct RaceSpell {
     spell_id: Uuid,
 
     #[belongs_to(key = race_id, references = id)]
-    race: toasty::BelongsTo<Race>,
+    race: Deferred<Race>,
     #[belongs_to(key = spell_id, references = id)]
-    spell: toasty::BelongsTo<Spell>,
+    spell: Deferred<Spell>,
 }

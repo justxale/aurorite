@@ -41,6 +41,9 @@ impl FromRequestParts<AuroriteState> for AuthorizedClient {
         state: &AuroriteState,
     ) -> Result<Self, Self::Rejection> {
         let AuthorizedUnchecked(payload) = AuthorizedUnchecked::from_request_parts(parts, state).await?;
+        if let Some(is_guest) = payload.is_guest && is_guest {
+            return Err((StatusCode::UNAUTHORIZED, AuroriteErrorResponse::new(TokenError::NotClient).json()));
+        }
         let record = Client::get_by_id(&mut state.db(), payload.id())
             .await
             .map_err(|_| (StatusCode::UNAUTHORIZED, AuroriteErrorResponse::new(TokenError::InvalidToken).json()))?;
@@ -100,10 +103,8 @@ impl<const LOAD_CAMPAIGN: bool> FromRequestParts<AuroriteState>
                 .include(CampaignClient::fields().campaign().classes())
                 .include(CampaignClient::fields().campaign().races())
                 .include(CampaignClient::fields().campaign().clients()),
-            false => CampaignClient::filter_by_client_id_and_campaign_id(
-                client.id,
-                campaign_id,
-            )
+            false => CampaignClient::filter_by_client_id_and_campaign_id(client.id, campaign_id, )
+                .include(CampaignClient::fields().campaign())
         };
         let record = record
             .get(&mut db)

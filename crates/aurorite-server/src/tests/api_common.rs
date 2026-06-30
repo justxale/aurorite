@@ -7,7 +7,7 @@ use tower::ServiceExt;
 async fn test_healthcheck() {
     dotenvy::dotenv().ok();
 
-    let app = build_app().await;
+    let (_, app) = build_app().await;
     let response = app
         .oneshot(Request::get("/healthcheck").body(Body::empty()).unwrap())
         .await

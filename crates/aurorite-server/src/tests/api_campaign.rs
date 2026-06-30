@@ -1,14 +1,16 @@
 use crate::build_app;
-use crate::responses::{ClientCampaigns, FullCampaignInfo};
+use crate::responses::{ClientCampaigns};
 use crate::tests::utils::{auth_client, delete_request, get_request, post_request};
 use aurorite_util::uuid::EncodedUuid;
 use axum::http::StatusCode;
+use aurorite_dataflow::dto::CampaignDto;
 
 #[tokio::test]
 #[tracing_test::traced_test]
 async fn test_creating_campaign() {
     dotenvy::dotenv().ok();
-    let mut app = build_app().await.into_service();
+    let (_, app) = build_app().await;
+    let mut app = app.into_service();
     let token = auth_client(&mut app).await;
     let (status, body) = get_request(&mut app, "/campaigns", Some(&token.access_token)).await;
     let res = serde_json::from_slice::<ClientCampaigns>(&body).unwrap();
@@ -22,7 +24,7 @@ async fn test_creating_campaign() {
         Some(&token.access_token),
     )
     .await;
-    let res = serde_json::from_slice::<FullCampaignInfo>(&body).unwrap();
+    let res = serde_json::from_slice::<CampaignDto>(&body).unwrap();
     assert_eq!(status, StatusCode::CREATED);
     assert_eq!(res.title, "Best tested DnD!");
 

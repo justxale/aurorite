@@ -1,0 +1,25 @@
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+use crate::database::{Class, ClassData};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ClassDto {
+    pub id: Uuid,
+    pub l18n_key: String,
+    pub dynamic: Option<ClassData>,
+
+    pub base_hits: u16,
+    pub base_hit_dice: String,
+}
+
+impl From<&Class> for ClassDto {
+    fn from(class: &Class) -> Self {
+        Self {
+            id: class.id,
+            l18n_key: class.l18n_key.clone(),
+            dynamic: class.dyn_data.as_ref().map(|v| v.0.clone()),
+            base_hits: class.base_hits,
+            base_hit_dice: class.base_hit_dice.clone(),
+        }
+    }
+}

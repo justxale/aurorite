@@ -4,10 +4,7 @@ use crate::requests::{
     PostCharacterBase, PutCharacterBackground, PutCharacterClass, PutCharacterRace,
 };
 use crate::responses::FailableResponse;
-use crate::responses::{
-    AuroriteErrorResponse, BackgroundInfo, CharacterInfo, ClassInfo, ClientCharacters,
-    FullCharacterBaseInfo, RaceInfo,
-};
+use crate::responses::{AuroriteErrorResponse, ClientCharacters, CharacterInfo};
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
 use aurorite_util::uuid::EncodedUuid;
@@ -16,6 +13,7 @@ use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::routing::get;
 use uuid::Uuid;
+use aurorite_dataflow::dto::{BackgroundDto, CharacterDto, ClassDto, RaceDto};
 
 async fn get_characters(
     State(state): State<AuroriteState>,
@@ -51,7 +49,7 @@ async fn post_character(
     State(state): State<AuroriteState>,
     AuthorizedClient(client): AuthorizedClient,
     Json(body): Json<PostCharacterBase>,
-) -> FailableResponse<FullCharacterBaseInfo> {
+) -> FailableResponse<CharacterDto> {
     let mut db = state.db();
     let record = Character::create()
         .client(client)
@@ -67,9 +65,9 @@ async fn post_character(
         .exec(&mut db)
         .await;
     match record {
-        Ok(ref record) => match FullCharacterBaseInfo::try_from(record) {
+        Ok(ref record) => match CharacterDto::try_from(record) {
             Ok(info) => Ok((StatusCode::CREATED, info.json())),
-            Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, err.json())),
+            Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json())),
         },
         Err(err) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -82,15 +80,15 @@ async fn get_character(
     Path(EncodedUuid(character_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
     AuthorizedClient(client): AuthorizedClient,
-) -> FailableResponse<FullCharacterBaseInfo> {
+) -> FailableResponse<CharacterDto> {
     match Character::filter_by_id(character_id)
         .filter_by_client_id(client.id)
         .get(&mut state.db())
         .await
     {
-        Ok(ref record) => match FullCharacterBaseInfo::try_from(record) {
+        Ok(ref record) => match CharacterDto::try_from(record) {
             Ok(info) => Ok((StatusCode::OK, info.json())),
-            Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, err.json())),
+            Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json())),
         },
         Err(err) => {
             if err.is_record_not_found() {
@@ -132,7 +130,7 @@ async fn get_character_class(
     Path(EncodedUuid(character_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
     AuthorizedClient(client): AuthorizedClient,
-) -> FailableResponse<Option<ClassInfo>> {
+) -> FailableResponse<Option<ClassDto>> {
     let mut db = state.db();
     let record = Character::filter_by_client_id(client.id)
         .filter_by_id(character_id)
@@ -147,7 +145,7 @@ async fn get_character_class(
         })?;
     Ok((
         StatusCode::OK,
-        record.class.get().as_ref().map(ClassInfo::from).json(),
+        record.class.get().as_ref().map(ClassDto::from).json(),
     ))
 }
 
@@ -156,7 +154,7 @@ async fn put_character_class(
     State(state): State<AuroriteState>,
     AuthorizedClient(client): AuthorizedClient,
     Json(body): Json<PutCharacterClass>,
-) -> FailableResponse<FullCharacterBaseInfo> {
+) -> FailableResponse<CharacterDto> {
     let mut db = state.db();
     let mut record = get_character_record(&mut db, client.id, character_id).await?;
     let mut dynamic = record.dyn_data.clone();
@@ -176,8 +174,8 @@ async fn put_character_class(
                         AuroriteErrorResponse::new(err).json(),
                     )
                 })?;
-            let response = FullCharacterBaseInfo::try_from(&record)
-                .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.json()))?;
+            let response = CharacterDto::try_from(&record)
+                .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))?;
             Ok((StatusCode::OK, response.json()))
         }
         Err(err) => Err((
@@ -191,12 +189,12 @@ async fn delete_character_class(
     Path(EncodedUuid(character_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
     AuthorizedClient(client): AuthorizedClient,
-) -> FailableResponse<FullCharacterBaseInfo> {
+) -> FailableResponse<CharacterDto> {
     let mut db = state.db();
     let mut record = get_character_record(&mut db, client.id, character_id).await?;
     match record.update().class(None).exec(&mut db).await {
-        Ok(_) => FullCharacterBaseInfo::try_from(&record)
-            .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.json()))
+        Ok(_) => CharacterDto::try_from(&record)
+            .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))
             .map(|record| (StatusCode::OK, record.json())),
         Err(err) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -209,7 +207,7 @@ async fn get_character_race(
     Path(EncodedUuid(character_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
     AuthorizedClient(client): AuthorizedClient,
-) -> FailableResponse<Option<RaceInfo>> {
+) -> FailableResponse<Option<RaceDto>> {
     let mut db = state.db();
     let record = Character::filter_by_client_id(client.id)
         .filter_by_id(character_id)
@@ -224,7 +222,7 @@ async fn get_character_race(
         })?;
     Ok((
         StatusCode::OK,
-        record.race.get().as_ref().map(RaceInfo::from).json(),
+        record.race.get().as_ref().map(RaceDto::from).json(),
     ))
 }
 
@@ -233,7 +231,7 @@ async fn put_character_race(
     State(state): State<AuroriteState>,
     AuthorizedClient(client): AuthorizedClient,
     Json(body): Json<PutCharacterRace>,
-) -> FailableResponse<FullCharacterBaseInfo> {
+) -> FailableResponse<CharacterDto> {
     let mut db = state.db();
     let mut record = get_character_record(&mut db, client.id, character_id).await?;
     match Race::get_by_id(&mut db, body.race_id.uuid()).await {
@@ -249,8 +247,8 @@ async fn put_character_race(
                         AuroriteErrorResponse::new(err).json(),
                     )
                 })?;
-            let response = FullCharacterBaseInfo::try_from(&record)
-                .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.json()))?;
+            let response = CharacterDto::try_from(&record)
+                .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))?;
             Ok((StatusCode::OK, response.json()))
         }
         Err(err) => Err((
@@ -264,12 +262,12 @@ async fn delete_character_race(
     Path(EncodedUuid(character_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
     AuthorizedClient(client): AuthorizedClient,
-) -> FailableResponse<FullCharacterBaseInfo> {
+) -> FailableResponse<CharacterDto> {
     let mut db = state.db();
     let mut record = get_character_record(&mut db, client.id, character_id).await?;
     match record.update().race(None).exec(&mut db).await {
-        Ok(_) => FullCharacterBaseInfo::try_from(&record)
-            .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.json()))
+        Ok(_) => CharacterDto::try_from(&record)
+            .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))
             .map(|record| (StatusCode::OK, record.json())),
         Err(err) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -281,7 +279,7 @@ async fn get_character_background(
     Path(EncodedUuid(character_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
     AuthorizedClient(client): AuthorizedClient,
-) -> FailableResponse<Option<BackgroundInfo>> {
+) -> FailableResponse<Option<BackgroundDto>> {
     let mut db = state.db();
     let record = Character::filter_by_client_id(client.id)
         .filter_by_id(character_id)
@@ -300,7 +298,7 @@ async fn get_character_background(
             .background
             .get()
             .as_ref()
-            .map(BackgroundInfo::from)
+            .map(BackgroundDto::from)
             .json(),
     ))
 }
@@ -310,7 +308,7 @@ async fn put_character_background(
     State(state): State<AuroriteState>,
     AuthorizedClient(client): AuthorizedClient,
     Json(body): Json<PutCharacterBackground>,
-) -> FailableResponse<FullCharacterBaseInfo> {
+) -> FailableResponse<CharacterDto> {
     let mut db = state.db();
     let mut record = get_character_record(&mut db, client.id, character_id).await?;
     match Background::get_by_id(&mut db, body.background_id.uuid()).await {
@@ -326,8 +324,8 @@ async fn put_character_background(
                         AuroriteErrorResponse::new(err).json(),
                     )
                 })?;
-            let response = FullCharacterBaseInfo::try_from(&record)
-                .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.json()))?;
+            let response = CharacterDto::try_from(&record)
+                .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))?;
             Ok((StatusCode::OK, response.json()))
         }
         Err(err) => Err((
@@ -341,12 +339,12 @@ async fn delete_character_background(
     Path(EncodedUuid(character_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
     AuthorizedClient(client): AuthorizedClient,
-) -> FailableResponse<FullCharacterBaseInfo> {
+) -> FailableResponse<CharacterDto> {
     let mut db = state.db();
     let mut record = get_character_record(&mut db, client.id, character_id).await?;
     match record.update().background(None).exec(&mut db).await {
-        Ok(_) => FullCharacterBaseInfo::try_from(&record)
-            .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.json()))
+        Ok(_) => CharacterDto::try_from(&record)
+            .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))
             .map(|record| (StatusCode::OK, record.json())),
         Err(err) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,

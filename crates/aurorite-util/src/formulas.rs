@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-pub fn get_modification(value: u8) -> i8 {
+pub fn get_modification(value: u8) -> i16 {
     if value <= 11 {
-        (value as i8 - 11) / 2
+        (value as i16 - 11) / 2
     } else {
-        (value as i8 - 10) / 2
+        (value as i16 - 10) / 2
     }
 }
 

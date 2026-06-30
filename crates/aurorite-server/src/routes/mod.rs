@@ -6,6 +6,7 @@ mod classes;
 mod client;
 mod races;
 mod rolls;
+mod session;
 
 use crate::state::AuroriteState;
 use axum::extract::{MatchedPath, Request};
@@ -19,7 +20,7 @@ use tower_http::services::ServeDir;
 use tower_http::timeout::TimeoutLayer;
 use tower_http::trace::TraceLayer;
 use tracing::Span;
-use aurorite_util::common::create_request_id;
+use aurorite_util::common::create_hex;
 
 pub fn build_routes() -> Router<AuroriteState> {
     Router::new()
@@ -30,6 +31,7 @@ pub fn build_routes() -> Router<AuroriteState> {
         .nest("/campaigns", campaigns::build_campaign_routes())
         .nest("/agsp", agsp::build_agsp_routes())
         .nest("/rolls", rolls::build_roll_routes())
+        .nest("/sessions", session::build_sessions_routes())
         .route("/healthcheck", any(async || StatusCode::NO_CONTENT))
         .route_service("/", ServeDir::new("static"))
         .layer(
@@ -45,7 +47,7 @@ pub fn build_routes() -> Router<AuroriteState> {
                                 "request",
                                 method = ?request.method(),
                                 matched_path,
-                                request_id = create_request_id()
+                                request_id = create_hex::<8>()
                             )
                         })
                         .on_request(|_request: &Request<_>, _span: &Span| {})

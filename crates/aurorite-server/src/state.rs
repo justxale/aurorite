@@ -1,20 +1,17 @@
 use aurorite_dataflow::{database::Db, build_connection};
-use axum::extract::ws::Message;
 use std::sync::Arc;
-use tokio::sync::broadcast;
-use tokio::sync::broadcast::Sender;
 use vismut_core::VismutExecutionEnvironment;
+use crate::session::SessionManager;
 
 #[derive(Clone, Debug)]
 pub struct AuroriteState {
     db: Db,
     executor: Arc<VismutExecutionEnvironment>,
-    sender: broadcast::Sender<Message>,
+    pub manager: Arc<SessionManager>
 }
 
 impl AuroriteState {
     pub async fn new() -> Self {
-        let (tx, _) = broadcast::channel(100);
         let mut executor = VismutExecutionEnvironment::default();
         executor.get_schema_mut();
 
@@ -22,17 +19,17 @@ impl AuroriteState {
         AuroriteState {
             db: connection,
             executor: Arc::new(executor),
-            sender: tx,
+            manager: Arc::new(SessionManager::new())
         }
     }
 
     pub fn db(&self) -> Db {
         self.db.clone()
     }
-    pub fn executor(&self) -> &VismutExecutionEnvironment {
-        &self.executor
-    }
-    pub fn sender(&self) -> &Sender<Message> {
-        &self.sender
+
+    pub async fn cleanup(self) {
+        tracing::info!("cleaning up state");
+        let manager = Arc::into_inner(self.manager).expect("error on cleanup, data will not be saved");
+        manager.cleanup(self.db).await;
     }
 }

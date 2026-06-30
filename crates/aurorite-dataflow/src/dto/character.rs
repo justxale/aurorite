@@ -1,33 +1,98 @@
-use aurorite_dataflow::database::Character;
-use aurorite_dataflow::enums::{Ability, Proficiency, Skill};
-use crate::responses::character::stats::{AbilityInfo, SkillInfo};
-use crate::responses::common::AuroriteErrorResponse;
+use crate::database::{Character, Overwrite};
+use crate::enums::{Ability, Proficiency, Skill};
+use aurorite_util::formulas::get_modification;
 use serde::{Deserialize, Serialize};
-use std::convert::TryFrom;
+use aurorite_util::uuid::EncodedUuid;
+use crate::dto::background::BackgroundDto;
+use crate::dto::class::ClassDto;
+use crate::dto::race::RaceDto;
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
-pub struct CharacterAbilitiesInfo {
-    strength: AbilityInfo,
-    intelligence: AbilityInfo,
-    wisdom: AbilityInfo,
-    dexterity: AbilityInfo,
-    constitution: AbilityInfo,
-    charisma: AbilityInfo,
+#[derive(Debug, Serialize, Deserialize, Copy, Clone)]
+pub struct AbilityDto {
+    pub value: u8,
+    pub modification: i16,
+    pub save_throw: Proficiency,
 }
 
-impl TryFrom<&Character> for CharacterAbilitiesInfo {
-    type Error = AuroriteErrorResponse;
+impl AbilityDto {
+    pub fn new(value: u8) -> Self {
+        Self {
+            value,
+            modification: get_modification(value),
+            save_throw: Proficiency::None,
+        }
+    }
+
+    pub fn set_value(&mut self, value: u8) {
+        self.value = value;
+        self.modification = get_modification(value);
+    }
+
+    pub fn set_overwrite(&mut self, overwrite: &Overwrite<Ability, u8>) {
+        if let Some(v) = overwrite.value {
+            self.set_value(v);
+        }
+        if let Some(p) = overwrite.proficiency {
+            self.save_throw = p;
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Copy, Clone)]
+pub struct SkillDto {
+    pub value: u8,
+    pub modification: i16,
+    pub proficiency: Proficiency,
+}
+
+impl SkillDto {
+    pub fn new(value: u8) -> Self {
+        Self {
+            value,
+            modification: get_modification(value),
+            proficiency: Proficiency::None,
+        }
+    }
+
+    pub fn set_value(&mut self, value: u8) {
+        self.value = value;
+        self.modification = get_modification(value);
+    }
+
+    pub fn set_overwrite(&mut self, overwrite: &Overwrite<Skill, u8>) {
+        if let Some(v) = overwrite.value {
+            self.set_value(v);
+        }
+        if let Some(p) = overwrite.proficiency {
+            self.proficiency = p;
+        }
+    }
+}
+
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+pub struct AbilitiesDto {
+    pub strength: AbilityDto,
+    pub intelligence: AbilityDto,
+    pub wisdom: AbilityDto,
+    pub dexterity: AbilityDto,
+    pub constitution: AbilityDto,
+    pub charisma: AbilityDto,
+}
+
+impl TryFrom<&Character> for AbilitiesDto {
+    type Error = &'static str;
     fn try_from(character: &Character) -> Result<Self, Self::Error> {
         if character.class.is_unloaded() || character.race.is_unloaded() {
-            return Err(AuroriteErrorResponse::new("failed to collect data"));
+            return Err("failed to collect data");
         }
 
-        let mut strength = AbilityInfo::new(character.strength);
-        let mut intelligence = AbilityInfo::new(character.intelligence);
-        let mut wisdom = AbilityInfo::new(character.wisdom);
-        let mut dexterity = AbilityInfo::new(character.dexterity);
-        let mut constitution = AbilityInfo::new(character.constitution);
-        let mut charisma = AbilityInfo::new(character.charisma);
+        let mut strength = AbilityDto::new(character.strength);
+        let mut intelligence = AbilityDto::new(character.intelligence);
+        let mut wisdom = AbilityDto::new(character.wisdom);
+        let mut dexterity = AbilityDto::new(character.dexterity);
+        let mut constitution = AbilityDto::new(character.constitution);
+        let mut charisma = AbilityDto::new(character.charisma);
 
         if let Some(class_data) = character.class.get()
             && let Some(ref data) = class_data.dyn_data
@@ -77,61 +142,61 @@ impl TryFrom<&Character> for CharacterAbilitiesInfo {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CharacterSkillsInfo {
-    acrobatics: SkillInfo,
-    athletics: SkillInfo,
-    perception: SkillInfo,
-    survival: SkillInfo,
-    performance: SkillInfo,
-    intimidation: SkillInfo,
-    history: SkillInfo,
-    sleight_of_hand: SkillInfo,
-    medicine: SkillInfo,
-    deception: SkillInfo,
-    animal_handling: SkillInfo,
-    nature: SkillInfo,
-    insight: SkillInfo,
-    investigation: SkillInfo,
-    religion: SkillInfo,
-    stealth: SkillInfo,
-    arcana: SkillInfo,
-    persuasion: SkillInfo,
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct SkillsDto {
+    pub acrobatics: SkillDto,
+    pub athletics: SkillDto,
+    pub perception: SkillDto,
+    pub survival: SkillDto,
+    pub performance: SkillDto,
+    pub intimidation: SkillDto,
+    pub history: SkillDto,
+    pub sleight_of_hand: SkillDto,
+    pub medicine: SkillDto,
+    pub deception: SkillDto,
+    pub animal_handling: SkillDto,
+    pub nature: SkillDto,
+    pub insight: SkillDto,
+    pub investigation: SkillDto,
+    pub religion: SkillDto,
+    pub stealth: SkillDto,
+    pub arcana: SkillDto,
+    pub persuasion: SkillDto,
 }
 
-impl TryFrom<&Character> for CharacterSkillsInfo {
-    type Error = AuroriteErrorResponse;
+impl TryFrom<&Character> for SkillsDto {
+    type Error = &'static str;
     fn try_from(character: &Character) -> Result<Self, Self::Error> {
         if character.class.is_unloaded()
             || character.race.is_unloaded()
             || character.background.is_unloaded()
         {
-            return Err(AuroriteErrorResponse::new("failed to collect data"));
+            return Err("failed to collect data");
         }
-        let abilities = CharacterAbilitiesInfo::try_from(character)?;
+        let abilities = AbilitiesDto::try_from(character)?;
 
-        let mut athletics = SkillInfo::new(abilities.strength.value);
+        let mut athletics = SkillDto::new(abilities.strength.value);
 
-        let mut acrobatics = SkillInfo::new(abilities.dexterity.value);
-        let mut sleight_of_hand = SkillInfo::new(abilities.dexterity.value);
-        let mut stealth = SkillInfo::new(abilities.dexterity.value);
+        let mut acrobatics = SkillDto::new(abilities.dexterity.value);
+        let mut sleight_of_hand = SkillDto::new(abilities.dexterity.value);
+        let mut stealth = SkillDto::new(abilities.dexterity.value);
 
-        let mut perception = SkillInfo::new(abilities.wisdom.value);
-        let mut survival = SkillInfo::new(abilities.wisdom.value);
-        let mut medicine = SkillInfo::new(abilities.wisdom.value);
-        let mut insight = SkillInfo::new(abilities.wisdom.value);
-        let mut animal_handling = SkillInfo::new(abilities.wisdom.value);
+        let mut perception = SkillDto::new(abilities.wisdom.value);
+        let mut survival = SkillDto::new(abilities.wisdom.value);
+        let mut medicine = SkillDto::new(abilities.wisdom.value);
+        let mut insight = SkillDto::new(abilities.wisdom.value);
+        let mut animal_handling = SkillDto::new(abilities.wisdom.value);
 
-        let mut investigation = SkillInfo::new(abilities.intelligence.value);
-        let mut history = SkillInfo::new(abilities.intelligence.value);
-        let mut arcana = SkillInfo::new(abilities.intelligence.value);
-        let mut nature = SkillInfo::new(abilities.intelligence.value);
-        let mut religion = SkillInfo::new(abilities.intelligence.value);
+        let mut investigation = SkillDto::new(abilities.intelligence.value);
+        let mut history = SkillDto::new(abilities.intelligence.value);
+        let mut arcana = SkillDto::new(abilities.intelligence.value);
+        let mut nature = SkillDto::new(abilities.intelligence.value);
+        let mut religion = SkillDto::new(abilities.intelligence.value);
 
-        let mut performance = SkillInfo::new(abilities.charisma.value);
-        let mut intimidation = SkillInfo::new(abilities.charisma.value);
-        let mut deception = SkillInfo::new(abilities.charisma.value);
-        let mut persuasion = SkillInfo::new(abilities.charisma.value);
+        let mut performance = SkillDto::new(abilities.charisma.value);
+        let mut intimidation = SkillDto::new(abilities.charisma.value);
+        let mut deception = SkillDto::new(abilities.charisma.value);
+        let mut persuasion = SkillDto::new(abilities.charisma.value);
 
         let mut selected_skills: Vec<Skill> = Vec::new();
 
@@ -210,6 +275,59 @@ impl TryFrom<&Character> for CharacterSkillsInfo {
             stealth,
             arcana,
             persuasion,
+        })
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CharacterDto {
+    pub id: EncodedUuid,
+    pub name: Option<String>,
+    pub full_name: String,
+    pub level: u8,
+    pub max_hits: u16,
+    pub max_hits_overwrite: Option<u16>,
+
+    pub class: Option<ClassDto>,
+    pub background: Option<BackgroundDto>,
+    pub race: Option<RaceDto>,
+    pub abilities: AbilitiesDto,
+    pub skills: SkillsDto,
+}
+
+impl TryFrom<&Character> for CharacterDto {
+    type Error = &'static str;
+    fn try_from(character: &Character) -> Result<Self, Self::Error> {
+        if character.class.is_unloaded()
+            || character.background.is_unloaded()
+            || character.race.is_unloaded()
+        {
+            return Err("failed to collect data");
+        }
+        let background = character
+            .background
+            .get()
+            .as_ref()
+            .map(BackgroundDto::from);
+        let race = character.race.get().as_ref().map(RaceDto::from);
+        let class = character.class.get().as_ref().map(ClassDto::from);
+        let abilities = AbilitiesDto::try_from(character)?;
+        let skills = SkillsDto::try_from(character)?;
+        let max_hits = character.max_hits_overwrite.unwrap_or(
+            class.as_ref().map(|c| c.base_hits).unwrap_or(0)
+        );
+        Ok(Self {
+            full_name: character.full_name.clone(),
+            name: character.name.clone(),
+            id: EncodedUuid(character.id),
+            level: character.level,
+            max_hits,
+            max_hits_overwrite: character.max_hits_overwrite,
+            background,
+            class,
+            race,
+            abilities,
+            skills,
         })
     }
 }
