@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="./docs/aurorite-light.svg">
-      <source media="(prefers-color-scheme: light)" srcset="./docs/aurorite-dark.svg">
+      <source media="(prefers-color-scheme: dark)" srcset="./docs/aurorite-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="./docs/aurorite-light.svg">
       <img alt="aurorite logo" src="./docs/aurorite-dark.svg">
     </picture>
     <br>
