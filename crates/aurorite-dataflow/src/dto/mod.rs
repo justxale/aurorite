@@ -1,15 +1,17 @@
-mod character;
-mod race;
-mod class;
 mod background;
 mod campaign;
+mod character;
+mod class;
 mod client;
+mod race;
 mod scene;
+mod spell;
 
-pub use class::ClassDto;
 pub use background::BackgroundDto;
-pub use race::RaceDto;
-pub use character::*;
-pub use client::ClientDto;
 pub use campaign::CampaignDto;
-pub use scene::{SceneDto, PreloadDto};
+pub use character::*;
+pub use class::ClassDto;
+pub use client::ClientDto;
+pub use race::RaceDto;
+pub use scene::{PreloadDto, SceneDto};
+pub use spell::SpellDto;

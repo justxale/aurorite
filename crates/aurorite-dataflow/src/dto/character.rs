@@ -1,11 +1,12 @@
 use crate::database::{Character, Overwrite};
-use crate::enums::{Ability, Proficiency, Skill};
-use aurorite_util::formulas::get_modification;
-use serde::{Deserialize, Serialize};
-use aurorite_util::uuid::EncodedUuid;
 use crate::dto::background::BackgroundDto;
 use crate::dto::class::ClassDto;
 use crate::dto::race::RaceDto;
+use crate::enums::{Ability, Proficiency, Skill};
+use aurorite_util::formulas::get_modification;
+use aurorite_util::uuid::EncodedUuid;
+use serde::{Deserialize, Serialize};
+use crate::dto::SpellDto;
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone)]
 pub struct AbilityDto {
@@ -68,7 +69,6 @@ impl SkillDto {
         }
     }
 }
-
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct AbilitiesDto {
@@ -293,6 +293,7 @@ pub struct CharacterDto {
     pub race: Option<RaceDto>,
     pub abilities: AbilitiesDto,
     pub skills: SkillsDto,
+    pub spells: Vec<SpellDto>,
 }
 
 impl TryFrom<&Character> for CharacterDto {
@@ -301,21 +302,19 @@ impl TryFrom<&Character> for CharacterDto {
         if character.class.is_unloaded()
             || character.background.is_unloaded()
             || character.race.is_unloaded()
+            || character.spells.is_unloaded()
         {
             return Err("failed to collect data");
         }
-        let background = character
-            .background
-            .get()
-            .as_ref()
-            .map(BackgroundDto::from);
+        let background = character.background.get().as_ref().map(BackgroundDto::from);
         let race = character.race.get().as_ref().map(RaceDto::from);
         let class = character.class.get().as_ref().map(ClassDto::from);
         let abilities = AbilitiesDto::try_from(character)?;
         let skills = SkillsDto::try_from(character)?;
-        let max_hits = character.max_hits_overwrite.unwrap_or(
-            class.as_ref().map(|c| c.base_hits).unwrap_or(0)
-        );
+        let spells = character.spells.get().iter().cloned().map(SpellDto::from).collect();
+        let max_hits = character
+            .max_hits_overwrite
+            .unwrap_or(class.as_ref().map(|c| c.base_hits).unwrap_or(0));
         Ok(Self {
             full_name: character.full_name.clone(),
             name: character.name.clone(),
@@ -328,6 +327,7 @@ impl TryFrom<&Character> for CharacterDto {
             race,
             abilities,
             skills,
+            spells,
         })
     }
 }

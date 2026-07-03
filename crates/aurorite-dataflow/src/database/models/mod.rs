@@ -12,13 +12,11 @@ mod spell;
 pub use asset::Asset;
 pub use background::Background;
 pub use campaign::{
-    Campaign, CampaignClient, CampaignRace,
-    CampaignClass, CampaignCharacter, CampaignBackground,
-    Scene, AccessState, Visibility,
-    PreloadedObject
+    AccessState, Campaign, CampaignBackground, CampaignCharacter, CampaignClass, CampaignClient,
+    CampaignRace, PreloadedObject, Scene, Visibility,
 };
-pub use character::Character;
+pub use character::{Character, CharacterSpell};
 pub use class::Class;
 pub use client::Client;
 pub use race::{CreatureSize, CreatureType, Race};
-pub use spell::Spell;
+pub use spell::*;
