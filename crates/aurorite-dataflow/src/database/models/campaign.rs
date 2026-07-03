@@ -1,9 +1,9 @@
 use crate::database::{Asset, Background, Character, Class, Client, Race};
+use aurorite_util::common::create_hex;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
-use toasty::{Deferred, Model, Embed};
+use toasty::{Deferred, Embed, Model};
 use uuid::Uuid;
-use aurorite_util::common::create_hex;
 
 #[derive(Clone, Debug, Embed, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -17,21 +17,21 @@ pub enum Visibility {
 #[derive(Clone, Debug, Embed, Deserialize, Serialize)]
 pub struct AccessState {
     pub visibility: Visibility,
-    pub code: Option<String>
+    pub code: Option<String>,
 }
 
 impl AccessState {
     pub fn invite_only() -> Self {
         Self {
             visibility: Visibility::InviteOnly,
-            code: Some(create_hex::<12>())
+            code: Some(create_hex::<12>()),
         }
     }
 
     pub fn private() -> Self {
         Self {
             visibility: Visibility::Private,
-            code: None
+            code: None,
         }
     }
 }

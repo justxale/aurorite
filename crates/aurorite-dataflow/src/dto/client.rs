@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::database::Client;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ClientDto {

@@ -1,6 +1,6 @@
 use crate::database::{Character, RaceData, Spell};
 use serde::{Deserialize, Serialize};
-use toasty::{Deferred, Json, Embed, Model};
+use toasty::{Deferred, Embed, Json, Model};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, Embed, Serialize, Deserialize)]

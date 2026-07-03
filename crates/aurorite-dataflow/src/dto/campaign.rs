@@ -1,8 +1,8 @@
-use jiff::Timestamp;
-use serde::{Deserialize, Serialize};
 use crate::database::{AccessState, Campaign};
 use crate::dto::client::ClientDto;
 use crate::dto::SceneDto;
+use jiff::Timestamp;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CampaignDto {
@@ -14,7 +14,7 @@ pub struct CampaignDto {
     pub scene: Option<SceneDto>,
 
     pub last_played_at: Timestamp,
-    pub created_at: Timestamp
+    pub created_at: Timestamp,
 }
 
 impl TryFrom<Campaign> for CampaignDto {
@@ -40,14 +40,18 @@ impl TryFrom<Campaign> for CampaignDto {
             .filter(|cl| !cl.is_master)
             .map(|cl| ClientDto::from(cl.client.get()))
             .collect();
-        let scene: Option<SceneDto> = value.scene.get()
+        let scene: Option<SceneDto> = value
+            .scene
+            .get()
             .as_ref()
             .and_then(|v| SceneDto::try_from(v).ok());
         Ok(Self {
             id: value.id,
             title: value.title,
             access_state: value.access_state,
-            masters, players, scene,
+            masters,
+            players,
+            scene,
             last_played_at: value.last_played_at,
             created_at: value.created_at,
         })

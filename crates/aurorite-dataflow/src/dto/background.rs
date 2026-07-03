@@ -1,6 +1,6 @@
+use crate::database::{Background, BackgroundData};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use crate::database::{Background, BackgroundData};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BackgroundDto {

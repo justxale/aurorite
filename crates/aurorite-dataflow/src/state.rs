@@ -1,6 +1,6 @@
-use toasty::Db;
-use aurorite_util::{env, auth::hash_password};
 use crate::database::Client;
+use aurorite_util::{auth::hash_password, env};
+use toasty::Db;
 
 #[cfg(debug_assertions)]
 async fn build() -> Db {

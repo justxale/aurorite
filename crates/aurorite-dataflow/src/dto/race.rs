@@ -1,6 +1,6 @@
+use crate::database::{CreatureSize, CreatureType, Race};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use crate::database::{CreatureSize, CreatureType, Race};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RaceDto {

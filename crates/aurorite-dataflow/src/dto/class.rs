@@ -1,6 +1,6 @@
+use crate::database::{Class, ClassData};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use crate::database::{Class, ClassData};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClassDto {

@@ -1,5 +1,5 @@
 use crate::database::{BackgroundData, Character};
-use toasty::{Model, Deferred, Json};
+use toasty::{Deferred, Json, Model};
 use uuid::Uuid;
 
 #[derive(Clone, Debug, Model)]
