@@ -1,24 +1,21 @@
 use aurorite_dataflow::{database::Db, build_connection};
 use std::sync::Arc;
-use vismut_core::VismutExecutionEnvironment;
 use crate::session::SessionManager;
 
 #[derive(Clone, Debug)]
 pub struct AuroriteState {
     db: Db,
-    executor: Arc<VismutExecutionEnvironment>,
     pub manager: Arc<SessionManager>
 }
 
 impl AuroriteState {
     pub async fn new() -> Self {
-        let mut executor = VismutExecutionEnvironment::default();
-        executor.get_schema_mut();
-
-        let connection = build_connection().await;
+        #[cfg(test)]
+        let connection = build_connection::<true>().await;
+        #[cfg(not(test))]
+        let connection = build_connection::<false>().await;
         AuroriteState {
             db: connection,
-            executor: Arc::new(executor),
             manager: Arc::new(SessionManager::new())
         }
     }
