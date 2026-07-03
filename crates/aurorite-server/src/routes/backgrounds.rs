@@ -44,8 +44,8 @@ async fn post_background(
     Json(body): Json<PostBackground>,
 ) -> FailableResponse<BackgroundDto> {
     let record = Background::create()
-        .dyn_data(body.dynamic.map(|v| ToastyJson(v)))
-        .l18n_key(body.l18n);
+        .dyn_data(body.dynamic.map(ToastyJson))
+        .i18n(body.i18n);
     match record.exec(&mut state.db()).await {
         Ok(ref result) => Ok((StatusCode::OK, BackgroundDto::from(result).json())),
         Err(err) => Err((StatusCode::CONFLICT, AuroriteErrorResponse::new(err).json())),

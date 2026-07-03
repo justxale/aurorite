@@ -7,7 +7,7 @@ pub struct Background {
     #[key]
     #[auto]
     pub id: Uuid,
-    pub l18n_key: String,
+    pub i18n: String,
 
     #[has_many]
     pub characters: Deferred<Vec<Character>>,

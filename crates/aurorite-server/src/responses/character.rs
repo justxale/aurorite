@@ -24,13 +24,13 @@ impl TryFrom<&Character> for CharacterInfo {
         {
             return Err(AuroriteErrorResponse::new("failed to collect data"));
         }
-        let class_l18n = character.class.get().as_ref().map(|data| &data.l18n_key);
+        let class_l18n = character.class.get().as_ref().map(|data| &data.i18n);
         let background_l18n = character
             .background
             .get()
             .as_ref()
-            .map(|data| &data.l18n_key);
-        let race_l18n = character.race.get().as_ref().map(|data| &data.l18n_key);
+            .map(|data| &data.i18n);
+        let race_l18n = character.race.get().as_ref().map(|data| &data.i18n);
         Ok(Self {
             id: EncodedUuid(character.id),
             level: character.level,

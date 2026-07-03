@@ -34,7 +34,7 @@ pub struct Race {
     #[key]
     #[auto]
     pub id: Uuid,
-    pub l18n_key: String,
+    pub i18n: String,
 
     pub size: CreatureSize,
     #[column("type")]

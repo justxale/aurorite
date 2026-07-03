@@ -163,7 +163,6 @@ pub struct Scene {
     #[key]
     #[auto]
     pub id: Uuid,
-    pub l18n_key: Option<String>,
 
     #[index]
     asset_id: Option<Uuid>,

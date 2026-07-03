@@ -4,5 +4,5 @@ pub struct Item {
     pub id: uuid::Uuid,
     pub title: String,
     #[unique]
-    pub l18n_key: Option<String>,
+    pub i18n: Option<String>,
 }

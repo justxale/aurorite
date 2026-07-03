@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpellDto {
-    pub l18n: String,
+    pub i18n: String,
     pub level: u8,
     pub order: u16,
     pub school: School,
@@ -24,7 +24,7 @@ impl From<CharacterSpell> for SpellDto {
     fn from(record: CharacterSpell) -> Self {
         let spell = record.spell;
         Self {
-            l18n: spell.l18n,
+            i18n: spell.i18n,
             level: spell.level,
             order: record.order,
             school: spell.school,

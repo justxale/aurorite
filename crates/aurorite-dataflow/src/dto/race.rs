@@ -5,7 +5,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RaceDto {
     id: Uuid,
-    l18n: String,
+    i18n: String,
     size: CreatureSize,
     #[serde(rename = "type")]
     creature_type: CreatureType,
@@ -24,7 +24,7 @@ impl From<&Race> for RaceDto {
     fn from(race: &Race) -> Self {
         Self {
             id: race.id,
-            l18n: race.l18n_key.clone(),
+            i18n: race.i18n.clone(),
             size: race.size,
             creature_type: race.creature_type,
             speed: race.speed,

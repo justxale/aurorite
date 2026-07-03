@@ -5,7 +5,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BackgroundDto {
     id: Uuid,
-    l18n_key: String,
+    i18n: String,
     dynamic: Option<BackgroundData>,
 }
 
@@ -13,7 +13,7 @@ impl From<&Background> for BackgroundDto {
     fn from(background: &Background) -> Self {
         Self {
             id: background.id,
-            l18n_key: background.l18n_key.clone(),
+            i18n: background.i18n.clone(),
             dynamic: background.dyn_data.as_ref().map(|v| v.0.clone()),
         }
     }

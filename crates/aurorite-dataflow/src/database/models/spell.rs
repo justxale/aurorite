@@ -85,7 +85,7 @@ pub struct Spell {
     pub id: Uuid,
     #[index]
     asset_id: Uuid,
-    pub l18n: String,
+    pub i18n: String,
 
     pub script_type: Script,
     pub level: u8,

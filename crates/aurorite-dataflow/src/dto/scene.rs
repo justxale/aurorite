@@ -21,7 +21,6 @@ impl From<&PreloadedObject> for PreloadDto {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SceneDto {
     asset: Option<String>,
-    l18n: Option<String>,
     preloads: Vec<PreloadDto>,
 }
 
@@ -33,7 +32,6 @@ impl TryFrom<&Scene> for SceneDto {
         }
         let preloads = value.preloads.get().iter().map(PreloadDto::from).collect();
         Ok(Self {
-            l18n: value.l18n_key.clone(),
             asset: value.asset.get().as_ref().map(|v| v.filename.clone()),
             preloads,
         })

@@ -6,7 +6,7 @@ use uuid::Uuid;
 pub struct Class {
     #[key]
     pub id: Uuid,
-    pub l18n_key: String,
+    pub i18n: String,
 
     pub base_hits: u16,
     pub base_hit_dice: String,
