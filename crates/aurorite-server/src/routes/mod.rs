@@ -8,19 +8,25 @@ mod races;
 mod rolls;
 mod session;
 
+use crate::responses::AuroriteErrorResponse;
 use crate::state::AuroriteState;
+use crate::traits::IntoJson;
+use aurorite_util::common::create_hex;
+use aurorite_util::env;
+use axum::error_handling::HandleErrorLayer;
 use axum::extract::{MatchedPath, Request};
+use axum::http::{header, Method};
 use axum::response::Response;
 use axum::routing::any;
-use axum::{Router, http};
+use axum::{http, BoxError, Router};
 use http::StatusCode;
 use std::time::Duration;
-use tower::ServiceBuilder;
+use tower::{buffer::BufferLayer, limit::RateLimitLayer, ServiceBuilder};
+use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
 use tower_http::timeout::TimeoutLayer;
 use tower_http::trace::TraceLayer;
 use tracing::Span;
-use aurorite_util::common::create_hex;
 
 pub fn build_routes() -> Router<AuroriteState> {
     Router::new()
@@ -36,6 +42,14 @@ pub fn build_routes() -> Router<AuroriteState> {
         .route_service("/", ServeDir::new("static"))
         .layer(
             ServiceBuilder::new()
+                .layer(HandleErrorLayer::new(|err: BoxError| async move {
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        AuroriteErrorResponse::new(err).json(),
+                    )
+                }))
+                .layer(BufferLayer::new(1024))
+                .layer(RateLimitLayer::new(128, Duration::from_mins(1)))
                 .layer(
                     TraceLayer::new_for_http()
                         .make_span_with(|request: &Request<_>| {
@@ -58,6 +72,17 @@ pub fn build_routes() -> Router<AuroriteState> {
                 .layer(TimeoutLayer::with_status_code(
                     StatusCode::REQUEST_TIMEOUT,
                     Duration::from_secs(5),
-                )),
+                ))
+                .option_layer(if env().allow_cors {
+                    Some(
+                        CorsLayer::new()
+                            .allow_methods([Method::GET, Method::POST])
+                            .allow_origin(Any)
+                            .allow_credentials(true)
+                            .allow_headers([header::AUTHORIZATION, header::ACCEPT]),
+                    )
+                } else {
+                    None
+                }),
         )
 }

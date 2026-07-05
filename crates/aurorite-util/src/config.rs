@@ -13,6 +13,7 @@ pub struct EnvConfig {
     pub password: String,
     pub secret: String,
     pub log: String,
+    pub allow_cors: bool,
 }
 
 static CONFIG: OnceLock<EnvConfig> = OnceLock::new();
@@ -39,7 +40,7 @@ pub fn env() -> &'static EnvConfig {
             .unwrap()
             .set_default("log", "vismut_core=INFO,aurorite=INFO")
             .unwrap()
-            .set_default("auto_exit", false)
+            .set_default("allow_cors", false)
             .unwrap()
             .add_source(
                 config::Environment::with_prefix("AURORITE")
