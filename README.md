@@ -19,5 +19,5 @@ The easiest way to install Aurorite is using Docker:
 git clone https://github.com/justxale/aurorite.git
 cd aurorite
 docker build -t aurorite:latest .
-docker run -e AURORITE_SECRET=totallysecret! aurorite:latest
+docker run -e AURORITE_SECRET=totallysecret -p 11811:11811 aurorite:latest
 ```
