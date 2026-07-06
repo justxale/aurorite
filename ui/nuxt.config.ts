@@ -19,7 +19,13 @@ export default defineNuxtConfig({
     vite: {
         plugins: [
             tailwindcss()
-        ]
+        ],
+        optimizeDeps: {
+            include: [
+                '@vue/devtools-core',
+                '@vue/devtools-kit',
+            ]
+        }
     },
     css: ["~/assets/css/tailwind.css"],
     shadcn: {
@@ -27,7 +33,6 @@ export default defineNuxtConfig({
         componentDir: "@/components/ui"
     },
     i18n: {
-        types: "composition",
         strategy: "no_prefix",
         detectBrowserLanguage: {
             useCookie: true,
