@@ -1,6 +1,15 @@
+<script setup lang="ts">
+import RegisterPage from "./RegisterPage.vue";
+</script>
+
 <template>
-  <div>
+  <div class="relative w-full">
     <NuxtRouteAnnouncer />
-    <NuxtWelcome />
+
+    <main class="relative z-2">
+      <div class="w-full h-full justify-items-center">
+        <RegisterPage />
+      </div>
+    </main>
   </div>
 </template>

@@ -1,6 +1,18 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@theme {
+  --color-green: #6dffaf;
+  --color-purple: #c273ff;
+  --color-blue: #66a8ff;
+  --color-grey: #dee2ed;
+  --color-greyBlue: #dfe5fd;
+  --color-white: #f5f7ff;
+  --color-stone: #323441;
+  --color-black: #15171d;
+  --color-carbon: #23242c;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
