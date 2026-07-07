@@ -12,7 +12,7 @@ async fn test_nonexisting_auth() {
     let (_, app) = build_app().await;
     let app = app.into_service();
 
-    let request = Request::post("/client/auth/login")
+    let request = Request::post("/clients/auth/login")
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(
             serde_json::to_vec(
@@ -33,7 +33,7 @@ async fn test_existing_auth() {
     let mut app = app.into_service();
     let token = auth_client(&mut app).await;
 
-    let request = Request::get("/client/me")
+    let request = Request::get("/clients/me")
         .header(
             header::AUTHORIZATION,
             format!("Bearer {}", token.access_token),

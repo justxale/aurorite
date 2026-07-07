@@ -8,7 +8,7 @@ use tokio_util::bytes::Bytes;
 use tower::{Service, ServiceExt};
 
 pub async fn auth_client(app: &mut RouterIntoService<Body>) -> ClientToken {
-    let request = Request::post("/client/auth/login")
+    let request = Request::post("/clients/auth/login")
         .header(header::CONTENT_TYPE, "application/json")
         .body(Body::from(
             serde_json::to_vec(&json!({ "password": "aurorite", "login": "aurorite" })).unwrap(),

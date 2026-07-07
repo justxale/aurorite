@@ -25,7 +25,7 @@ use aurorite_util::common::create_hex;
 pub fn build_routes() -> Router<AuroriteState> {
     Router::new()
         .nest("/characters", characters::build_characters_routes())
-        .nest("/client", client::build_client_routes())
+        .nest("/clients", client::build_client_routes())
         .nest("/backgrounds", backgrounds::build_backgrounds_routes())
         .nest("/classes", classes::build_classes_routes())
         .nest("/campaigns", campaigns::build_campaign_routes())
