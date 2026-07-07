@@ -1,17 +1,21 @@
+use std::sync::Arc;
 use futures_util::{StreamExt, SinkExt};
 use axum::extract::ws::{close_code, CloseFrame, Message, Utf8Bytes, WebSocket};
 use dashmap::DashMap;
 use dashmap::mapref::one::Ref;
 use futures_util::stream::SplitSink;
 use jiff::Timestamp;
-use tokio::sync::mpsc::{channel, Receiver, Sender};
+use tokio::sync::{mpsc::{channel, Receiver, Sender}, Mutex};
 use tokio::task::JoinSet;
 use uuid::Uuid;
-use aurorite_dataflow::database::{CampaignCharacter, Db};
+use aurorite_agsp::loader::load_text_file;
+use aurorite_dataflow::database::{Campaign, Db, Scene, Script};
+use aurorite_dataflow::dto::SceneDto;
+use aurorite_runtime::{AuroriteRuntime, CachedScript, RuntimeCtx, RuntimeEvent, ScriptSchema};
 use aurorite_util::jwt::decode_key;
-use crate::session::character::Character;
-use crate::session::scene::Scene;
 use crate::session::WebsocketMessage;
+
+const BUFFER_SIZE: usize = 128;
 
 struct SendEvent {
     pub id: Uuid,
@@ -26,32 +30,38 @@ pub struct SessionClient {
     pub name: String
 }
 
-#[derive(Debug)]
 pub struct Session {
     campaign_id: Uuid,
+    db: Db,
     clients: DashMap<Uuid, SessionClient>,
     guests: DashMap<Uuid, SessionClient>,
     sockets: DashMap<Uuid, DashMap<Uuid, Sender<WebsocketMessage>>>,
-
-    scene: Option<Scene>,
-    characters: DashMap<Uuid, Character>,
+    ctx: Arc<Mutex<RuntimeCtx>>,
+    rt: AuroriteRuntime,
 
     pub started_at: Timestamp,
 }
 
 impl Session {
-    pub fn new(campaign_id: Uuid) -> Self {
+    pub fn new(campaign_id: Uuid, db: Db) -> Self {
+        let (sender, _) = channel::<RuntimeEvent>(BUFFER_SIZE);
+        let ctx = Arc::new(Mutex::new(RuntimeCtx::new(campaign_id, sender)));
         Self {
-            campaign_id,
+            campaign_id, db,
             clients: DashMap::new(),
             guests: DashMap::new(),
             sockets: DashMap::new(),
-            scene: None,
-            characters: DashMap::new(),
+            ctx: ctx.clone(),
+            rt: AuroriteRuntime::new(ctx),
             started_at: Timestamp::now(),
         }
     }
-
+    
+    #[inline]
+    pub fn ctx(&self) -> &Arc<Mutex<RuntimeCtx>> {
+        &self.ctx
+    }
+    
     #[inline]
     pub fn clients(&self) -> &DashMap<Uuid, SessionClient> {
         &self.clients
@@ -60,17 +70,6 @@ impl Session {
     #[inline]
     pub fn guests(&self) -> &DashMap<Uuid, SessionClient> {
         &self.guests
-    }
-
-    #[inline]
-    pub fn characters(&self) -> &DashMap<Uuid, Character> {
-        &self.characters
-    }
-
-    #[inline]
-    pub fn character(&self, character_id: Uuid) ->  Option<Ref<'_, Uuid, Character>>
-    {
-        self.characters.get(&character_id)
     }
 
     pub async fn attach(&self, mut socket: WebSocket) {
@@ -91,7 +90,7 @@ impl Session {
                 return;
             };
             tracing::info!("websocket for {} {} attached", if payload.is_guest.unwrap_or(false) { "guest" } else { "client" }, payload.id());
-            let (sender, reader) = channel::<WebsocketMessage>(32);
+            let (sender, reader) = channel::<WebsocketMessage>(BUFFER_SIZE);
             self.sockets
                 .entry(payload.id())
                 .or_default()
@@ -179,34 +178,87 @@ impl Session {
         }
     }
 
-    async fn save_state(&self, db: &mut Db) -> Result<(), &'static str> {
-        let mut tx = db.transaction().await.map_err(|_| "db failure")?;
-        for c in self.characters.iter() {
-            let _ = CampaignCharacter::update_by_character_id_and_campaign_id(c.id, self.campaign_id)
-                .current_hits(c.current_hits)
-                .exec(&mut tx).await;
+    pub async fn load_campaign(&mut self) -> Result<(), &'static str> {
+        let record = Campaign::filter_by_id(self.campaign_id)
+            .include(Campaign::fields().scene())
+            .include(Campaign::fields().scene().preloads())
+            .include(Campaign::fields().scene().preloads().character())
+            .include(Campaign::fields().scene().asset())
+            .include(Campaign::fields().characters())
+            .get(&mut self.db)
+            .await
+            .map_err(|_| "failed to load campaign")?;
+
+        let mut lock = self.ctx.lock().await;
+        if let Some(dto) = record.scene.get().as_ref().and_then(|s| SceneDto::try_from(s).ok()) {
+            lock.switch_scene(dto);
+        } else {
+            lock.remove_scene();
         }
-        tx.commit().await.map_err(|_| "transaction failed, data will not be saved")?;
         Ok(())
     }
 
-    async fn cleanup(self, mut db: Db) -> Db {
+    pub async fn load_scene(&mut self, scene_id: Uuid) -> Result<(), &'static str> {
+        match Scene::filter_by_id(scene_id)
+            .include(Scene::fields().preloads())
+            .include(Scene::fields().asset())
+            .get(&mut self.db)
+            .await
+        {
+            Err(_) => Err("scene not found"),
+            Ok(s) => {
+                self.ctx.lock().await.switch_scene(SceneDto::try_from(&s)?);
+                Ok(())
+            }
+        }
+    }
+
+    pub async fn load_spell(&mut self, character_id: Uuid, spell_id: Uuid) -> Result<(), &'static str> {
+        let mut ctx = self.ctx.lock().await;
+        match ctx.character_mut(character_id) {
+            Some(character) => match character.spell_mut(spell_id) {
+                Some(spell) => {
+                    match spell.script {
+                        Script::Vismut => {
+                            let asset = spell.script_asset.clone();
+                            let content = match load_text_file(&asset).await {
+                                Ok(c) => c,
+                                Err(_) => return Err("script loading failed")
+                            };
+                            let schema = serde_json::from_str::<ScriptSchema>(&content).map_err(|_| "invalid json")?;
+                            let script = self.rt.parse(&schema).map_err(|_| "registry error occured")?;
+                            spell.cached_script = CachedScript::Vismut(script);
+                            Ok(())
+                        },
+                    }
+                },
+                None => Err("spell not found"),
+            }
+            None => Err("character not found"),
+        }
+    }
+
+    async fn save_state(&self, db: &mut Db) -> Result<(), &'static str> {
+        self.ctx.lock().await.save_state(db).await
+    }
+
+    async fn cleanup(self, db: &mut Db) {
         let (_, _) = tokio::join!(
             self.broadcast(WebsocketMessage::Shutdown { reason: Some("disconnecting".to_string()) }),
-            self.save_state(&mut db)
+            self.save_state(db)
         );
-        db
     }
 }
 
-#[derive(Debug)]
 pub struct SessionManager {
     sessions: DashMap<Uuid, Session>,
+    db: Db
 }
 
 impl SessionManager {
-    pub fn new() -> Self {
+    pub fn new(db: Db) -> Self {
         Self {
+            db,
             sessions: DashMap::new(),
         }
     }
@@ -224,7 +276,7 @@ impl SessionManager {
 
     #[inline]
     pub fn attach(&self, campaign_id: Uuid) {
-        self.sessions.insert(campaign_id, Session::new(campaign_id));
+        self.sessions.insert(campaign_id, Session::new(campaign_id, self.db.clone()));
     }
 
     #[inline]
@@ -232,15 +284,9 @@ impl SessionManager {
         self.sessions.remove(&campaign_id);
     }
 
-    pub async fn cleanup(self, db: Db) {
-        let mut db = db;
-        for s in self.sessions.iter() {
-            let session = if let Some(s) = self.sessions.remove(s.key()) {
-                s.1
-            } else {
-                unreachable!("cleanup failure");
-            };
-            db = session.cleanup(db).await;
+    pub async fn cleanup(mut self) {
+        for (_id, session) in self.sessions.into_iter() {
+            session.cleanup(&mut self.db).await;
         }
     }
 }

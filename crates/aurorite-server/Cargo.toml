@@ -11,9 +11,9 @@ axum = { version = "0.8.9", features = ["http2", "macros", "multipart", "ws"] }
 serde = { version = "1.0.228", features = ["derive"] }
 tokio = { version = "1.52.0", features = ["fs", "macros", "parking_lot", "rt-multi-thread", "signal", "tracing"] }
 tracing = "0.1.44"
-vismut-core = { git = "https://github.com/justxale/vismut-core.git", version = "0.1.0", features = ["nodes", "serde"] }
 aurorite-agsp = { path = "../aurorite-agsp" }
 aurorite-dataflow = { path = "../aurorite-dataflow" }
+aurorite-runtime = { path = "../aurorite-runtime" }
 aurorite-util = { path = "../aurorite-util" }
 uuid = { version = "1.23.1", features = ["serde"] }
 tower = "0.5.3"
@@ -25,7 +25,7 @@ dotenvy = "0.15.7"
 tracing-appender = "0.2.5"
 tokio-util = { version = "0.7.18", features = ["compat", "io"] }
 dashmap = { version = "7.0.0-rc2", features = ["inline-more"] }
-serde_json = "1.0.149"
+serde_json = "1.0.150"
 futures-util = "0.3.32"
 
 [dev-dependencies]

@@ -27,10 +27,7 @@ async fn get_self(
         )),
         Ok(record) => Ok((
             StatusCode::OK,
-            Json(ClientDto {
-                display_name: record.display_name,
-                username: record.username,
-            }),
+            ClientDto::from(&record).json()
         )),
     }
 }
@@ -72,10 +69,7 @@ async fn edit_self(
     }
     Ok((
         StatusCode::OK,
-        Json(ClientDto {
-            display_name: record.display_name,
-            username: record.username,
-        }),
+        ClientDto::from(&record).json()
     ))
 }
 
@@ -146,10 +140,7 @@ async fn register_client(
     let record = record.exec(&mut db).await.unwrap();
     Ok((
         StatusCode::CREATED,
-        Json(ClientDto {
-            username: record.username,
-            display_name: record.display_name,
-        }),
+        ClientDto::from(&record).json(),
     ))
 }
 

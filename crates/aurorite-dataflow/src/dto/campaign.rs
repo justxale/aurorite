@@ -12,6 +12,7 @@ pub struct CampaignDto {
     pub masters: Vec<ClientDto>,
     pub players: Vec<ClientDto>,
     pub scene: Option<SceneDto>,
+    pub scenes: Vec<SceneDto>,
 
     pub last_played_at: Timestamp,
     pub created_at: Timestamp,
@@ -25,6 +26,9 @@ impl TryFrom<Campaign> for CampaignDto {
         }
         if value.scene.is_unloaded() {
             return Err("failed to fetch scene data");
+        }
+        if value.scenes.is_unloaded() {
+            return Err("failed to fetch scenes data");
         }
         let masters: Vec<ClientDto> = value
             .clients
@@ -45,6 +49,12 @@ impl TryFrom<Campaign> for CampaignDto {
             .get()
             .as_ref()
             .and_then(|v| SceneDto::try_from(v).ok());
+        let scenes = value
+            .scenes
+            .get()
+            .iter()
+            .map(|v| SceneDto::try_from(v).unwrap())
+            .collect();
         Ok(Self {
             id: value.id,
             title: value.title,
@@ -52,6 +62,7 @@ impl TryFrom<Campaign> for CampaignDto {
             masters,
             players,
             scene,
+            scenes,
             last_played_at: value.last_played_at,
             created_at: value.created_at,
         })

@@ -4,6 +4,7 @@ mod exporter;
 mod importer;
 #[cfg(test)]
 mod tests;
+pub mod loader;
 
 pub use common::{AssetRecord, AssetType, MAX_PACKAGE_SIZE, ManifestRecord};
 pub use exporter::export;

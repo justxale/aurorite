@@ -1,11 +1,17 @@
-use aurorite_dataflow::{database::Db, build_connection};
-use std::sync::Arc;
+use crate::responses::AuroriteErrorResponse;
 use crate::session::SessionManager;
+use crate::traits::IntoJson;
+use aurorite_dataflow::{build_connection, database::Db};
+use aurorite_runtime::Character;
+use axum::http::StatusCode;
+use axum::Json;
+use std::sync::Arc;
+use uuid::Uuid;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct AuroriteState {
     db: Db,
-    pub manager: Arc<SessionManager>
+    pub manager: Arc<SessionManager>,
 }
 
 impl AuroriteState {
@@ -15,8 +21,8 @@ impl AuroriteState {
         #[cfg(not(test))]
         let connection = build_connection::<false>().await;
         AuroriteState {
-            db: connection,
-            manager: Arc::new(SessionManager::new())
+            db: connection.clone(),
+            manager: Arc::new(SessionManager::new(connection)),
         }
     }
 
@@ -24,9 +30,36 @@ impl AuroriteState {
         self.db.clone()
     }
 
+    pub async fn session_character_and<F, C>(
+        &self,
+        session_id: Uuid,
+        character_id: Uuid,
+        f: F,
+    ) -> Result<C, (StatusCode, Json<AuroriteErrorResponse>)>
+    where
+        F: FnOnce(&Character) -> C,
+    {
+        let session = self.manager.session(session_id).ok_or((
+            StatusCode::NOT_FOUND,
+            AuroriteErrorResponse::new("no session with this id").json(),
+        ))?;
+        session
+            .ctx()
+            .lock()
+            .await
+            .character(character_id)
+            .map(f)
+            .ok_or((
+                StatusCode::NOT_FOUND,
+                AuroriteErrorResponse::new("no character with this id").json(),
+            ))
+    }
+
     pub async fn cleanup(self) {
         tracing::info!("cleaning up state");
-        let manager = Arc::into_inner(self.manager).expect("error on cleanup, data will not be saved");
-        manager.cleanup(self.db).await;
+        match Arc::try_unwrap(self.manager) {
+            Err(_) => tracing::error!("error on cleanup, data will not be saved"),
+            Ok(manager) => manager.cleanup().await,
+        };
     }
 }

@@ -1,6 +1,7 @@
-use config::{Case, Config, ConfigError};
+use config::{Case, Config, ConfigError, Environment};
 use serde::Deserialize;
 use std::net::Ipv4Addr;
+use std::path::PathBuf;
 use std::sync::OnceLock;
 
 #[cfg_attr(test, allow(dead_code))] // omit warn on unused database_path because of in-memory sqlite
@@ -13,6 +14,7 @@ pub struct EnvConfig {
     pub password: String,
     pub secret: String,
     pub log: String,
+    pub data_root: PathBuf
 }
 
 static CONFIG: OnceLock<EnvConfig> = OnceLock::new();
@@ -41,8 +43,10 @@ pub fn env() -> &'static EnvConfig {
             .unwrap()
             .set_default("auto_exit", false)
             .unwrap()
+            .set_default("data_root", std::env::current_dir().unwrap().join("assets").to_string_lossy().to_string())
+            .unwrap()
             .add_source(
-                config::Environment::with_prefix("AURORITE")
+                Environment::with_prefix("AURORITE")
                     .ignore_empty(true)
                     .convert_case(Case::Lower),
             )

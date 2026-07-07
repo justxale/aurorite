@@ -13,7 +13,7 @@ use tokio_util::io::ReaderStream;
 async fn add_file(
     tar: &mut Builder<ZstdEncoder<impl AsyncWrite + Send + Unpin>>,
     manifest: &mut ManifestRecord,
-    parents: &Vec<String>,
+    parents: &[String],
     entry: &DirEntry,
 ) -> Result<(), AgspError> {
     tracing::debug!("file found: {}", entry.path().display());

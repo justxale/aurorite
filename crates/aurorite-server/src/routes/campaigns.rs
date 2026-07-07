@@ -61,6 +61,7 @@ async fn post_campaign(
                 .include(Campaign::fields().clients())
                 .include(Campaign::fields().scene())
                 .include(Campaign::fields().clients().client())
+                .include(Campaign::fields().scenes())
                 .get(&mut db)
                 .await;
             match res {

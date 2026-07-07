@@ -10,7 +10,7 @@ pub enum Script {
     Vismut,
 }
 
-#[derive(Debug, Clone, toasty::Embed, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, toasty::Embed, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum RangeType {
     #[column(variant = "self")]
@@ -18,12 +18,13 @@ pub enum RangeType {
     Caster,
     #[column(variant = "touch")]
     Touch,
-    #[column(variant = "ranged")]
+    #[column(variant = "range")]
     Range,
+    #[column(variant = "cone")]
     Cone,
 }
 
-#[derive(Debug, Clone, toasty::Embed, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, toasty::Embed, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub struct Range {
     #[column("type")]
@@ -32,7 +33,7 @@ pub struct Range {
     value: Option<u16>,
 }
 
-#[derive(Debug, Clone, toasty::Embed, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, toasty::Embed, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TimeUnit {
     #[column(variant = "rounds")]
@@ -45,7 +46,7 @@ pub enum TimeUnit {
     Hours,
 }
 
-#[derive(Debug, Clone, toasty::Embed, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, toasty::Embed, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum School {
     Abjuration,
@@ -58,20 +59,20 @@ pub enum School {
     Transmutation,
 }
 
-#[derive(Debug, Clone, toasty::Embed, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, toasty::Embed, Deserialize, Serialize)]
 pub struct Casting {
     pub unit: TimeUnit,
     pub time: u16,
 }
 
-#[derive(Debug, Clone, toasty::Embed, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, toasty::Embed, Deserialize, Serialize)]
 pub struct Duration {
     pub unit: TimeUnit,
     pub time: u16,
     pub has_concentration: bool,
 }
 
-#[derive(Debug, Clone, toasty::Embed, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, toasty::Embed, Deserialize, Serialize)]
 pub struct Materials {
     pub verbal: bool,
     pub somatic: bool,

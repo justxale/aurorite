@@ -21,8 +21,8 @@ pub struct Dice {
 
 #[derive(Serialize, Deserialize)]
 pub struct DiceRollResult {
-    all: Vec<u16>,
-    sum: i64,
+    pub all: Vec<u16>,
+    pub sum: i64,
 }
 
 impl Dice {

@@ -1,0 +1,17 @@
+[package]
+name = "aurorite-runtime"
+version = "0.1.0"
+repository.workspace = true
+license.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+vismut-core = { git = "https://github.com/justxale/vismut-core.git", version = "0.1.0", features = ["nodes", "serde"] }
+aurorite-util = { path = "../aurorite-util" }
+aurorite-agsp = { path = "../aurorite-agsp" }
+aurorite-dataflow = { path = "../aurorite-dataflow" }
+tracing = "0.1.44"
+uuid = { version = "1.23.1", features = ["serde"] }
+serde = { version = "1.0.228", features = ["derive"] }
+tokio = { version = "1.52.0" }

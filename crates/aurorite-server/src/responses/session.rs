@@ -2,7 +2,7 @@ use jiff::Timestamp;
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 use crate::session::{Session, SessionClient};
-use crate::session::character::Character;
+use aurorite_runtime::Character;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct SessionClientInfo {

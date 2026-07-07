@@ -18,6 +18,7 @@ tokio-util = { version = "0.7.18", features = ["io"] }
 toml = "1.1.2"
 tracing = "0.1.44"
 uuid = { version = "1.23.1", features = ["serde", "v7"] }
+aurorite-util = { path = "../aurorite-util" }
 
 [dev-dependencies]
 tokio = { version = "1.52.3", features = ["fs", "macros", "rt"] }

@@ -1,4 +1,4 @@
-use crate::database::{Character, Overwrite};
+use crate::database::{CampaignCharacter, Character, Overwrite};
 use crate::dto::background::BackgroundDto;
 use crate::dto::class::ClassDto;
 use crate::dto::race::RaceDto;
@@ -6,7 +6,7 @@ use crate::enums::{Ability, Proficiency, Skill};
 use aurorite_util::formulas::get_modification;
 use aurorite_util::uuid::EncodedUuid;
 use serde::{Deserialize, Serialize};
-use crate::dto::SpellDto;
+use crate::dto::{ClientDto, SpellDto};
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone)]
 pub struct AbilityDto {
@@ -287,6 +287,8 @@ pub struct CharacterDto {
     pub level: u8,
     pub max_hits: u16,
     pub max_hits_overwrite: Option<u16>,
+    pub current_hits: u16,
+    pub is_enemy: bool,
 
     pub class: Option<ClassDto>,
     pub background: Option<BackgroundDto>,
@@ -294,40 +296,56 @@ pub struct CharacterDto {
     pub abilities: AbilitiesDto,
     pub skills: SkillsDto,
     pub spells: Vec<SpellDto>,
+    
+    pub owner: ClientDto
 }
 
 impl TryFrom<&Character> for CharacterDto {
     type Error = &'static str;
-    fn try_from(character: &Character) -> Result<Self, Self::Error> {
-        if character.class.is_unloaded()
-            || character.background.is_unloaded()
-            || character.race.is_unloaded()
-            || character.spells.is_unloaded()
+    fn try_from(value: &Character) -> Result<Self, Self::Error> {
+        if value.class.is_unloaded()
+            || value.background.is_unloaded()
+            || value.race.is_unloaded()
+            || value.spells.is_unloaded()
+            || value.client.is_unloaded()
         {
             return Err("failed to collect data");
         }
-        let background = character.background.get().as_ref().map(BackgroundDto::from);
-        let race = character.race.get().as_ref().map(RaceDto::from);
-        let class = character.class.get().as_ref().map(ClassDto::from);
-        let abilities = AbilitiesDto::try_from(character)?;
-        let skills = SkillsDto::try_from(character)?;
-        let spells = character.spells.get().iter().cloned().map(SpellDto::from).collect();
-        let max_hits = character
+        let background = value.background.get().as_ref().map(BackgroundDto::from);
+        let race = value.race.get().as_ref().map(RaceDto::from);
+        let class = value.class.get().as_ref().map(ClassDto::from);
+        let abilities = AbilitiesDto::try_from(value)?;
+        let skills = SkillsDto::try_from(value)?;
+        let spells = value.spells.get().iter().cloned().map(SpellDto::from).collect();
+        let max_hits = value
             .max_hits_overwrite
             .unwrap_or(class.as_ref().map(|c| c.base_hits).unwrap_or(0));
         Ok(Self {
-            full_name: character.full_name.clone(),
-            name: character.name.clone(),
-            id: EncodedUuid(character.id),
-            level: character.level,
+            full_name: value.full_name.clone(),
+            name: value.name.clone(),
+            id: EncodedUuid(value.id),
+            level: value.level,
             max_hits,
-            max_hits_overwrite: character.max_hits_overwrite,
+            current_hits: max_hits,
+            is_enemy: false,
+            max_hits_overwrite: value.max_hits_overwrite,
             background,
             class,
             race,
             abilities,
             skills,
             spells,
+            owner: ClientDto::from(value.client.get())
         })
+    }
+}
+
+impl TryFrom<&CampaignCharacter> for CharacterDto {
+    type Error = &'static str;
+    fn try_from(value: &CampaignCharacter) -> Result<Self, Self::Error> {
+        let mut dto = CharacterDto::try_from(&value.base)?;
+        dto.is_enemy = value.is_enemy;
+        dto.current_hits = value.current_hits;
+        Ok(dto)
     }
 }

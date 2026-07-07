@@ -77,11 +77,15 @@ pub struct Campaign {
     pub classes: Deferred<Vec<CampaignClass>>,
     #[has_many]
     pub characters: Deferred<Vec<CampaignCharacter>>,
+    #[has_many]
+    pub scenes: Deferred<Vec<CampaignScene>>
 }
 
 #[derive(Clone, Debug, Model)]
 pub struct CampaignCharacter {
-    current_hits: u16,
+    pub current_hits: u16,
+    pub is_enemy: bool,
+    
     #[index]
     #[key]
     character_id: Uuid,
@@ -90,9 +94,9 @@ pub struct CampaignCharacter {
     campaign_id: Uuid,
 
     #[belongs_to(key = character_id, references = id)]
-    base: Deferred<Character>,
+    pub base: Character,
     #[belongs_to(key = campaign_id, references = id)]
-    campaign: Deferred<Campaign>,
+    pub campaign: Deferred<Campaign>,
 }
 
 #[derive(Clone, Debug, Model)]
@@ -197,4 +201,19 @@ pub struct PreloadedObject {
     pub scene: Deferred<Scene>,
     #[belongs_to(key = [character_id, campaign_id], references = [character_id, campaign_id])]
     pub character: Deferred<CampaignCharacter>,
+}
+
+#[derive(Clone, Debug, Model)]
+pub struct CampaignScene {
+    #[index]
+    #[key]
+    scene_id: Uuid,
+    #[index]
+    #[key]
+    campaign_id: Uuid,
+
+    #[belongs_to(key = scene_id, references = id)]
+    pub scene: Scene,
+    #[belongs_to(key = campaign_id, references = id)]
+    pub campaign: Campaign,
 }

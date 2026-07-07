@@ -1,9 +1,11 @@
 use crate::database::{Casting, Character, CharacterSpell, Duration, Materials, Range, School, Script, Spell};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpellDto {
+    pub id: Uuid,
     pub i18n: String,
     pub level: u8,
     pub order: u16,
@@ -24,6 +26,7 @@ impl From<CharacterSpell> for SpellDto {
     fn from(record: CharacterSpell) -> Self {
         let spell = record.spell;
         Self {
+            id: spell.id,
             i18n: spell.i18n,
             level: spell.level,
             order: record.order,
