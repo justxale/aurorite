@@ -1,4 +1,4 @@
-use config::{Case, Config, ConfigError};
+use config::{Config, ConfigError};
 use serde::Deserialize;
 use std::net::Ipv4Addr;
 use std::sync::OnceLock;
@@ -45,7 +45,6 @@ pub fn env() -> &'static EnvConfig {
             .add_source(
                 config::Environment::with_prefix("AURORITE")
                     .ignore_empty(true)
-                    .convert_case(Case::Lower),
             )
             .build()
             .unwrap();

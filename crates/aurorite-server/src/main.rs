@@ -128,7 +128,7 @@ async fn main() {
     #[cfg(target_os = "windows")]
     if std::env::var("AURORITE_AUTOEXIT")
         .ok()
-        .is_none_or(|v| v == "0")
+        .is_none_or(|v| v == "0" || v.eq_ignore_ascii_case("false"))
     {
         std::panic::set_hook(Box::new(|info| {
             let mut out = stderr().lock();

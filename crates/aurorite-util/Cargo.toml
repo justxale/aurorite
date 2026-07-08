@@ -13,7 +13,7 @@ jiff = "0.2.24"
 argon2 = { version = "0.5.3", features = ["simple", "std"] }
 uuid = { version = "1.23.1", features = ["serde", "v7"] }
 fastrand = "2.4.1"
-config = { version = "0.15.23", default-features = false, features = ["json", "convert-case"] }
+config = { version = "0.15.23", default-features = false }
 
 [dev-dependencies]
 serde_json = "1.0.150"
