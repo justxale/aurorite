@@ -22,7 +22,7 @@ use axum::{http, BoxError, Router};
 use http::StatusCode;
 use std::time::Duration;
 use tower::{buffer::BufferLayer, limit::RateLimitLayer, ServiceBuilder};
-use tower_http::cors::{AllowOrigin, CorsLayer};
+use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 use tower_http::services::ServeDir;
 use tower_http::timeout::TimeoutLayer;
 use tower_http::trace::TraceLayer;
@@ -78,7 +78,7 @@ pub fn build_routes() -> Router<AuroriteState> {
                         CorsLayer::new()
                             .allow_methods([Method::GET, Method::POST])
                             .allow_origin(AllowOrigin::any())
-                            .allow_headers([header::AUTHORIZATION, header::ACCEPT]),
+                            .allow_headers(Any),
                     )
                 } else {
                     None
