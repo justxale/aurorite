@@ -77,8 +77,7 @@ pub fn build_routes() -> Router<AuroriteState> {
                     Some(
                         CorsLayer::new()
                             .allow_methods([Method::GET, Method::POST])
-                            .allow_origin(AllowOrigin::exact("http://localhost:3000".parse().unwrap()))
-                            .allow_credentials(true)
+                            .allow_origin(AllowOrigin::any())
                             .allow_headers([header::AUTHORIZATION, header::ACCEPT]),
                     )
                 } else {
