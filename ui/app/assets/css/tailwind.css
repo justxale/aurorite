@@ -1,3 +1,6 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap');
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -5,9 +8,9 @@
   --color-green: #6dffaf;
   --color-purple: #c273ff;
   --color-blue: #66a8ff;
-  --color-grey: #dee2ed;
-  --color-greyBlue: #dfe5fd;
-  --color-white: #f5f7ff;
+  --color-white: #f9fafb;
+  --color-darkWhite: #f2f3f6;
+  --color-grey: #d4d7de;
   --color-stone: #323441;
   --color-black: #15171d;
   --color-carbon: #23242c;

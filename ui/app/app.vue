@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import RegisterPage from "./RegisterPage.vue";
+
 </script>
 
 <template>
@@ -8,7 +8,7 @@ import RegisterPage from "./RegisterPage.vue";
 
     <main class="relative z-2">
       <div class="w-full h-full justify-items-center">
-        <RegisterPage />
+        <NuxtPage />
       </div>
     </main>
   </div>
