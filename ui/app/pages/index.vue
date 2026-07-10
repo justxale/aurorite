@@ -10,7 +10,10 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { toTypedSchema } from '@vee-validate/zod'
-import * as z from 'zod';
+import * as z from 'zod'
+import type { FetchError } from 'ofetch'
+import {toast, Toaster} from 'vue-sonner'
+import 'vue-sonner/style.css';
 
 const formSchema = toTypedSchema(
     z.object({
@@ -23,7 +26,7 @@ const form = useForm({
   validationSchema: formSchema,
 })
 
-const login = ref('')
+const username = ref('')
 const password = ref('')
 
 async function handlerRegister() {
@@ -31,13 +34,32 @@ async function handlerRegister() {
     await $fetch("http://localhost:11811/client/auth/login", {
       method: 'POST',
       body: {
-        login: login.value,
+        login: username.value,
         password: password.value
       },
     })
   }
   catch(e) {
+    const error = e as FetchError
     console.log(e)
+
+    if (error.status === 404) {
+      toast.error(`User ${username.value} not found`)
+    }
+
+    else if (error.status === 500) {
+      showError({
+        status: 500,
+        statusText: 'Internal Server Error',
+      })
+    }
+
+    else {
+      showError({
+        status: error.status,
+        statusText: error.statusText,
+      })
+    }
   }
 }
 // await navigateTo('/<page>')
@@ -64,12 +86,13 @@ const onSubmit = form.handleSubmit((values) => {
             <div class="flex w-full h-full items-center justify-center">
                 <div class="w-[80%] md:w-[50%] lg:w-[40%] h-screen/2 md:h-screen/2.5 justify-items-center top-[30%]">
                     <div class="relative w-full h-full bg-white mix-blend-normal rounded-[10px]">
+
                       <form @submit="onSubmit">
-                        <FormField v-slot="{ componentField }" name="login">
+                        <FormField v-slot="{ componentField }" name="username">
                           <FormItem>
-                            <FormLabel class="pt-5 pb-1 mx-2 ps-1 md:ps-4">Login</FormLabel>
+                            <FormLabel class="pt-5 pb-1 mx-2 ps-1 md:ps-4">Username</FormLabel>
                             <FormControl>
-                              <Input v-model="login" type="text" placeholder="Login" v-bind="componentField" class="w-[calc(100%-16px)] mt-1 mx-2 p-1 md:p-2 ps-1 md:ps-4 rounded-lg" />
+                              <Input v-model="username" type="text" placeholder="username" v-bind="componentField" class="w-[calc(100%-16px)] mt-1 mx-2 p-1 md:p-2 ps-1 md:ps-4 rounded-lg" />
                             </FormControl>
                             <FormMessage class="mx-2 ps-1 md:ps-4" />
                           </FormItem>
@@ -78,20 +101,21 @@ const onSubmit = form.handleSubmit((values) => {
                           <FormItem>
                             <FormLabel class="pt-5 pb-1 mx-2 ps-1 md:ps-4">Password</FormLabel>
                             <FormControl>
-                              <Input v-model="password" type="text" placeholder="Password" v-bind="componentField" class="w-[calc(100%-16px)] mt-1 mx-2 p-1 md:p-2 ps-1 md:ps-4 rounded-lg" />
+                              <Input v-model="password" type="text" placeholder="password" v-bind="componentField" class="w-[calc(100%-16px)] mt-1 mx-2 p-1 md:p-2 ps-1 md:ps-4 rounded-lg" />
                             </FormControl>
                             <FormMessage class="mx-2 ps-1 md:ps-4" />
                           </FormItem>
                         </FormField>
                         <div class="flex items-center justify-center h-[30%] md:h-[35%] mt-[3%] md:mt-[4%] pb-[1%] md:pb-[4%]">
-                            <Button class="transition duration-300 ease-in-out cursor-pointer w-[50%] p-1 text-[1rem] bg-green rounded-lg mix-blend-normal hover:scale-110 hover:bg-[#A3FFCD]" @click="handlerRegister">
-                                Register
+                            <Button class="transition duration-300 ease-in-out cursor-pointer w-[50%] p-1 m-3 text-[1rem] bg-green rounded-lg mix-blend-normal hover:scale-110 hover:bg-[#A3FFCD]" @click="handlerRegister" >
+                                Login
                             </Button>
                         </div>
                       </form>
                     </div>
                 </div>
             </div>
+          <Toaster position="top-center"/>
         </div>
 
     </div>
