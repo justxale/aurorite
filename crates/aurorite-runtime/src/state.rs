@@ -81,15 +81,8 @@ impl RuntimeCtx {
         self.initiative = None;
     }
 
-    pub async fn save_state(&self, db: &mut Db) -> Result<(), &'static str> {
-        let mut tx = db.transaction().await.map_err(|_| "db failure")?;
-        for c in self.characters.values() {
-            let _ = CampaignCharacter::update_by_character_id_and_campaign_id(c.id, self.campaign_id)
-                .current_hits(c.current_hits)
-                .exec(&mut tx).await;
-        }
-        tx.commit().await.map_err(|_| "transaction failed, data will not be saved")?;
-        Ok(())
+    pub fn characters_current_hits(&self) -> Vec<(Uuid, u16)> {
+        self.characters.values().map(|c| (c.id, c.current_hits)).collect()
     }
 
     pub fn characters(&self) -> &HashMap<Uuid, Character> {

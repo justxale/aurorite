@@ -1,5 +1,4 @@
-use std::sync::Arc;
-use tokio::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use vismut_core::schemas::ScriptSchema;
 use vismut_core::{RegistryError, VismutRuntime, VismutScript};
 use crate::RuntimeCtx;

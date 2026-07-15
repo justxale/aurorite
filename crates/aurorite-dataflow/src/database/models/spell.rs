@@ -8,6 +8,8 @@ use uuid::Uuid;
 pub enum Script {
     #[column(variant = 0)]
     Vismut,
+    #[column(variant = 1)]
+    Python,
 }
 
 #[derive(Debug, Clone, Copy, toasty::Embed, Deserialize, Serialize)]

@@ -38,7 +38,7 @@ async fn get_session_characters(
             session
                 .ctx()
                 .lock()
-                .await
+                .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new("failed to lock").json()))?
                 .characters()
                 .values()
                 .cloned()

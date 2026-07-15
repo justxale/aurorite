@@ -1,15 +1,15 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use futures_util::{StreamExt, SinkExt};
 use axum::extract::ws::{close_code, CloseFrame, Message, Utf8Bytes, WebSocket};
 use dashmap::DashMap;
 use dashmap::mapref::one::Ref;
 use futures_util::stream::SplitSink;
 use jiff::Timestamp;
-use tokio::sync::{mpsc::{channel, Receiver, Sender}, Mutex};
+use tokio::sync::mpsc::{channel, Receiver, Sender};
 use tokio::task::JoinSet;
 use uuid::Uuid;
 use aurorite_agsp::loader::load_text_file;
-use aurorite_dataflow::database::{Campaign, Db, Scene, Script};
+use aurorite_dataflow::database::{Campaign, CampaignCharacter, Db, Scene, Script};
 use aurorite_dataflow::dto::SceneDto;
 use aurorite_runtime::{AuroriteRuntime, CachedScript, RuntimeCtx, RuntimeEvent, ScriptSchema};
 use aurorite_util::jwt::decode_key;
@@ -189,7 +189,7 @@ impl Session {
             .await
             .map_err(|_| "failed to load campaign")?;
 
-        let mut lock = self.ctx.lock().await;
+        let mut lock = self.ctx.lock().map_err(|_| "failed to lock")?;
         if let Some(dto) = record.scene.get().as_ref().and_then(|s| SceneDto::try_from(s).ok()) {
             lock.switch_scene(dto);
         } else {
@@ -207,39 +207,55 @@ impl Session {
         {
             Err(_) => Err("scene not found"),
             Ok(s) => {
-                self.ctx.lock().await.switch_scene(SceneDto::try_from(&s)?);
+                let mut lock = self.ctx.lock().map_err(|_| "failed to lock")?;
+                lock.switch_scene(SceneDto::try_from(&s)?);
                 Ok(())
             }
         }
     }
 
     pub async fn load_spell(&mut self, character_id: Uuid, spell_id: Uuid) -> Result<(), &'static str> {
-        let mut ctx = self.ctx.lock().await;
-        match ctx.character_mut(character_id) {
-            Some(character) => match character.spell_mut(spell_id) {
-                Some(spell) => {
-                    match spell.script {
-                        Script::Vismut => {
-                            let asset = spell.script_asset.clone();
-                            let content = match load_text_file(&asset).await {
-                                Ok(c) => c,
-                                Err(_) => return Err("script loading failed")
-                            };
-                            let schema = serde_json::from_str::<ScriptSchema>(&content).map_err(|_| "invalid json")?;
-                            let script = self.rt.parse(&schema).map_err(|_| "registry error occured")?;
-                            spell.cached_script = CachedScript::Vismut(script);
-                            Ok(())
-                        },
-                    }
-                },
-                None => Err("spell not found"),
+        let (t, asset) = {
+            let ctx = self.ctx.lock().map_err(|_| "failed to lock context")?;
+            let s = ctx.character(character_id).and_then(|c| c.spell(spell_id)).ok_or("failed to load spell")?;
+            match s.script {
+                Script::Python => unimplemented!("python is not supported yet"),
+                Script::Vismut => {
+                    (Script::Vismut, s.script_asset.clone())
+                }
             }
-            None => Err("character not found"),
-        }
+        };
+        let script = match t {
+            Script::Python => unimplemented!(),
+            Script::Vismut => {
+                let content = match load_text_file(asset).await {
+                    Ok(c) => c,
+                    Err(_) => return Err("script loading failed")
+                };
+                let schema = serde_json::from_str::<ScriptSchema>(&content).map_err(|_| "invalid json")?;
+                self.rt.parse(&schema).map_err(|_| "registry error occured")?
+            }
+        };
+        self.ctx.lock().map_err(|_| "failed to lock context")?.character_mut(character_id).and_then(|c| c.spell_mut(spell_id).map(|s| s.cached_script = CachedScript::Vismut(script)));
+
+        Ok(())
     }
 
     async fn save_state(&self, db: &mut Db) -> Result<(), &'static str> {
-        self.ctx.lock().await.save_state(db).await
+        let map = {
+            match self.ctx.lock() {
+                Ok(ctx) => ctx.characters_current_hits(),
+                Err(e) => e.into_inner().characters_current_hits(),
+            }
+        };
+        let mut tx = db.transaction().await.map_err(|_| "db failure")?;
+        for (id, hits) in map {
+            let _ = CampaignCharacter::update_by_character_id_and_campaign_id(id, self.campaign_id)
+                .current_hits(hits)
+                .exec(&mut tx).await;
+        }
+        tx.commit().await.map_err(|_| "transaction failed, data will not be saved")?;
+        Ok(())
     }
 
     async fn cleanup(self, db: &mut Db) {

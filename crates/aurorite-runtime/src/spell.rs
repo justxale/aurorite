@@ -1,6 +1,5 @@
 use std::fmt::Debug;
-use std::sync::Arc;
-use tokio::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use aurorite_dataflow::database::{Casting, Duration, Materials, Range, School, Script};
