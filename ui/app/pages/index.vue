@@ -13,7 +13,9 @@ import { toTypedSchema } from '@vee-validate/zod'
 import * as z from 'zod'
 import type { FetchError } from 'ofetch'
 import {toast, Toaster} from 'vue-sonner'
-import 'vue-sonner/style.css';
+import 'vue-sonner/style.css'
+import {useAuthenticationStore} from "~/stores/AuthenticationStore";
+
 
 const formSchema = toTypedSchema(
     z.object({
@@ -31,13 +33,9 @@ const password = ref('')
 
 async function handlerRegister() {
   try{
-    await $fetch("http://localhost:11811/client/auth/login", {
-      method: 'POST',
-      body: {
-        login: username.value,
-        password: password.value
-      },
-    })
+    const authenticationFetch = await authenticationStore.authentication(username.value, password.value)
+    const authenticationStorage = await authenticationStore.onStorage()
+    return {authenticationFetch, authenticationStorage}
   }
   catch(e) {
     const error = e as FetchError
@@ -45,6 +43,10 @@ async function handlerRegister() {
 
     if (error.status === 404) {
       toast.error(`User ${username.value} not found`)
+    }
+
+    else if (error.status === 401) {
+      toast.error(`User ${username.value} is unauthorized`)
     }
 
     else if (error.status === 500) {
@@ -74,6 +76,8 @@ const onSubmit = form.handleSubmit((values) => {
   console.log('Form submitted!', values)
 })
 
+const authenticationStore = useAuthenticationStore()
+console.log(authenticationStore)
 </script>
 
 <template>
