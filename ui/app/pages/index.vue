@@ -14,7 +14,7 @@ import * as z from 'zod'
 import type { FetchError } from 'ofetch'
 import {toast, Toaster} from 'vue-sonner'
 import 'vue-sonner/style.css'
-import {useAuthenticationStore} from "~/stores/AuthenticationStore";
+import {useAuthenticationStore} from "~/stores/authenticationStore";
 
 
 const formSchema = toTypedSchema(
@@ -31,10 +31,10 @@ const form = useForm({
 const username = ref('')
 const password = ref('')
 
-async function handlerRegister() {
+async function handleSubmit() {
   try{
-    const authenticationFetch = await authenticationStore.authentication(username.value, password.value)
-    const authenticationStorage = await authenticationStore.onStorage()
+    const authenticationFetch = await authenticationStore.fetchToken(username.value, password.value)
+    const authenticationStorage = await authenticationStore.fetchUser()
     return {authenticationFetch, authenticationStorage}
   }
   catch(e) {
@@ -77,7 +77,6 @@ const onSubmit = form.handleSubmit((values) => {
 })
 
 const authenticationStore = useAuthenticationStore()
-console.log(authenticationStore)
 </script>
 
 <template>
@@ -111,7 +110,7 @@ console.log(authenticationStore)
                           </FormItem>
                         </FormField>
                         <div class="flex items-center justify-center h-[30%] md:h-[35%] mt-[3%] md:mt-[4%] pb-[1%] md:pb-[4%]">
-                            <Button class="transition duration-300 ease-in-out cursor-pointer w-[50%] p-1 m-3 text-[1rem] bg-green rounded-lg mix-blend-normal hover:scale-110 hover:bg-[#A3FFCD]" @click="handlerRegister" >
+                            <Button class="transition duration-300 ease-in-out cursor-pointer w-[50%] p-1 m-3 text-[1rem] bg-green rounded-lg mix-blend-normal hover:scale-110 hover:bg-[#A3FFCD]" @click="handleSubmit" >
                                 Login
                             </Button>
                         </div>
