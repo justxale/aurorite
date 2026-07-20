@@ -1,3 +1,18 @@
 {
-
+  "aurorite": {
+    "ui": {
+      "username": "Username",
+      "password": "Password",
+      "login": "Login",
+      "goBack": "Go back home"
+    },
+    "errors": {
+      "formRequired": "Required",
+      "formPasswordCharacters": "Password must contain at least 8 character(s)",
+      "notFound": "User {username} not found",
+      "notAuthorized": "User {username} is unauthorized",
+      "httpError": "HTTP {statusCode} error",
+      "error500": "Service Unavailable"
+    }
+  }
 }

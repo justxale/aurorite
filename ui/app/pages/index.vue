@@ -16,11 +16,12 @@ import {toast, Toaster} from 'vue-sonner'
 import 'vue-sonner/style.css'
 import {useAuthenticationStore} from "~/stores/authenticationStore";
 
+const { t } = useI18n()
 
 const formSchema = toTypedSchema(
     z.object({
-      login: z.string().min(3),
-      password: z.string().min(8),
+      username: z.string({message: t('aurorite.errors.formRequired')}),
+      password: z.string({message: t('aurorite.errors.formRequired')}).min(8, t('aurorite.errors.formPasswordCharacters')),
   })
 )
 
@@ -42,7 +43,9 @@ async function handleSubmit() {
     console.log(e)
 
     if (error.status === 404) {
-      toast.error(`User ${username.value} not found`)
+      toast.error(t('aurorite.errors.notFound', {
+        username: username.value
+      }))
     }
 
     else if (error.status === 401) {
@@ -67,7 +70,7 @@ async function handleSubmit() {
 // await navigateTo('/<page>')
 
 //   const logObject = form.handleSubmit((values) => {
-//     login.value = values.login
+//     username.value = values.username
 //     password.value = values.password
 //   })
 
@@ -93,25 +96,25 @@ const authenticationStore = useAuthenticationStore()
                       <form @submit="onSubmit">
                         <FormField v-slot="{ componentField }" name="username">
                           <FormItem>
-                            <FormLabel class="pt-5 pb-1 mx-2 ps-1 md:ps-4">Username</FormLabel>
+                            <FormLabel class="pt-5 pb-1 mx-2 ps-1 md:ps-4 text-[1rem]">{{t('aurorite.ui.username')}}</FormLabel>
                             <FormControl>
-                              <Input v-model="username" type="text" placeholder="username" v-bind="componentField" class="w-[calc(100%-16px)] mt-1 mx-2 p-1 md:p-2 ps-1 md:ps-4 rounded-lg" />
+                              <Input v-model="username" type="text" :placeholder="t('aurorite.ui.username')" v-bind="componentField" class="w-[calc(100%-16px)] mt-1 mx-2 p-1 md:p-2 ps-1 md:ps-4 rounded-lg" />
                             </FormControl>
                             <FormMessage class="mx-2 ps-1 md:ps-4" />
                           </FormItem>
                         </FormField>
                         <FormField v-slot="{ componentField }" name="password">
                           <FormItem>
-                            <FormLabel class="pt-5 pb-1 mx-2 ps-1 md:ps-4">Password</FormLabel>
+                            <FormLabel class="pt-5 pb-1 mx-2 ps-1 md:ps-4 text-[1rem]">{{t('aurorite.ui.password')}}</FormLabel>
                             <FormControl>
-                              <Input v-model="password" type="text" placeholder="password" v-bind="componentField" class="w-[calc(100%-16px)] mt-1 mx-2 p-1 md:p-2 ps-1 md:ps-4 rounded-lg" />
+                              <Input v-model="password" type="text" :placeholder="t('aurorite.ui.password')" v-bind="componentField" class="w-[calc(100%-16px)] mt-1 mx-2 p-1 md:p-2 ps-1 md:ps-4 rounded-lg" />
                             </FormControl>
                             <FormMessage class="mx-2 ps-1 md:ps-4" />
                           </FormItem>
                         </FormField>
                         <div class="flex items-center justify-center h-[30%] md:h-[35%] mt-[3%] md:mt-[4%] pb-[1%] md:pb-[4%]">
                             <Button class="transition duration-300 ease-in-out cursor-pointer w-[50%] p-1 m-3 text-[1rem] bg-green rounded-lg mix-blend-normal hover:scale-110 hover:bg-[#A3FFCD]" @click="handleSubmit" >
-                                Login
+                              {{t('aurorite.ui.login')}}
                             </Button>
                         </div>
                       </form>

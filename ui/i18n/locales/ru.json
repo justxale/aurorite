@@ -1,3 +1,18 @@
 {
-
+  "aurorite": {
+    "ui": {
+      "username": "Имя пользователя",
+      "password": "Пароль",
+      "login": "Войти",
+      "goBack": "Вернуться назад"
+    },
+    "errors": {
+      "formRequired": "Обязательное поле",
+      "formPasswordCharacters": "Пароль должен содержать не менее 8 символов",
+      "notFound": "Пользователь {username} не найден",
+      "notAuthorized": "Пользователь {username} не авторизован",
+      "httpError": "Произошла ошибка {statusCode}",
+      "error500": "Сервер недоступен"
+    }
+  }
 }
