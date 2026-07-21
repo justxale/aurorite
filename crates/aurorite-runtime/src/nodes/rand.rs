@@ -7,7 +7,6 @@ use uuid::Uuid;
 
 fn get_character_field(ctx: &AuroriteCtx, character_id: Uuid, and_then: impl FnOnce(&Character) -> Dice) -> Result<Dice, ScriptError> {
     ctx.lock()
-        .map_err(|e| ScriptError::RuntimeError(e.to_string()))?
         .character(character_id)
         .map(and_then)
         .ok_or(ScriptError::RuntimeError(format!("character {} not found", character_id)))

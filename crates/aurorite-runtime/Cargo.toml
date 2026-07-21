@@ -12,6 +12,7 @@ aurorite-util = { path = "../aurorite-util" }
 aurorite-agsp = { path = "../aurorite-agsp" }
 aurorite-dataflow = { path = "../aurorite-dataflow" }
 tracing = "0.1.44"
+parking_lot = { version = "0.12.5"}
 uuid = { version = "1.23.1", features = ["serde"] }
 serde = { version = "1.0.228", features = ["derive"] }
 tokio = { version = "1.52.0" }

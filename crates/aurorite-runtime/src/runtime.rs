@@ -1,4 +1,5 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use parking_lot::Mutex;
 use vismut_core::schemas::ScriptSchema;
 use vismut_core::{RegistryError, VismutRuntime, VismutScript};
 use vismut_core::nodes::build_math_nodes;
@@ -6,6 +7,7 @@ use crate::nodes::build_rand_nodes;
 use crate::RuntimeCtx;
 
 type ArcedCtx = Arc<Mutex<RuntimeCtx>>;
+static INCLUSION_ERROR: &str = "failed to start Vismut runtime";
 
 pub struct AuroriteRuntime {
     ctx: ArcedCtx,

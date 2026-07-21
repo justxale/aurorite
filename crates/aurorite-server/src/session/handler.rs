@@ -1,4 +1,5 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use parking_lot::Mutex;
 use futures_util::{StreamExt, SinkExt};
 use axum::extract::ws::{close_code, CloseFrame, Message, Utf8Bytes, WebSocket};
 use dashmap::DashMap;
@@ -189,7 +190,7 @@ impl Session {
             .await
             .map_err(|_| "failed to load campaign")?;
 
-        let mut lock = self.ctx.lock().map_err(|_| "failed to lock")?;
+        let mut lock = self.ctx.lock();
         if let Some(dto) = record.scene.get().as_ref().and_then(|s| SceneDto::try_from(s).ok()) {
             lock.switch_scene(dto);
         } else {
@@ -207,7 +208,7 @@ impl Session {
         {
             Err(_) => Err("scene not found"),
             Ok(s) => {
-                let mut lock = self.ctx.lock().map_err(|_| "failed to lock")?;
+                let mut lock = self.ctx.lock();
                 lock.switch_scene(SceneDto::try_from(&s)?);
                 Ok(())
             }
@@ -216,7 +217,7 @@ impl Session {
 
     pub async fn load_spell(&mut self, character_id: Uuid, spell_id: Uuid) -> Result<(), &'static str> {
         let (t, asset) = {
-            let ctx = self.ctx.lock().map_err(|_| "failed to lock context")?;
+            let ctx = self.ctx.lock();
             let s = ctx.character(character_id).and_then(|c| c.spell(spell_id)).ok_or("failed to load spell")?;
             match s.script {
                 Script::Python => unimplemented!("python is not supported yet"),
@@ -236,18 +237,13 @@ impl Session {
                 self.rt.parse(&schema).map_err(|_| "registry error occured")?
             }
         };
-        self.ctx.lock().map_err(|_| "failed to lock context")?.character_mut(character_id).and_then(|c| c.spell_mut(spell_id).map(|s| s.cached_script = CachedScript::Vismut(script)));
+        self.ctx.lock().character_mut(character_id).and_then(|c| c.spell_mut(spell_id).map(|s| s.cached_script = CachedScript::Vismut(script)));
 
         Ok(())
     }
 
     async fn save_state(&self, db: &mut Db) -> Result<(), &'static str> {
-        let map = {
-            match self.ctx.lock() {
-                Ok(ctx) => ctx.characters_current_hits(),
-                Err(e) => e.into_inner().characters_current_hits(),
-            }
-        };
+        let map = self.ctx.lock().characters_current_hits();
         let mut tx = db.transaction().await.map_err(|_| "db failure")?;
         for (id, hits) in map {
             let _ = CampaignCharacter::update_by_character_id_and_campaign_id(id, self.campaign_id)

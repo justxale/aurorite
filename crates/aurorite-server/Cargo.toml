@@ -27,6 +27,7 @@ tokio-util = { version = "0.7.18", features = ["compat", "io"] }
 dashmap = { version = "7.0.0-rc2", features = ["inline-more"] }
 serde_json = "1.0.150"
 futures-util = "0.3.32"
+parking_lot = { version = "0.12.5" }
 
 [dev-dependencies]
 http-body-util = "0.1.3"

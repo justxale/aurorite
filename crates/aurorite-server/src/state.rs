@@ -46,7 +46,6 @@ impl AuroriteState {
         session
             .ctx()
             .lock()
-            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new("failed to lock").json()))?
             .character(character_id)
             .map(f)
             .ok_or((

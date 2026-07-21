@@ -1,4 +1,5 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use parking_lot::Mutex;
 use vismut_core::BuiltNode;
 use crate::RuntimeCtx;
 

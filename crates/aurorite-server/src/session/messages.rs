@@ -1,4 +1,4 @@
-use crate::responses::{MessageInfo, SessionClientInfo};
+use crate::responses::SessionClientInfo;
 use std::fmt::Display;
 use axum::extract::ws::Message;
 use jiff::Timestamp;
