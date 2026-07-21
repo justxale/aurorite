@@ -1,26 +1,22 @@
-use crate::{RuntimeEvent, Scene};
 use crate::Character;
+use crate::{RuntimeEvent, Scene};
+use aurorite_dataflow::database::{CampaignCharacter, Db};
+use aurorite_dataflow::dto::SceneDto;
 use std::collections::HashMap;
 use tokio::sync::mpsc::Sender;
 use uuid::Uuid;
-use aurorite_dataflow::database::{CampaignCharacter, Db};
-use aurorite_dataflow::dto::SceneDto;
 
 #[derive(Debug)]
 pub struct Initiative {
-    pub order: Vec<(Uuid, i64)>
+    pub order: Vec<(Uuid, i64)>,
 }
 
 impl Initiative {
     pub fn new() -> Self {
-        Self {
-            order: Vec::new()
-        }
+        Self { order: Vec::new() }
     }
 
-    pub fn add_character(&mut self, character: &Character) {
-
-    }
+    pub fn add_character(&mut self, character: &Character) {}
 }
 
 #[derive(Debug)]
@@ -29,13 +25,14 @@ pub struct RuntimeCtx {
     scene: Option<Scene>,
     initiative: Option<Initiative>,
     characters: HashMap<Uuid, Character>,
-    sender: Sender<RuntimeEvent>
+    sender: Sender<RuntimeEvent>,
 }
 
 impl RuntimeCtx {
     pub fn new(campaign_id: Uuid, sender: Sender<RuntimeEvent>) -> Self {
         Self {
-            campaign_id, sender,
+            campaign_id,
+            sender,
             initiative: None,
             scene: None,
             characters: HashMap::new(),
@@ -46,10 +43,8 @@ impl RuntimeCtx {
         let mut characters = Vec::with_capacity(dto.preloads.len());
         for p in dto.preloads {
             characters.push((p.character.id.uuid(), p.is_visible));
-            self.characters.insert(
-                p.character.id.uuid(),
-                Character::from(p.character)
-            );
+            self.characters
+                .insert(p.character.id.uuid(), Character::from(p.character));
         }
         self.scene = Some(Scene {
             characters,
@@ -68,7 +63,7 @@ impl RuntimeCtx {
                 Some(c) => initiative.add_character(c),
                 None => {
                     tracing::error!("character {} was not found", id);
-                    return Err("character was not found")
+                    return Err("character was not found");
                 }
             }
         }
@@ -82,7 +77,10 @@ impl RuntimeCtx {
     }
 
     pub fn characters_current_hits(&self) -> Vec<(Uuid, u16)> {
-        self.characters.values().map(|c| (c.id, c.current_hits)).collect()
+        self.characters
+            .values()
+            .map(|c| (c.id, c.current_hits))
+            .collect()
     }
 
     pub fn characters(&self) -> &HashMap<Uuid, Character> {

@@ -1,8 +1,8 @@
 use crate::responses::SessionClientInfo;
-use std::fmt::Display;
 use axum::extract::ws::Message;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 
 #[derive(Debug, Copy, Clone, Deserialize)]
 pub enum WebsocketError {
@@ -24,16 +24,27 @@ impl std::error::Error for WebsocketError {}
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "type", content = "payload", rename_all = "snake_case")]
 pub enum WebsocketMessage {
-    Auth { token: String },
-    Chat { client: SessionClientInfo, content: String, created_at: Timestamp },
-    Shutdown { reason: Option<String> }
+    Auth {
+        token: String,
+    },
+    Chat {
+        client: SessionClientInfo,
+        content: String,
+        created_at: Timestamp,
+    },
+    Shutdown {
+        reason: Option<String>,
+    },
 }
 
 impl TryFrom<&Message> for WebsocketMessage {
     type Error = WebsocketError;
     fn try_from(message: &Message) -> Result<Self, Self::Error> {
         serde_json::from_str::<Self>(
-            message.to_text().map_err(|_| WebsocketError::InvalidEncoding)?
-        ).map_err(|_| WebsocketError::InvalidSchema)
+            message
+                .to_text()
+                .map_err(|_| WebsocketError::InvalidEncoding)?,
+        )
+        .map_err(|_| WebsocketError::InvalidSchema)
     }
 }

@@ -1,18 +1,18 @@
-use std::fmt::Debug;
-use std::sync::Arc;
-use parking_lot::Mutex;
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use crate::RuntimeCtx;
 use aurorite_dataflow::database::{Casting, Duration, Materials, Range, School, Script};
 use aurorite_dataflow::dto::SpellDto;
+use parking_lot::Mutex;
+use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
+use std::sync::Arc;
+use uuid::Uuid;
 use vismut_core::VismutScript;
-use crate::RuntimeCtx;
 
 #[derive(Default)]
 pub enum CachedScript {
     #[default]
     None,
-    Vismut(VismutScript<Arc<Mutex<RuntimeCtx>>>)
+    Vismut(VismutScript<Arc<Mutex<RuntimeCtx>>>),
 }
 
 impl Debug for CachedScript {
@@ -23,7 +23,6 @@ impl Debug for CachedScript {
         }
     }
 }
-
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Spell {
@@ -58,7 +57,7 @@ impl Clone for Spell {
             duration: self.duration,
             script: self.script.clone(),
             script_asset: self.script_asset.clone(),
-            cached_script: CachedScript::None
+            cached_script: CachedScript::None,
         }
     }
 }
@@ -77,7 +76,7 @@ impl From<SpellDto> for Spell {
             duration: value.duration,
             script: value.script_type,
             script_asset: value.script_asset,
-            cached_script: CachedScript::None
+            cached_script: CachedScript::None,
         }
     }
 }

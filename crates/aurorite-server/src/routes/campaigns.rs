@@ -1,14 +1,14 @@
-use aurorite_dataflow::database::{AccessState, Campaign, CampaignClient, Visibility};
 use crate::extractors::{AuthorizedAdmin, AuthorizedClient, AuthorizedMaster};
 use crate::requests::{PostCampaign, PutCampaignSession};
 use crate::responses::{AuroriteErrorResponse, ClientCampaigns, FailableResponse};
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
+use aurorite_dataflow::database::{AccessState, Campaign, CampaignClient, Visibility};
+use aurorite_dataflow::dto::CampaignDto;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::routing::get;
 use axum::{Json, Router};
-use aurorite_dataflow::dto::CampaignDto;
 
 async fn get_campaigns(
     State(state): State<AuroriteState>,
@@ -67,7 +67,10 @@ async fn post_campaign(
             match res {
                 Ok(record) => match CampaignDto::try_from(record) {
                     Ok(res) => Ok((StatusCode::CREATED, res.json())),
-                    Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json())),
+                    Err(err) => Err((
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        AuroriteErrorResponse::new(err).json(),
+                    )),
                 },
                 Err(err) => Err((
                     StatusCode::INTERNAL_SERVER_ERROR,
@@ -95,7 +98,12 @@ async fn delete_campaign(
     AuthorizedMaster(_client, mut campaign): AuthorizedMaster<false>,
     State(state): State<AuroriteState>,
 ) -> Result<(StatusCode, ()), (StatusCode, Json<AuroriteErrorResponse>)> {
-    match campaign.update().is_active(false).exec(&mut state.db()).await {
+    match campaign
+        .update()
+        .is_active(false)
+        .exec(&mut state.db())
+        .await
+    {
         Err(err) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             AuroriteErrorResponse::new(err).json(),
@@ -117,7 +125,7 @@ async fn put_campaign_session(
 ) -> FailableResponse<AccessState> {
     let record = match body.visibility {
         Visibility::Private => campaign.update().access_state(AccessState::private()),
-        Visibility::InviteOnly => campaign.update().access_state(AccessState::invite_only())
+        Visibility::InviteOnly => campaign.update().access_state(AccessState::invite_only()),
     };
     match record.exec(&mut state.db()).await {
         Ok(_) => {
@@ -126,8 +134,11 @@ async fn put_campaign_session(
                 Visibility::InviteOnly => state.manager.attach(campaign.id),
             };
             Ok((StatusCode::OK, campaign.access_state.json()))
-        },
-        Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json())),
+        }
+        Err(err) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            AuroriteErrorResponse::new(err).json(),
+        )),
     }
 }
 
@@ -135,5 +146,8 @@ pub fn build_campaign_routes() -> Router<AuroriteState> {
     Router::new()
         .route("/", get(get_campaigns).post(post_campaign))
         .route("/{campaign_id}", get(get_campaign).delete(delete_campaign))
-        .route("/{campaign_id}/session", get(get_campaign_session).put(put_campaign_session))
+        .route(
+            "/{campaign_id}/session",
+            get(get_campaign_session).put(put_campaign_session),
+        )
 }

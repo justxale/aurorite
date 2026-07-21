@@ -1,20 +1,20 @@
-use std::sync::Arc;
-use parking_lot::Mutex;
-use futures_util::{StreamExt, SinkExt};
-use axum::extract::ws::{close_code, CloseFrame, Message, Utf8Bytes, WebSocket};
-use dashmap::DashMap;
-use dashmap::mapref::one::Ref;
-use futures_util::stream::SplitSink;
-use jiff::Timestamp;
-use tokio::sync::mpsc::{channel, Receiver, Sender};
-use tokio::task::JoinSet;
-use uuid::Uuid;
+use crate::session::WebsocketMessage;
 use aurorite_agsp::loader::load_text_file;
 use aurorite_dataflow::database::{Campaign, CampaignCharacter, Db, Scene, Script};
 use aurorite_dataflow::dto::SceneDto;
 use aurorite_runtime::{AuroriteRuntime, CachedScript, RuntimeCtx, RuntimeEvent, ScriptSchema};
 use aurorite_util::jwt::decode_key;
-use crate::session::WebsocketMessage;
+use axum::extract::ws::{CloseFrame, Message, Utf8Bytes, WebSocket, close_code};
+use dashmap::DashMap;
+use dashmap::mapref::one::Ref;
+use futures_util::stream::SplitSink;
+use futures_util::{SinkExt, StreamExt};
+use jiff::Timestamp;
+use parking_lot::Mutex;
+use std::sync::Arc;
+use tokio::sync::mpsc::{Receiver, Sender, channel};
+use tokio::task::JoinSet;
+use uuid::Uuid;
 
 const BUFFER_SIZE: usize = 128;
 
@@ -28,7 +28,7 @@ struct SendEvent {
 #[derive(Debug)]
 pub struct SessionClient {
     pub id: Uuid,
-    pub name: String
+    pub name: String,
 }
 
 pub struct Session {
@@ -48,7 +48,8 @@ impl Session {
         let (sender, _) = channel::<RuntimeEvent>(BUFFER_SIZE);
         let ctx = Arc::new(Mutex::new(RuntimeCtx::new(campaign_id, sender)));
         Self {
-            campaign_id, db,
+            campaign_id,
+            db,
             clients: DashMap::new(),
             guests: DashMap::new(),
             sockets: DashMap::new(),
@@ -57,12 +58,12 @@ impl Session {
             started_at: Timestamp::now(),
         }
     }
-    
+
     #[inline]
     pub fn ctx(&self) -> &Arc<Mutex<RuntimeCtx>> {
         &self.ctx
     }
-    
+
     #[inline]
     pub fn clients(&self) -> &DashMap<Uuid, SessionClient> {
         &self.clients
@@ -74,7 +75,10 @@ impl Session {
     }
 
     pub async fn attach(&self, mut socket: WebSocket) {
-        let err = Message::Close(Some(CloseFrame { code: close_code::POLICY, reason: Utf8Bytes::from_static("unauthorized")}));
+        let err = Message::Close(Some(CloseFrame {
+            code: close_code::POLICY,
+            reason: Utf8Bytes::from_static("unauthorized"),
+        }));
         let msg = if let Some(msg) = socket.recv().await {
             msg
         } else {
@@ -90,7 +94,15 @@ impl Session {
                 let _ = socket.send(err).await;
                 return;
             };
-            tracing::info!("websocket for {} {} attached", if payload.is_guest.unwrap_or(false) { "guest" } else { "client" }, payload.id());
+            tracing::info!(
+                "websocket for {} {} attached",
+                if payload.is_guest.unwrap_or(false) {
+                    "guest"
+                } else {
+                    "client"
+                },
+                payload.id()
+            );
             let (sender, reader) = channel::<WebsocketMessage>(BUFFER_SIZE);
             self.sockets
                 .entry(payload.id())
@@ -113,7 +125,7 @@ impl Session {
                     id: *conn.key(),
                     client_id: *client.key(),
                     msg: msg.clone(),
-                    sender: conn.value().clone()
+                    sender: conn.value().clone(),
                 };
                 Self::handle_event(&mut set, event);
             }
@@ -134,16 +146,23 @@ impl Session {
                 id: *conn.key(),
                 client_id,
                 msg: msg.clone(),
-                sender: conn.value().clone()
+                sender: conn.value().clone(),
             };
             Self::handle_event(&mut set, event);
         }
         self.handle_set(set).await;
     }
 
-    async fn handle_sender(mut sink: SplitSink<WebSocket, Message>, mut stream: Receiver<WebsocketMessage>) {
+    async fn handle_sender(
+        mut sink: SplitSink<WebSocket, Message>,
+        mut stream: Receiver<WebsocketMessage>,
+    ) {
         while let Some(event) = stream.recv().await {
-            let _ = sink.send(Message::Text(Utf8Bytes::from(serde_json::to_string(&event).unwrap()))).await;
+            let _ = sink
+                .send(Message::Text(Utf8Bytes::from(
+                    serde_json::to_string(&event).unwrap(),
+                )))
+                .await;
         }
     }
 
@@ -161,7 +180,9 @@ impl Session {
     async fn handle_set(&self, mut set: JoinSet<Result<(), SendEvent>>) {
         let mut retry_set = JoinSet::new();
         while let Some(res) = set.join_next().await {
-            if let Ok(res) = res && let Err(event) = res {
+            if let Ok(res) = res
+                && let Err(event) = res
+            {
                 tracing::warn!("trying to resend message");
                 Self::handle_event(&mut retry_set, event);
             }
@@ -170,7 +191,9 @@ impl Session {
             if res.is_err() {
                 tracing::error!("unspecified error during execution");
             }
-            if let Ok(res) = res && let Err(event) = res {
+            if let Ok(res) = res
+                && let Err(event) = res
+            {
                 tracing::error!("failed to send message after retry");
                 if let Some(set) = self.sockets.get(&event.client_id) {
                     set.remove(&event.id);
@@ -191,7 +214,12 @@ impl Session {
             .map_err(|_| "failed to load campaign")?;
 
         let mut lock = self.ctx.lock();
-        if let Some(dto) = record.scene.get().as_ref().and_then(|s| SceneDto::try_from(s).ok()) {
+        if let Some(dto) = record
+            .scene
+            .get()
+            .as_ref()
+            .and_then(|s| SceneDto::try_from(s).ok())
+        {
             lock.switch_scene(dto);
         } else {
             lock.remove_scene();
@@ -215,15 +243,20 @@ impl Session {
         }
     }
 
-    pub async fn load_spell(&mut self, character_id: Uuid, spell_id: Uuid) -> Result<(), &'static str> {
+    pub async fn load_spell(
+        &mut self,
+        character_id: Uuid,
+        spell_id: Uuid,
+    ) -> Result<(), &'static str> {
         let (t, asset) = {
             let ctx = self.ctx.lock();
-            let s = ctx.character(character_id).and_then(|c| c.spell(spell_id)).ok_or("failed to load spell")?;
+            let s = ctx
+                .character(character_id)
+                .and_then(|c| c.spell(spell_id))
+                .ok_or("failed to load spell")?;
             match s.script {
                 Script::Python => unimplemented!("python is not supported yet"),
-                Script::Vismut => {
-                    (Script::Vismut, s.script_asset.clone())
-                }
+                Script::Vismut => (Script::Vismut, s.script_asset.clone()),
             }
         };
         let script = match t {
@@ -231,13 +264,19 @@ impl Session {
             Script::Vismut => {
                 let content = match load_text_file(asset).await {
                     Ok(c) => c,
-                    Err(_) => return Err("script loading failed")
+                    Err(_) => return Err("script loading failed"),
                 };
-                let schema = serde_json::from_str::<ScriptSchema>(&content).map_err(|_| "invalid json")?;
-                self.rt.parse(&schema).map_err(|_| "registry error occured")?
+                let schema =
+                    serde_json::from_str::<ScriptSchema>(&content).map_err(|_| "invalid json")?;
+                self.rt
+                    .parse(&schema)
+                    .map_err(|_| "registry error occured")?
             }
         };
-        self.ctx.lock().character_mut(character_id).and_then(|c| c.spell_mut(spell_id).map(|s| s.cached_script = CachedScript::Vismut(script)));
+        self.ctx.lock().character_mut(character_id).and_then(|c| {
+            c.spell_mut(spell_id)
+                .map(|s| s.cached_script = CachedScript::Vismut(script))
+        });
 
         Ok(())
     }
@@ -248,15 +287,20 @@ impl Session {
         for (id, hits) in map {
             let _ = CampaignCharacter::update_by_character_id_and_campaign_id(id, self.campaign_id)
                 .current_hits(hits)
-                .exec(&mut tx).await;
+                .exec(&mut tx)
+                .await;
         }
-        tx.commit().await.map_err(|_| "transaction failed, data will not be saved")?;
+        tx.commit()
+            .await
+            .map_err(|_| "transaction failed, data will not be saved")?;
         Ok(())
     }
 
     async fn cleanup(self, db: &mut Db) {
         let (_, _) = tokio::join!(
-            self.broadcast(WebsocketMessage::Shutdown { reason: Some("disconnecting".to_string()) }),
+            self.broadcast(WebsocketMessage::Shutdown {
+                reason: Some("disconnecting".to_string())
+            }),
             self.save_state(db)
         );
     }
@@ -264,7 +308,7 @@ impl Session {
 
 pub struct SessionManager {
     sessions: DashMap<Uuid, Session>,
-    db: Db
+    db: Db,
 }
 
 impl SessionManager {
@@ -281,14 +325,14 @@ impl SessionManager {
     }
 
     #[inline]
-    pub fn session(&self, session_id: Uuid) ->  Option<Ref<'_, Uuid, Session>>
-    {
+    pub fn session(&self, session_id: Uuid) -> Option<Ref<'_, Uuid, Session>> {
         self.sessions.get(&session_id)
     }
 
     #[inline]
     pub fn attach(&self, campaign_id: Uuid) {
-        self.sessions.insert(campaign_id, Session::new(campaign_id, self.db.clone()));
+        self.sessions
+            .insert(campaign_id, Session::new(campaign_id, self.db.clone()));
     }
 
     #[inline]

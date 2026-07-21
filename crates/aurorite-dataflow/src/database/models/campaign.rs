@@ -78,14 +78,14 @@ pub struct Campaign {
     #[has_many]
     pub characters: Deferred<Vec<CampaignCharacter>>,
     #[has_many]
-    pub scenes: Deferred<Vec<CampaignScene>>
+    pub scenes: Deferred<Vec<CampaignScene>>,
 }
 
 #[derive(Clone, Debug, Model)]
 pub struct CampaignCharacter {
     pub current_hits: u16,
     pub is_enemy: bool,
-    
+
     #[index]
     #[key]
     character_id: Uuid,

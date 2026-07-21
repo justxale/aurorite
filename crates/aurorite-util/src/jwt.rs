@@ -51,7 +51,8 @@ impl Authorization {
         let now = jiff::Timestamp::now();
         let exp = now + TOKEN_LIFETIME.hours();
         Self {
-            sub, is_guest: None,
+            sub,
+            is_guest: None,
             iat: now.as_second(),
             exp: exp.as_second(),
         }

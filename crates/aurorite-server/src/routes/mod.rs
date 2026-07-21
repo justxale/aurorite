@@ -9,6 +9,7 @@ mod rolls;
 mod session;
 
 use crate::state::AuroriteState;
+use aurorite_util::common::create_hex;
 use axum::extract::{MatchedPath, Request};
 use axum::response::Response;
 use axum::routing::any;
@@ -20,7 +21,6 @@ use tower_http::services::ServeDir;
 use tower_http::timeout::TimeoutLayer;
 use tower_http::trace::TraceLayer;
 use tracing::Span;
-use aurorite_util::common::create_hex;
 
 pub fn build_routes() -> Router<AuroriteState> {
     Router::new()

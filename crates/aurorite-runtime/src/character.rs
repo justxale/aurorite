@@ -1,10 +1,10 @@
 use crate::spell::Spell;
+use aurorite_dataflow::dto::{AbilitiesDto, AbilityDto, CharacterDto, SkillDto, SkillsDto};
+use aurorite_dataflow::enums::{Ability, Skill};
+use aurorite_util::formulas::{Dice, get_proficiency_bonus};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
-use serde::{Serialize, Deserialize};
-use aurorite_dataflow::dto::{AbilitiesDto, CharacterDto, SkillsDto, SkillDto, AbilityDto};
-use aurorite_dataflow::enums::{Ability, Skill};
-use aurorite_util::formulas::{get_proficiency_bonus, Dice};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Character {
@@ -21,7 +21,7 @@ pub struct Character {
     pub mastery: u8,
     pub abilities: AbilitiesDto,
     pub skills: SkillsDto,
-    pub spells: HashMap<Uuid, Spell>
+    pub spells: HashMap<Uuid, Spell>,
 }
 
 impl Character {
@@ -75,7 +75,7 @@ impl Character {
         let bonus = self.mastery * value.save_throw.as_u8();
         Dice::new(1, 20, Some(value.modification + bonus as i16))
     }
-    
+
     pub fn spell(&self, spell_id: Uuid) -> Option<&Spell> {
         self.spells.get(&spell_id)
     }
@@ -90,7 +90,7 @@ impl From<CharacterDto> for Character {
         Self {
             id: dto.id.uuid(),
             controlled_by: dto.owner.id,
-            
+
             name: dto.name.unwrap_or(dto.full_name),
             level: dto.level,
             is_enemy: dto.is_enemy,
@@ -100,7 +100,11 @@ impl From<CharacterDto> for Character {
             mastery: get_proficiency_bonus(dto.level),
             skills: dto.skills,
             abilities: dto.abilities,
-            spells: dto.spells.into_iter().map(|v| (v.id, Spell::from(v))).collect(),
+            spells: dto
+                .spells
+                .into_iter()
+                .map(|v| (v.id, Spell::from(v)))
+                .collect(),
         }
     }
 }

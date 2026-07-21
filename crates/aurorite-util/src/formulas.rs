@@ -32,13 +32,8 @@ impl Dice {
 
     pub fn roll(&self) -> DiceRollResult {
         let all = fastrand::choose_multiple(1..=self.max, self.amount as usize);
-        let sum = all
-            .iter()
-            .fold(0i64, |tmp, v| tmp + *v as i64) + self.bonus.unwrap_or(0) as i64;
-        DiceRollResult {
-            sum,
-            all,
-        }
+        let sum = all.iter().fold(0i64, |tmp, v| tmp + *v as i64) + self.bonus.unwrap_or(0) as i64;
+        DiceRollResult { sum, all }
     }
 }
 
@@ -47,15 +42,30 @@ impl FromStr for Dice {
     fn from_str(query: &str) -> Result<Self, Self::Err> {
         let (amount, rest) = match query.split_once('d') {
             None => return Err("invalid roll query".to_string()),
-            Some((amount, rest)) => (amount.parse::<u16>().map_err(|_| format!("invalid amount: {amount}",))?, rest),
+            Some((amount, rest)) => (
+                amount
+                    .parse::<u16>()
+                    .map_err(|_| format!("invalid amount: {amount}",))?,
+                rest,
+            ),
         };
         let (max, bonus) = match rest.find(['+', '-']) {
             Some(pos) => {
-                let sides = rest[..pos].parse::<u16>().map_err(|_| format!("invalid max: {}", &rest[..pos]))?;
-                let bonus = Some(rest[pos..].parse::<i16>().map_err(|_| format!("invalid bonus: {}", &rest[pos..]))?);
+                let sides = rest[..pos]
+                    .parse::<u16>()
+                    .map_err(|_| format!("invalid max: {}", &rest[..pos]))?;
+                let bonus = Some(
+                    rest[pos..]
+                        .parse::<i16>()
+                        .map_err(|_| format!("invalid bonus: {}", &rest[pos..]))?,
+                );
                 (sides, bonus)
             }
-            None => (rest.parse::<u16>().map_err(|_| format!("invalid max: {rest}"))?, None),
+            None => (
+                rest.parse::<u16>()
+                    .map_err(|_| format!("invalid max: {rest}"))?,
+                None,
+            ),
         };
         Ok(Self::new(amount, max, bonus))
     }

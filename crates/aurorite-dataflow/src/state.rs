@@ -6,11 +6,10 @@ pub async fn build_connection<const IS_TEST: bool>() -> Db {
     let mut builder = Db::builder();
     builder.models(toasty::models!(crate::*));
     let mut connection = if IS_TEST {
-        builder.connect("sqlite::memory:")
-            .await
-            .unwrap()
+        builder.connect("sqlite::memory:").await.unwrap()
     } else {
-        builder.connect(format!("sqlite:///{}?mode=rwc", env().database_path).as_str())
+        builder
+            .connect(format!("sqlite:///{}?mode=rwc", env().database_path).as_str())
             .await
             .unwrap()
     };

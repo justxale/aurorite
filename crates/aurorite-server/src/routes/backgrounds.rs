@@ -1,17 +1,15 @@
-use aurorite_dataflow::database::{Background, ToastyJson};
 use crate::extractors::{AuthorizedAdmin, AuthorizedClient};
 use crate::requests::PostBackground;
-use crate::responses::{
-    AllBackgroundsInfo, AuroriteErrorResponse, FailableResponse,
-};
+use crate::responses::{AllBackgroundsInfo, AuroriteErrorResponse, FailableResponse};
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
+use aurorite_dataflow::database::{Background, ToastyJson};
+use aurorite_dataflow::dto::BackgroundDto;
 use aurorite_util::uuid::EncodedUuid;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::routing::get;
 use axum::{Json, Router};
-use aurorite_dataflow::dto::BackgroundDto;
 
 async fn get_backgrounds(
     State(state): State<AuroriteState>,

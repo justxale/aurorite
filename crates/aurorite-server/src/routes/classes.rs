@@ -1,15 +1,15 @@
-use aurorite_dataflow::database::{Class, ToastyJson};
 use crate::extractors::{AuthorizedAdmin, AuthorizedClient};
 use crate::requests::PostClass;
 use crate::responses::{AllClassesInfo, AuroriteErrorResponse, FailableResponse};
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
+use aurorite_dataflow::database::{Class, ToastyJson};
+use aurorite_dataflow::dto::ClassDto;
 use aurorite_util::uuid::EncodedUuid;
 use axum::Router;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::routing::get;
-use aurorite_dataflow::dto::ClassDto;
 
 async fn get_classes(
     State(state): State<AuroriteState>,

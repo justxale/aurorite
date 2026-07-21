@@ -144,7 +144,7 @@ pub mod serde_support {
 
 #[cfg(test)]
 mod tests {
-    use crate::uuid::{decode_uuid, encode_uuid, EncodedUuid};
+    use crate::uuid::{EncodedUuid, decode_uuid, encode_uuid};
     const LOOPS: usize = 300_000;
 
     #[test]

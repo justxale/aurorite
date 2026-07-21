@@ -1,19 +1,19 @@
-use aurorite_dataflow::database::{Background, Character, Class, Race, Db};
 use crate::extractors::AuthorizedClient;
 use crate::requests::{
     PostCharacterBase, PutCharacterBackground, PutCharacterClass, PutCharacterRace,
 };
 use crate::responses::FailableResponse;
-use crate::responses::{AuroriteErrorResponse, ClientCharacters, CharacterInfo};
+use crate::responses::{AuroriteErrorResponse, CharacterInfo, ClientCharacters};
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
+use aurorite_dataflow::database::{Background, Character, Class, Db, Race};
+use aurorite_dataflow::dto::{BackgroundDto, CharacterDto, ClassDto, RaceDto};
 use aurorite_util::uuid::EncodedUuid;
 use axum::Router;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::routing::get;
 use uuid::Uuid;
-use aurorite_dataflow::dto::{BackgroundDto, CharacterDto, ClassDto, RaceDto};
 
 async fn get_characters(
     State(state): State<AuroriteState>,
@@ -67,7 +67,10 @@ async fn post_character(
     match record {
         Ok(ref record) => match CharacterDto::try_from(record) {
             Ok(info) => Ok((StatusCode::CREATED, info.json())),
-            Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json())),
+            Err(err) => Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                AuroriteErrorResponse::new(err).json(),
+            )),
         },
         Err(err) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -88,7 +91,10 @@ async fn get_character(
     {
         Ok(ref record) => match CharacterDto::try_from(record) {
             Ok(info) => Ok((StatusCode::OK, info.json())),
-            Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json())),
+            Err(err) => Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                AuroriteErrorResponse::new(err).json(),
+            )),
         },
         Err(err) => {
             if err.is_record_not_found() {
@@ -174,8 +180,12 @@ async fn put_character_class(
                         AuroriteErrorResponse::new(err).json(),
                     )
                 })?;
-            let response = CharacterDto::try_from(&record)
-                .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))?;
+            let response = CharacterDto::try_from(&record).map_err(|err| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    AuroriteErrorResponse::new(err).json(),
+                )
+            })?;
             Ok((StatusCode::OK, response.json()))
         }
         Err(err) => Err((
@@ -194,7 +204,12 @@ async fn delete_character_class(
     let mut record = get_character_record(&mut db, client.id, character_id).await?;
     match record.update().class(None).exec(&mut db).await {
         Ok(_) => CharacterDto::try_from(&record)
-            .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))
+            .map_err(|err| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    AuroriteErrorResponse::new(err).json(),
+                )
+            })
             .map(|record| (StatusCode::OK, record.json())),
         Err(err) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -247,8 +262,12 @@ async fn put_character_race(
                         AuroriteErrorResponse::new(err).json(),
                     )
                 })?;
-            let response = CharacterDto::try_from(&record)
-                .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))?;
+            let response = CharacterDto::try_from(&record).map_err(|err| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    AuroriteErrorResponse::new(err).json(),
+                )
+            })?;
             Ok((StatusCode::OK, response.json()))
         }
         Err(err) => Err((
@@ -267,7 +286,12 @@ async fn delete_character_race(
     let mut record = get_character_record(&mut db, client.id, character_id).await?;
     match record.update().race(None).exec(&mut db).await {
         Ok(_) => CharacterDto::try_from(&record)
-            .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))
+            .map_err(|err| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    AuroriteErrorResponse::new(err).json(),
+                )
+            })
             .map(|record| (StatusCode::OK, record.json())),
         Err(err) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -324,8 +348,12 @@ async fn put_character_background(
                         AuroriteErrorResponse::new(err).json(),
                     )
                 })?;
-            let response = CharacterDto::try_from(&record)
-                .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))?;
+            let response = CharacterDto::try_from(&record).map_err(|err| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    AuroriteErrorResponse::new(err).json(),
+                )
+            })?;
             Ok((StatusCode::OK, response.json()))
         }
         Err(err) => Err((
@@ -344,7 +372,12 @@ async fn delete_character_background(
     let mut record = get_character_record(&mut db, client.id, character_id).await?;
     match record.update().background(None).exec(&mut db).await {
         Ok(_) => CharacterDto::try_from(&record)
-            .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))
+            .map_err(|err| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    AuroriteErrorResponse::new(err).json(),
+                )
+            })
             .map(|record| (StatusCode::OK, record.json())),
         Err(err) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,

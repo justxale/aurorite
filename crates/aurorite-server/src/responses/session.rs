@@ -1,8 +1,8 @@
-use jiff::Timestamp;
-use serde::{Serialize, Deserialize};
-use uuid::Uuid;
 use crate::session::{Session, SessionClient};
 use aurorite_runtime::Character;
+use jiff::Timestamp;
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct SessionClientInfo {
@@ -33,7 +33,7 @@ impl SessionClientInfo {
 pub struct MessageInfo {
     pub client: SessionClientInfo,
     pub content: String,
-    pub created_at: Timestamp
+    pub created_at: Timestamp,
 }
 
 #[derive(Serialize)]
@@ -45,12 +45,14 @@ pub struct SessionInfo {
 impl From<&Session> for SessionInfo {
     fn from(session: &Session) -> Self {
         let mut clients = Vec::with_capacity(session.clients().len() + session.guests().len());
-        session.clients().iter().for_each(|client| {
-            clients.push(SessionClientInfo::from_client(&client))
-        });
-        session.guests().iter().for_each(|guest| {
-            clients.push(SessionClientInfo::from_guest(&guest))
-        });
+        session
+            .clients()
+            .iter()
+            .for_each(|client| clients.push(SessionClientInfo::from_client(&client)));
+        session
+            .guests()
+            .iter()
+            .for_each(|guest| clients.push(SessionClientInfo::from_guest(&guest)));
         Self {
             clients,
             started_at: session.started_at,
@@ -60,5 +62,5 @@ impl From<&Session> for SessionInfo {
 
 #[derive(Serialize)]
 pub struct SessionCharacters {
-    pub characters: Vec<Character>
+    pub characters: Vec<Character>,
 }

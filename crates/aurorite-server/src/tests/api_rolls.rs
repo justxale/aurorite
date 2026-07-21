@@ -1,7 +1,7 @@
-use axum::http::StatusCode;
 use crate::build_app;
 use crate::responses::RollResult;
 use crate::tests::utils::get_request;
+use axum::http::StatusCode;
 
 #[tokio::test]
 async fn test_invalid_rolls() {
@@ -13,7 +13,8 @@ async fn test_invalid_rolls() {
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
     let (status, _) = get_request(&mut app, "/rolls?line=1dk+2", None).await;
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
-    let (status, _) = get_request(&mut app, "/rolls?amount=1&max=20&bonus=20&line=1d20", None).await;
+    let (status, _) =
+        get_request(&mut app, "/rolls?amount=1&max=20&bonus=20&line=1d20", None).await;
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
     let (status, _) = get_request(&mut app, "/rolls", None).await;
     assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);

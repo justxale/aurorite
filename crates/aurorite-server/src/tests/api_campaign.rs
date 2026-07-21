@@ -1,9 +1,9 @@
 use crate::build_app;
-use crate::responses::{ClientCampaigns};
+use crate::responses::ClientCampaigns;
 use crate::tests::utils::{auth_client, delete_request, get_request, post_request};
+use aurorite_dataflow::dto::CampaignDto;
 use aurorite_util::uuid::EncodedUuid;
 use axum::http::StatusCode;
-use aurorite_dataflow::dto::CampaignDto;
 
 #[tokio::test]
 #[tracing_test::traced_test]

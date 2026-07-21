@@ -1,4 +1,4 @@
-use crate::database::{Casting, Character, CharacterSpell, Duration, Materials, Range, School, Script, Spell};
+use crate::database::{Casting, CharacterSpell, Duration, Materials, Range, School, Script};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

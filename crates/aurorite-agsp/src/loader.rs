@@ -1,8 +1,8 @@
+use aurorite_util::env;
 use std::io::Error;
-use tokio::io::AsyncReadExt;
 use std::path::Path;
 use tokio::fs::File;
-use aurorite_util::env;
+use tokio::io::AsyncReadExt;
 
 #[inline]
 pub async fn load_text_file(path: impl AsRef<Path>) -> Result<String, Error> {

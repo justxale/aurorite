@@ -1,10 +1,10 @@
 use super::utils::auth_client;
 use crate::build_app;
+use aurorite_dataflow::dto::ClientDto;
 use axum::body::Body;
 use axum::http::{Request, StatusCode, header};
 use http_body_util::BodyExt;
 use tower::{Service, ServiceExt};
-use aurorite_dataflow::dto::ClientDto;
 
 #[tokio::test]
 async fn test_nonexisting_auth() {

@@ -1,16 +1,16 @@
-use aurorite_dataflow::database::{Campaign, CampaignClient, Client};
+use crate::responses::AuroriteErrorResponse;
 use crate::state::AuroriteState;
-use aurorite_util::jwt::{TokenError, Authorization, decode_key};
+use crate::traits::IntoJson;
+use aurorite_dataflow::database::{Campaign, CampaignClient, Client};
+use aurorite_util::jwt::{Authorization, TokenError, decode_key};
 use aurorite_util::uuid::EncodedUuid;
 use axum::RequestPartsExt;
-use axum::extract::{FromRequestParts, OptionalFromRequestParts, Path, Json};
+use axum::extract::{FromRequestParts, Json, OptionalFromRequestParts, Path};
 use axum::http::StatusCode;
 use axum::http::request::Parts;
 use axum_extra::headers;
 use axum_extra::headers::authorization::Bearer;
 use axum_extra::typed_header::TypedHeader;
-use crate::responses::AuroriteErrorResponse;
-use crate::traits::IntoJson;
 
 pub struct AuthorizedClient(pub Client);
 pub struct AuthorizedAdmin(pub Client);
@@ -27,10 +27,18 @@ where
         let TypedHeader(headers::Authorization(bearer)) = parts
             .extract::<TypedHeader<headers::Authorization<Bearer>>>()
             .await
-            .map_err(|_| (StatusCode::UNAUTHORIZED, AuroriteErrorResponse::new(TokenError::InvalidToken).json()))?;
-        Ok(Self(
-            decode_key(bearer.token()).map_err(|e| (StatusCode::UNAUTHORIZED, AuroriteErrorResponse::new(e).json()))?
-        ))
+            .map_err(|_| {
+                (
+                    StatusCode::UNAUTHORIZED,
+                    AuroriteErrorResponse::new(TokenError::InvalidToken).json(),
+                )
+            })?;
+        Ok(Self(decode_key(bearer.token()).map_err(|e| {
+            (
+                StatusCode::UNAUTHORIZED,
+                AuroriteErrorResponse::new(e).json(),
+            )
+        })?))
     }
 }
 
@@ -40,13 +48,24 @@ impl FromRequestParts<AuroriteState> for AuthorizedClient {
         parts: &mut Parts,
         state: &AuroriteState,
     ) -> Result<Self, Self::Rejection> {
-        let AuthorizedUnchecked(payload) = AuthorizedUnchecked::from_request_parts(parts, state).await?;
-        if let Some(is_guest) = payload.is_guest && is_guest {
-            return Err((StatusCode::UNAUTHORIZED, AuroriteErrorResponse::new(TokenError::NotClient).json()));
+        let AuthorizedUnchecked(payload) =
+            AuthorizedUnchecked::from_request_parts(parts, state).await?;
+        if let Some(is_guest) = payload.is_guest
+            && is_guest
+        {
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                AuroriteErrorResponse::new(TokenError::NotClient).json(),
+            ));
         }
         let record = Client::get_by_id(&mut state.db(), payload.id())
             .await
-            .map_err(|_| (StatusCode::UNAUTHORIZED, AuroriteErrorResponse::new(TokenError::InvalidToken).json()))?;
+            .map_err(|_| {
+                (
+                    StatusCode::UNAUTHORIZED,
+                    AuroriteErrorResponse::new(TokenError::InvalidToken).json(),
+                )
+            })?;
         Ok(Self(record))
     }
 }
@@ -61,7 +80,10 @@ impl FromRequestParts<AuroriteState> for AuthorizedAdmin {
         if record.is_admin {
             Ok(Self(record))
         } else {
-            Err((StatusCode::FORBIDDEN, AuroriteErrorResponse::new(TokenError::NotAdmin).json()))
+            Err((
+                StatusCode::FORBIDDEN,
+                AuroriteErrorResponse::new(TokenError::NotAdmin).json(),
+            ))
         }
     }
 }
@@ -95,7 +117,12 @@ impl<const LOAD_CAMPAIGN: bool> FromRequestParts<AuroriteState>
             AuroriteState,
         >>::from_request_parts(parts, state)
         .await
-        .map_err(|err| (StatusCode::NOT_FOUND, AuroriteErrorResponse::new(TokenError::NotFound(err.to_string())).json()))?;
+        .map_err(|err| {
+            (
+                StatusCode::NOT_FOUND,
+                AuroriteErrorResponse::new(TokenError::NotFound(err.to_string())).json(),
+            )
+        })?;
         let mut db = state.db();
         let record = match LOAD_CAMPAIGN {
             true => CampaignClient::filter_by_client_id_and_campaign_id(client.id, campaign_id)
@@ -103,21 +130,27 @@ impl<const LOAD_CAMPAIGN: bool> FromRequestParts<AuroriteState>
                 .include(CampaignClient::fields().campaign().classes())
                 .include(CampaignClient::fields().campaign().races())
                 .include(CampaignClient::fields().campaign().clients()),
-            false => CampaignClient::filter_by_client_id_and_campaign_id(client.id, campaign_id, )
-                .include(CampaignClient::fields().campaign())
+            false => CampaignClient::filter_by_client_id_and_campaign_id(client.id, campaign_id)
+                .include(CampaignClient::fields().campaign()),
         };
-        let record = record
-            .get(&mut db)
-            .await
-            .map_err(|_| {(
+        let record = record.get(&mut db).await.map_err(|_| {
+            (
                 StatusCode::NOT_FOUND,
-                AuroriteErrorResponse::new(TokenError::NotFound(format!("campaign {} not found", campaign_id))).json()
-            )})?;
+                AuroriteErrorResponse::new(TokenError::NotFound(format!(
+                    "campaign {} not found",
+                    campaign_id
+                )))
+                .json(),
+            )
+        })?;
 
         if client.is_admin || record.is_master {
             Ok(Self(client, record.campaign.get().clone()))
         } else {
-            Err((StatusCode::FORBIDDEN, AuroriteErrorResponse::new(TokenError::NotMaster).json()))
+            Err((
+                StatusCode::FORBIDDEN,
+                AuroriteErrorResponse::new(TokenError::NotMaster).json(),
+            ))
         }
     }
 }

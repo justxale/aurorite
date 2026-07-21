@@ -1,17 +1,17 @@
-use aurorite_dataflow::database::Client;
+use crate::extractors::AuthorizedUnchecked;
 use crate::requests::{ClientAuth, NewClientData, UpdatedClientData};
 use crate::responses::ClientToken;
 use crate::responses::{AuroriteErrorResponse, FailableResponse};
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
+use aurorite_dataflow::database::Client;
+use aurorite_dataflow::dto::ClientDto;
 use aurorite_util::auth::{generate_password, hash_password, verify};
 use aurorite_util::jwt::encode_key;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::routing::{get, post};
 use axum::{Json, Router};
-use aurorite_dataflow::dto::ClientDto;
-use crate::extractors::AuthorizedUnchecked;
 
 async fn get_self(
     State(state): State<AuroriteState>,
@@ -25,10 +25,7 @@ async fn get_self(
                 user.id()
             ))),
         )),
-        Ok(record) => Ok((
-            StatusCode::OK,
-            ClientDto::from(&record).json()
-        )),
+        Ok(record) => Ok((StatusCode::OK, ClientDto::from(&record).json())),
     }
 }
 
@@ -67,10 +64,7 @@ async fn edit_self(
             AuroriteErrorResponse::new("failed to update").json(),
         ));
     }
-    Ok((
-        StatusCode::OK,
-        ClientDto::from(&record).json()
-    ))
+    Ok((StatusCode::OK, ClientDto::from(&record).json()))
 }
 
 async fn login_client(
@@ -116,7 +110,7 @@ async fn login_client(
 
 async fn register_client(
     State(state): State<AuroriteState>,
-    AuthorizedUnchecked(user): AuthorizedUnchecked,
+    AuthorizedUnchecked(_user): AuthorizedUnchecked,
     Json(body): Json<NewClientData>,
 ) -> FailableResponse<ClientDto> {
     let mut db = state.db();
@@ -138,10 +132,7 @@ async fn register_client(
         record = record.pwd(hash_password(&generate_password()).unwrap());
     }
     let record = record.exec(&mut db).await.unwrap();
-    Ok((
-        StatusCode::CREATED,
-        ClientDto::from(&record).json(),
-    ))
+    Ok((StatusCode::CREATED, ClientDto::from(&record).json()))
 }
 
 pub fn build_client_routes() -> Router<AuroriteState> {

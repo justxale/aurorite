@@ -1,5 +1,5 @@
-use serde::Serialize;
 use aurorite_dataflow::dto::ClassDto;
+use serde::Serialize;
 
 #[derive(Debug, Serialize)]
 pub struct AllClassesInfo {

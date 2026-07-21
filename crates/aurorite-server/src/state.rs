@@ -3,8 +3,8 @@ use crate::session::SessionManager;
 use crate::traits::IntoJson;
 use aurorite_dataflow::{build_connection, database::Db};
 use aurorite_runtime::Character;
-use axum::http::StatusCode;
 use axum::Json;
+use axum::http::StatusCode;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -43,15 +43,10 @@ impl AuroriteState {
             StatusCode::NOT_FOUND,
             AuroriteErrorResponse::new("no session with this id").json(),
         ))?;
-        session
-            .ctx()
-            .lock()
-            .character(character_id)
-            .map(f)
-            .ok_or((
-                StatusCode::NOT_FOUND,
-                AuroriteErrorResponse::new("no character with this id").json(),
-            ))
+        session.ctx().lock().character(character_id).map(f).ok_or((
+            StatusCode::NOT_FOUND,
+            AuroriteErrorResponse::new("no character with this id").json(),
+        ))
     }
 
     pub async fn cleanup(self) {

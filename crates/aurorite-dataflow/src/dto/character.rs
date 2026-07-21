@@ -2,11 +2,11 @@ use crate::database::{CampaignCharacter, Character, Overwrite};
 use crate::dto::background::BackgroundDto;
 use crate::dto::class::ClassDto;
 use crate::dto::race::RaceDto;
+use crate::dto::{ClientDto, SpellDto};
 use crate::enums::{Ability, Proficiency, Skill};
 use aurorite_util::formulas::get_modification;
 use aurorite_util::uuid::EncodedUuid;
 use serde::{Deserialize, Serialize};
-use crate::dto::{ClientDto, SpellDto};
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone)]
 pub struct AbilityDto {
@@ -296,8 +296,8 @@ pub struct CharacterDto {
     pub abilities: AbilitiesDto,
     pub skills: SkillsDto,
     pub spells: Vec<SpellDto>,
-    
-    pub owner: ClientDto
+
+    pub owner: ClientDto,
 }
 
 impl TryFrom<&Character> for CharacterDto {
@@ -316,7 +316,13 @@ impl TryFrom<&Character> for CharacterDto {
         let class = value.class.get().as_ref().map(ClassDto::from);
         let abilities = AbilitiesDto::try_from(value)?;
         let skills = SkillsDto::try_from(value)?;
-        let spells = value.spells.get().iter().cloned().map(SpellDto::from).collect();
+        let spells = value
+            .spells
+            .get()
+            .iter()
+            .cloned()
+            .map(SpellDto::from)
+            .collect();
         let max_hits = value
             .max_hits_overwrite
             .unwrap_or(class.as_ref().map(|c| c.base_hits).unwrap_or(0));
@@ -335,7 +341,7 @@ impl TryFrom<&Character> for CharacterDto {
             abilities,
             skills,
             spells,
-            owner: ClientDto::from(value.client.get())
+            owner: ClientDto::from(value.client.get()),
         })
     }
 }

@@ -14,7 +14,7 @@ pub struct EnvConfig {
     pub password: String,
     pub secret: String,
     pub log: String,
-    pub data_root: PathBuf
+    pub data_root: PathBuf,
 }
 
 static CONFIG: OnceLock<EnvConfig> = OnceLock::new();
@@ -43,7 +43,14 @@ pub fn env() -> &'static EnvConfig {
             .unwrap()
             .set_default("auto_exit", false)
             .unwrap()
-            .set_default("data_root", std::env::current_dir().unwrap().join("assets").to_string_lossy().to_string())
+            .set_default(
+                "data_root",
+                std::env::current_dir()
+                    .unwrap()
+                    .join("assets")
+                    .to_string_lossy()
+                    .to_string(),
+            )
             .unwrap()
             .add_source(
                 Environment::with_prefix("AURORITE")
@@ -57,10 +64,10 @@ pub fn env() -> &'static EnvConfig {
             Err(ConfigError::Message(msg)) => panic!("{msg}"),
             Err(ConfigError::NotFound(field)) => panic!("{field} must be set"),
             Err(ConfigError::At {
-                    origin: _,
-                    key,
-                    error,
-                }) => panic!("invalid value of {} field: {error}", key.unwrap()),
+                origin: _,
+                key,
+                error,
+            }) => panic!("invalid value of {} field: {error}", key.unwrap()),
             Err(_) => panic!("unspecified error in configuration"),
         }
     })

@@ -4,10 +4,10 @@ use crate::traits::IntoJson;
 use aurorite_dataflow::enums::{Ability, Skill};
 use aurorite_runtime::Character;
 use aurorite_util::uuid::EncodedUuid;
+use axum::Router;
 use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::routing::get;
-use axum::Router;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -55,11 +55,11 @@ async fn get_session_character(
     State(state): State<AuroriteState>,
     Path(params): Path<PathParams>,
 ) -> FailableResponse<Character> {
-    let char = state.session_character_and(
-        params.session_id.uuid(),
-        params.character_id.uuid(),
-        |v| v.clone(),
-    ).await?;
+    let char = state
+        .session_character_and(params.session_id.uuid(), params.character_id.uuid(), |v| {
+            v.clone()
+        })
+        .await?;
     Ok((StatusCode::OK, char.json()))
 }
 
@@ -68,17 +68,19 @@ async fn get_character_roll(
     Path(params): Path<PathParams>,
     Query(query): Query<ApiRollQuery>,
 ) -> FailableResponse<RollResult> {
-    let dice = state.session_character_and(
-        params.session_id.uuid(),
-        params.character_id.uuid(),
-        |v| match (query.attr, query.save) {
-            (Either::Left(skill), _) => v.skill_dice(skill),
-            (Either::Right(ability), Some(false)) | (Either::Right(ability), None) => {
-                v.ability_dice(ability)
-            }
-            (Either::Right(ability), Some(true)) => v.save_throw_dice(ability),
-        },
-    ).await?;
+    let dice = state
+        .session_character_and(
+            params.session_id.uuid(),
+            params.character_id.uuid(),
+            |v| match (query.attr, query.save) {
+                (Either::Left(skill), _) => v.skill_dice(skill),
+                (Either::Right(ability), Some(false)) | (Either::Right(ability), None) => {
+                    v.ability_dice(ability)
+                }
+                (Either::Right(ability), Some(true)) => v.save_throw_dice(ability),
+            },
+        )
+        .await?;
     Ok((
         StatusCode::OK,
         RollResult {

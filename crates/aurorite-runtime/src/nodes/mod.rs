@@ -1,7 +1,7 @@
-use std::sync::Arc;
-use parking_lot::Mutex;
-use vismut_core::BuiltNode;
 use crate::RuntimeCtx;
+use parking_lot::Mutex;
+use std::sync::Arc;
+use vismut_core::BuiltNode;
 
 mod rand;
 

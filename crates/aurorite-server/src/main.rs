@@ -1,6 +1,6 @@
-use aurorite_util::env;
 use crate::routes::build_routes;
 use crate::state::AuroriteState;
+use aurorite_util::env;
 use axum::Router;
 #[cfg(target_os = "windows")]
 use std::io::{Read, Write, stderr, stdin};
@@ -14,11 +14,11 @@ pub mod extractors;
 pub mod requests;
 pub mod responses;
 mod routes;
+mod session;
 mod state;
 #[cfg(test)]
 mod tests;
 mod traits;
-mod session;
 
 async fn build_app() -> (AuroriteState, Router) {
     let state = AuroriteState::new().await;

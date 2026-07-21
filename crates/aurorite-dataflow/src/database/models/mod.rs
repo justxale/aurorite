@@ -13,7 +13,7 @@ pub use asset::Asset;
 pub use background::Background;
 pub use campaign::{
     AccessState, Campaign, CampaignBackground, CampaignCharacter, CampaignClass, CampaignClient,
-    CampaignRace, PreloadedObject, Scene, Visibility, CampaignScene
+    CampaignRace, CampaignScene, PreloadedObject, Scene, Visibility,
 };
 pub use character::{Character, CharacterSpell};
 pub use class::Class;
