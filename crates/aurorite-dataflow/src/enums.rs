@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
@@ -22,6 +23,32 @@ pub enum Skill {
     Persuasion,
 }
 
+impl FromStr for Skill {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "acrobatics" => Skill::Acrobatics,
+            "athletics" => Skill::Athletics,
+            "perception" => Skill::Perception,
+            "survival" => Skill::Survival,
+            "performance" => Skill::Performance,
+            "intimidation" => Skill::Intimidation,
+            "history" => Skill::History,
+            "sleight_of_hand" => Skill::SleightOfHand,
+            "medicine" => Skill::Medicine,
+            "deception" => Skill::Deception,
+            "animal_handling" => Skill::AnimalHandling,
+            "nature" => Skill::Nature,
+            "investigation" => Skill::Investigation,
+            "religion" => Skill::Religion,
+            "stealth" => Skill::Stealth,
+            "arcana" => Skill::Arcana,
+            "persuasion" => Skill::Persuasion,
+            &_ => return Err(()),
+        })
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub enum Ability {
     Strength,
@@ -30,6 +57,21 @@ pub enum Ability {
     Dexterity,
     Constitution,
     Charisma,
+}
+
+impl FromStr for Ability {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "strength" => Ability::Strength,
+            "intelligence" => Ability::Intelligence,
+            "wisdom" => Ability::Wisdom,
+            "dexterity" => Ability::Dexterity,
+            "constitution" => Ability::Constitution,
+            "charisma" => Ability::Charisma,
+            _ => return Err(()),
+        })
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]

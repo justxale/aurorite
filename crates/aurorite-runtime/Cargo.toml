@@ -7,7 +7,7 @@ edition.workspace = true
 authors.workspace = true
 
 [dependencies]
-vismut-core = { git = "https://github.com/justxale/vismut-core.git", version = "0.1.0", features = ["nodes", "serde"] }
+vismut-core = { git = "https://github.com/justxale/vismut-core.git", version = "0.1.0", features = ["nodes", "serde", "uuid"] }
 aurorite-util = { path = "../aurorite-util" }
 aurorite-agsp = { path = "../aurorite-agsp" }
 aurorite-dataflow = { path = "../aurorite-dataflow" }

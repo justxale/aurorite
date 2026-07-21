@@ -1,6 +1,8 @@
 use std::sync::{Arc, Mutex};
 use vismut_core::schemas::ScriptSchema;
 use vismut_core::{RegistryError, VismutRuntime, VismutScript};
+use vismut_core::nodes::build_math_nodes;
+use crate::nodes::build_rand_nodes;
 use crate::RuntimeCtx;
 
 type ArcedCtx = Arc<Mutex<RuntimeCtx>>;
@@ -12,7 +14,9 @@ pub struct AuroriteRuntime {
 
 impl AuroriteRuntime {
     pub fn new(ctx: Arc<Mutex<RuntimeCtx>>) -> Self {
-        let executor = VismutRuntime::new(ctx.clone());
+        let mut executor = VismutRuntime::new(ctx.clone());
+        executor.include(build_math_nodes()).expect(INCLUSION_ERROR);
+        executor.include(build_rand_nodes()).expect(INCLUSION_ERROR);
         Self {
             ctx,
             executor,

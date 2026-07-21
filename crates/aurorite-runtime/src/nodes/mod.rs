@@ -1,5 +1,10 @@
-mod dice;
+use std::sync::{Arc, Mutex};
+use vismut_core::BuiltNode;
+use crate::RuntimeCtx;
 
+mod rand;
+
+#[macro_export]
 macro_rules! try_extract {
     ($source:expr, $t:path, $name:literal) => {
         if let Some($t(value)) = $source.get($name) {
@@ -10,4 +15,7 @@ macro_rules! try_extract {
     };
 }
 
-pub(crate) use try_extract;
+pub(super) type AuroriteCtx = Arc<Mutex<RuntimeCtx>>;
+pub(super) type AuroriteNode = BuiltNode<AuroriteCtx>;
+
+pub use rand::build_rand_nodes;

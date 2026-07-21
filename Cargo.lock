@@ -3643,12 +3643,13 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 [[package]]
 name = "vismut-core"
 version = "0.1.0"
-source = "git+https://github.com/justxale/vismut-core.git#b30beb996ed771b492716839a4f947562f48bb07"
+source = "git+https://github.com/justxale/vismut-core.git#07bfe23401fbc33b316b767e73ac88bdf3669c81"
 dependencies = [
  "log",
  "petgraph",
  "rand 0.10.2",
  "serde",
+ "uuid",
 ]
 
 [[package]]
