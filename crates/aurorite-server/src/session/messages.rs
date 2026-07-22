@@ -3,6 +3,7 @@ use axum::extract::ws::Message;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
+use aurorite_runtime::{InitiativeOrder, RuntimeEvent, Throw};
 
 #[derive(Debug, Copy, Clone, Deserialize)]
 pub enum WebsocketError {
@@ -35,6 +36,10 @@ pub enum WebsocketMessage {
     Shutdown {
         reason: Option<String>,
     },
+
+    RtInitiativeFinalize(Vec<InitiativeOrder>),
+    RtDiceThrow(Throw),
+    RtDicesThrow(Vec<Throw>)
 }
 
 impl TryFrom<&Message> for WebsocketMessage {
@@ -46,5 +51,15 @@ impl TryFrom<&Message> for WebsocketMessage {
                 .map_err(|_| WebsocketError::InvalidEncoding)?,
         )
         .map_err(|_| WebsocketError::InvalidSchema)
+    }
+}
+
+impl From<RuntimeEvent> for WebsocketMessage {
+    fn from(event: RuntimeEvent) -> Self {
+        match event {
+            RuntimeEvent::FinalizeInitiative(initiatives) => WebsocketMessage::RtInitiativeFinalize(initiatives),
+            RuntimeEvent::ThrowDice(throw) => WebsocketMessage::RtDiceThrow(throw),
+            RuntimeEvent::ThrowDices(throws) => WebsocketMessage::RtDicesThrow(throws),
+        }
     }
 }

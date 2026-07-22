@@ -18,6 +18,60 @@ use uuid::Uuid;
 
 const BUFFER_SIZE: usize = 128;
 
+fn handle_event(set: &mut JoinSet<Result<(), SendEvent>>, event: SendEvent) {
+    set.spawn(async move {
+        event.sender.send(event.msg).await.map_err(|err| SendEvent {
+            id: event.id,
+            client_id: event.client_id,
+            msg: err.0,
+            sender: event.sender,
+        })
+    });
+}
+
+fn broadcast_owned(
+    sockets: &Arc<DashMap<Uuid, DashMap<Uuid, Sender<WebsocketMessage>>>>,
+    msg: WebsocketMessage
+) {
+    let mut set = JoinSet::new();
+
+    for client in sockets.iter() {
+        for conn in client.value().iter() {
+            let event = SendEvent {
+                id: *conn.key(),
+                client_id: *client.key(),
+                msg: msg.clone(),
+                sender: conn.value().clone(),
+            };
+            handle_event(&mut set, event);
+        }
+    }
+}
+
+async fn handle_set_owned(mut set: JoinSet<Result<(), SendEvent>>) -> Result<(), SendEvent> {
+    let mut retry_set = JoinSet::new();
+    while let Some(res) = set.join_next().await {
+        if let Ok(res) = res
+            && let Err(event) = res
+        {
+            tracing::warn!("trying to resend message");
+            handle_event(&mut retry_set, event);
+        }
+    }
+    while let Some(res) = retry_set.join_next().await {
+        if res.is_err() {
+            tracing::error!("unspecified error during execution");
+        }
+        if let Ok(res) = res
+            && let Err(event) = res
+        {
+            tracing::error!("failed to send message after retry");
+            return Err(event);
+        }
+    }
+    Ok(())
+}
+
 struct SendEvent {
     pub id: Uuid,
     pub client_id: Uuid,
@@ -36,7 +90,7 @@ pub struct Session {
     db: Db,
     clients: DashMap<Uuid, SessionClient>,
     guests: DashMap<Uuid, SessionClient>,
-    sockets: DashMap<Uuid, DashMap<Uuid, Sender<WebsocketMessage>>>,
+    sockets: Arc<DashMap<Uuid, DashMap<Uuid, Sender<WebsocketMessage>>>>,
     ctx: Arc<Mutex<RuntimeCtx>>,
     rt: AuroriteRuntime,
 
@@ -45,18 +99,20 @@ pub struct Session {
 
 impl Session {
     pub fn new(campaign_id: Uuid, db: Db) -> Self {
-        let (sender, _) = channel::<RuntimeEvent>(BUFFER_SIZE);
+        let (sender, reader) = channel::<RuntimeEvent>(BUFFER_SIZE);
         let ctx = Arc::new(Mutex::new(RuntimeCtx::new(campaign_id, sender)));
-        Self {
+        let session = Self {
             campaign_id,
             db,
             clients: DashMap::new(),
             guests: DashMap::new(),
-            sockets: DashMap::new(),
+            sockets: Arc::new(DashMap::new()),
             ctx: ctx.clone(),
             rt: AuroriteRuntime::new(ctx),
             started_at: Timestamp::now(),
-        }
+        };
+        tokio::spawn(Self::handle_event_stream(session.sockets.clone(), reader));
+        session
     }
 
     #[inline]
@@ -109,7 +165,7 @@ impl Session {
                 .or_default()
                 .insert(Uuid::now_v7(), sender);
             let (ws_sender, _) = socket.split();
-            tokio::spawn(Self::handle_sender(ws_sender, reader));
+            tokio::spawn(Self::handle_message_stream(ws_sender, reader));
         } else {
             tracing::info!("unautorized websocket rejected");
             let _ = socket.send(err).await;
@@ -117,20 +173,7 @@ impl Session {
     }
 
     pub async fn broadcast(&self, msg: WebsocketMessage) {
-        let mut set = JoinSet::new();
-
-        for client in self.sockets.iter() {
-            for conn in client.value().iter() {
-                let event = SendEvent {
-                    id: *conn.key(),
-                    client_id: *client.key(),
-                    msg: msg.clone(),
-                    sender: conn.value().clone(),
-                };
-                Self::handle_event(&mut set, event);
-            }
-        }
-        self.handle_set(set).await;
+        broadcast_owned(&self.sockets, msg)
     }
 
     pub async fn send_to(&self, client_id: Uuid, msg: WebsocketMessage) {
@@ -148,12 +191,12 @@ impl Session {
                 msg: msg.clone(),
                 sender: conn.value().clone(),
             };
-            Self::handle_event(&mut set, event);
+            handle_event(&mut set, event);
         }
         self.handle_set(set).await;
     }
 
-    async fn handle_sender(
+    async fn handle_message_stream(
         mut sink: SplitSink<WebSocket, Message>,
         mut stream: Receiver<WebsocketMessage>,
     ) {
@@ -166,37 +209,22 @@ impl Session {
         }
     }
 
-    fn handle_event(set: &mut JoinSet<Result<(), SendEvent>>, event: SendEvent) {
-        set.spawn(async move {
-            event.sender.send(event.msg).await.map_err(|err| SendEvent {
-                id: event.id,
-                client_id: event.client_id,
-                msg: err.0,
-                sender: event.sender,
-            })
-        });
+    async fn handle_event_stream(
+        sockets: Arc<DashMap<Uuid, DashMap<Uuid, Sender<WebsocketMessage>>>>,
+        mut stream: Receiver<RuntimeEvent>
+    ) {
+        while let Some(event) = stream.recv().await {
+            let msg = WebsocketMessage::from(event);
+            broadcast_owned(&sockets, msg);
+        }
     }
 
-    async fn handle_set(&self, mut set: JoinSet<Result<(), SendEvent>>) {
-        let mut retry_set = JoinSet::new();
-        while let Some(res) = set.join_next().await {
-            if let Ok(res) = res
-                && let Err(event) = res
-            {
-                tracing::warn!("trying to resend message");
-                Self::handle_event(&mut retry_set, event);
-            }
-        }
-        while let Some(res) = retry_set.join_next().await {
-            if res.is_err() {
-                tracing::error!("unspecified error during execution");
-            }
-            if let Ok(res) = res
-                && let Err(event) = res
-            {
-                tracing::error!("failed to send message after retry");
-                if let Some(set) = self.sockets.get(&event.client_id) {
-                    set.remove(&event.id);
+    async fn handle_set(&self, set: JoinSet<Result<(), SendEvent>>) {
+        match handle_set_owned(set).await {
+            Ok(_) => (),
+            Err(SendEvent { id, client_id, msg: _, sender: _ }) => {
+                if let Some(set) = self.sockets.get(&client_id) {
+                    set.remove(&id);
                 }
             }
         }
