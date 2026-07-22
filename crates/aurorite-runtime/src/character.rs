@@ -25,7 +25,7 @@ pub struct Character {
 }
 
 impl Character {
-    pub fn get_skill_dto(&self, skill: Skill) -> &SkillDto {
+    pub fn skill_dto(&self, skill: Skill) -> &SkillDto {
         match skill {
             Skill::Acrobatics => &self.skills.acrobatics,
             Skill::Athletics => &self.skills.athletics,
@@ -48,7 +48,7 @@ impl Character {
         }
     }
 
-    pub fn get_ability_dto(&self, ability: Ability) -> &AbilityDto {
+    pub fn ability_dto(&self, ability: Ability) -> &AbilityDto {
         match ability {
             Ability::Strength => &self.abilities.strength,
             Ability::Dexterity => &self.abilities.dexterity,
@@ -60,18 +60,18 @@ impl Character {
     }
 
     pub fn skill_dice(&self, skill: Skill) -> Dice {
-        let value = self.get_skill_dto(skill);
+        let value = self.skill_dto(skill);
         let bonus = self.mastery * value.proficiency.as_u8();
         Dice::new(1, 20, Some(value.modification + bonus as i16))
     }
 
     pub fn ability_dice(&self, ability: Ability) -> Dice {
-        let value = self.get_ability_dto(ability);
+        let value = self.ability_dto(ability);
         Dice::new(1, 20, Some(value.modification))
     }
 
     pub fn save_throw_dice(&self, ability: Ability) -> Dice {
-        let value = self.get_ability_dto(ability);
+        let value = self.ability_dto(ability);
         let bonus = self.mastery * value.save_throw.as_u8();
         Dice::new(1, 20, Some(value.modification + bonus as i16))
     }

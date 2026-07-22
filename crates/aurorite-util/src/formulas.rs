@@ -32,7 +32,7 @@ impl Dice {
 
     pub fn roll(&self) -> DiceRollResult {
         let all = fastrand::choose_multiple(1..=self.max, self.amount as usize);
-        let sum = all.iter().fold(0i64, |tmp, v| tmp + *v as i64) + self.bonus.unwrap_or(0) as i64;
+        let sum = all.iter().fold(0i64, |tmp, v| tmp + i64::from(*v)) + i64::from(self.bonus.unwrap_or(0));
         DiceRollResult { sum, all }
     }
 }
