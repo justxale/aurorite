@@ -1,19 +1,16 @@
-
-@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap');
-
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @theme {
-  --color-green: #6dffaf;
-  --color-purple: #c273ff;
-  --color-blue: #66a8ff;
-  --color-white: #f9fafb;
-  --color-darkWhite: #f2f3f6;
-  --color-grey: #d4d7de;
-  --color-stone: #323441;
-  --color-black: #15171d;
-  --color-carbon: #23242c;
+  --color-green-aur: #6dffaf;
+  --color-purple-aur: #c273ff;
+  --color-blue-aur: #66a8ff;
+  --color-white-500: #f9fafb;
+  --color-white-400: #f2f3f6;
+  --color-white-300: #d4d7de;
+  --color-black-500: #15171d;
+  --color-black-400: #23242c;
+  --color-black-300: #323441;
 }
 
 @custom-variant dark (&:is(.dark *));

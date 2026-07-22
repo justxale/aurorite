@@ -99,7 +99,7 @@ const layout = 'default'
    <NuxtLayout :name="layout">
       <div class="flex w-full h-full items-center justify-center">
           <div class="w-[80%] md:w-[50%] lg:w-[40%] h-screen/2 md:h-screen/2.5 justify-items-center top-[30%]">
-              <div class="relative w-full h-full bg-white mix-blend-normal rounded-[10px]">
+              <div class="relative w-full h-full bg-white-500 mix-blend-normal rounded-[10px]">
                   <form @submit="onSubmit">
                       <FormField v-slot="{ componentField }" name="username">
                           <FormItem>
@@ -120,7 +120,7 @@ const layout = 'default'
                           </FormItem>
                       </FormField>
                       <div class="flex items-center justify-center h-[30%] md:h-[35%] mt-[3%] md:mt-[4%] pb-[1%] md:pb-[4%]">
-                          <Button class="transition duration-300 ease-in-out cursor-pointer w-[50%] p-1 m-3 text-[1rem] bg-green rounded-lg mix-blend-normal hover:scale-110 hover:bg-[#A3FFCD]" @click="handleSubmit" >
+                          <Button class="transition duration-300 ease-in-out cursor-pointer w-[50%] p-1 m-3 text-[1rem] bg-green-aur rounded-lg mix-blend-normal hover:scale-110 hover:bg-[#A3FFCD]" @click="handleSubmit" >
                               {{t('aurorite.ui.login')}}
                           </Button>
                       </div>
