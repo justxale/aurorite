@@ -22,7 +22,7 @@ const { t } = useI18n()
   <NuxtLayout :name="layout">
     <div class="flex w-full h-full items-center justify-center">
       <div class="w-[80%] md:w-[50%] lg:w-[40%] h-screen/2 md:h-screen/2.5 justify-center top-[30%]">
-        <div class="relative w-full h-full bg-white mix-blend-normal rounded-[10px]">
+        <div class="relative w-full h-full bg-background text-card-foreground mix-blend-normal rounded-[10px]">
           <div class="text-center p-10">
             <div v-if="error.statusCode === 500">
               <h1 class="p-5 font-bold text-2xl">{{ t('aurorite.errors.httpError', {statusCode: props.error.statusCode }) }}</h1>

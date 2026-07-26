@@ -15,7 +15,11 @@ import type { FetchError } from 'ofetch'
 import {toast, Toaster} from 'vue-sonner'
 import 'vue-sonner/style.css'
 import {useAuthenticationStore} from "~/stores/authenticationStore"
-import NuxtLayout from "~/layouts/default.vue";
+import NuxtLayout from "~/layouts/default.vue"
+import { useWindowSize } from '@vueuse/core'
+import auroriteDark from '~/assets/aurorite-full-dark.svg'
+import auroriteLight from '~/assets/aurorite-full.svg'
+import auroriteMobile from '~/assets/aurorite.svg';
 
 const { t } = useI18n()
 
@@ -33,9 +37,9 @@ const form = useForm({
 const username = ref('')
 const password = ref('')
 
-async function handleSubmit() {
-  try{
-    const authenticationFetch = await authenticationStore.fetchToken(username.value, password.value)
+const handleSubmit = form.handleSubmit(async (values) => {
+  try {
+    const authenticationFetch = await authenticationStore.fetchToken(values.username, values.password)
     const authenticationStorage = await authenticationStore.fetchUser()
     return {authenticationFetch, authenticationStorage}
   }
@@ -67,7 +71,7 @@ async function handleSubmit() {
       })
     }
   }
-}
+})
 // await navigateTo('/<page>')
 
 //   const logObject = form.handleSubmit((values) => {
@@ -93,34 +97,42 @@ definePageMeta({
 })
 
 const layout = 'default'
+
+const { width } = useWindowSize()
+const colorMode = useColorMode()
 </script>
 
 <template>
    <NuxtLayout :name="layout">
       <div class="flex w-full h-full items-center justify-center">
           <div class="w-[80%] md:w-[50%] lg:w-[40%] h-screen/2 md:h-screen/2.5 justify-items-center top-[30%]">
-              <div class="relative w-full h-full bg-white-500 mix-blend-normal rounded-[10px]">
+            <div class="relative w-full h-full bg-card mix-blend-normal rounded-[10px]">
+                  <div class="w-full justify-items-center pt-2">
+                      <img v-if="width>768 && colorMode.value === 'light'" :src="auroriteDark" alt="logo" class="h-20">
+                      <img v-else-if="width>768 && colorMode.value === 'dark'" :src="auroriteLight" alt="logo" class="h-20">
+                      <img v-else :src="auroriteMobile" alt="logo" class="h-20">
+                  </div>
                   <form @submit="onSubmit">
                       <FormField v-slot="{ componentField }" name="username">
                           <FormItem>
-                              <FormLabel class="pt-5 pb-1 mx-2 ps-1 md:ps-4 text-[1rem]">{{t('aurorite.ui.username')}}</FormLabel>
+                              <FormLabel class="pt-5 pb-1 mx-6 ps-2 md:ps-4 text-[1rem] text-card-foreground">{{t('aurorite.ui.username')}}</FormLabel>
                                   <FormControl>
-                                      <Input v-model="username" type="text" :placeholder="t('aurorite.ui.username')" v-bind="componentField" class="w-[calc(100%-16px)] mt-1 mx-2 p-1 md:p-2 ps-1 md:ps-4 rounded-lg" />
+                                        <Input v-model="username" type="text" :placeholder="t('aurorite.ui.username')" v-bind="componentField" class="w-[calc(100%-48px)] mt-1 mx-6 p-1 md:p-2 ps-2 md:ps-4 rounded-lg bg-input" />
                                   </FormControl>
-                              <FormMessage class="mx-2 ps-1 md:ps-4" />
+                              <FormMessage class="mx-6 ps-2 md:ps-4 text-[1rem]" />
                           </FormItem>
                       </FormField>
                       <FormField v-slot="{ componentField }" name="password">
                           <FormItem>
-                              <FormLabel class="pt-5 pb-1 mx-2 ps-1 md:ps-4 text-[1rem]">{{t('aurorite.ui.password')}}</FormLabel>
+                              <FormLabel class="pt-5 pb-1 mx-6 ps-2 md:ps-4 text-[1rem] text-card-foreground">{{t('aurorite.ui.password')}}</FormLabel>
                                   <FormControl>
-                                      <Input v-model="password" type="text" :placeholder="t('aurorite.ui.password')" v-bind="componentField" class="w-[calc(100%-16px)] mt-1 mx-2 p-1 md:p-2 ps-1 md:ps-4 rounded-lg" />
+                                      <Input v-model="password" type="text" :placeholder="t('aurorite.ui.password')" v-bind="componentField" class="w-[calc(100%-48px)] mt-1 mx-6 p-1 md:p-2 ps-2 md:ps-4 rounded-lg bg-input" />
                                   </FormControl>
-                              <FormMessage class="mx-2 ps-1 md:ps-4" />
+                              <FormMessage class="mx-6 ps-2 md:ps-4 text-[1rem]" />
                           </FormItem>
                       </FormField>
                       <div class="flex items-center justify-center h-[30%] md:h-[35%] mt-[3%] md:mt-[4%] pb-[1%] md:pb-[4%]">
-                          <Button class="transition duration-300 ease-in-out cursor-pointer w-[50%] p-1 m-3 text-[1rem] bg-green-aur rounded-lg mix-blend-normal hover:scale-110 hover:bg-[#A3FFCD]" @click="handleSubmit" >
+                          <Button @click="handleSubmit" >
                               {{t('aurorite.ui.login')}}
                           </Button>
                       </div>
