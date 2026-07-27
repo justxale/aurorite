@@ -9,7 +9,6 @@ import type {FetchError} from 'ofetch'
 import {toast} from 'vue-sonner'
 import 'vue-sonner/style.css'
 import {useAuthenticationStore} from "~/stores/authenticationStore"
-import {useWindowSize} from '@vueuse/core'
 import auroriteDark from '~/assets/aurorite-full-dark.svg'
 import auroriteLight from '~/assets/aurorite-full.svg'
 import auroriteMobile from '~/assets/aurorite.svg'
@@ -64,18 +63,15 @@ const onSubmit = form.handleSubmit((values) => {
 })
 
 const authenticationStore = useAuthenticationStore()
-
-const {width} = useWindowSize()
-const colorMode = useColorMode()
 </script>
 
 <template>
     <div class="w-[80%] md:w-[50%] lg:w-[40%] h-screen/2 md:h-screen/2.5 justify-items-center">
         <div class="w-full h-full bg-card rounded-[10px]">
             <div class="flex w-full justify-center pt-2">
-                <img v-if="width>768 && colorMode.value === 'light'" :src="auroriteDark" alt="logo" class="h-20">
-                <img v-else-if="width>768 && colorMode.value === 'dark'" :src="auroriteLight" alt="logo" class="h-20">
-                <img v-else :src="auroriteMobile" alt="logo" class="h-20">
+                <img :src="auroriteDark" alt="logo" class="h-20 hidden md:block dark:hidden">
+                <img :src="auroriteLight" alt="logo" class="h-20 hidden dark:md:block">
+                <img :src="auroriteMobile" alt="logo" class="h-20 block md:hidden">
             </div>
             <form @submit="onSubmit">
                 <FormField v-slot="{ componentField }" name="username">

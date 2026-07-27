@@ -18,7 +18,6 @@ function changeTheme() {
 const { locale, setLocale } = useI18n();
 
 function changeLanguage(language: 'ru' | 'en') {
-  locale.value = language
   setLocale(language)
 }
 
@@ -31,20 +30,20 @@ function changeLanguage(language: 'ru' | 'en') {
       <div class="flex items-center justify-center text-2xl">
         <Menubar class="border-0 bg-card hover:bg-background gap-0">
           <MenubarMenu>
-            <MenubarTrigger class="cursor-pointer p-1"><LanguagesIcon/></MenubarTrigger>
-            <MenubarContent>
-              <MenubarItem class="cursor-pointer" @click="changeLanguage('en')">EN
-                <LucideCheck v-if="locale === 'en'" />
+            <MenubarTrigger class="cursor-pointer p-1"><LanguagesIcon class="text-card-foreground"/></MenubarTrigger>
+            <MenubarContent class="bg-card border-card">
+              <MenubarItem class="cursor-pointer text-card-foreground" @click="changeLanguage('en')">EN
+                <LucideCheck v-if="locale === 'en'" class="text-card-foreground" />
               </MenubarItem>
-              <MenubarItem class="cursor-pointer" @click="changeLanguage('ru')">RU
-                <LucideCheck v-if="locale === 'ru'" />
+              <MenubarItem class="cursor-pointer text-card-foreground" @click="changeLanguage('ru')">RU
+                <LucideCheck v-if="locale === 'ru'" class="text-card-foreground" />
               </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
         </Menubar>
         <div class="flex p-1 mx-2" @click="changeTheme">
-          <MoonIcon v-if="currentTheme.value === 'light'" class="cursor-pointer hover:bg-background h-8 w-8 p-1 rounded-sm" />
-          <SunIcon v-else class="cursor-pointer hover:bg-background h-8 w-8 p-1 rounded-sm" />
+          <MoonIcon class="cursor-pointer hover:bg-background h-8 w-8 p-1 rounded-sm block dark:hidden" />
+          <SunIcon class="cursor-pointer hover:bg-background h-8 w-8 p-1 rounded-sm hidden dark:block" />
         </div>
       </div>
     </div>
