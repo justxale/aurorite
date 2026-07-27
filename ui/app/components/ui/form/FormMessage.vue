@@ -10,14 +10,20 @@ const props = defineProps<{
 }>()
 
 const { name, formMessageId } = useFormField()
+const { t } = useI18n()
 </script>
 
 <template>
   <ErrorMessage
     :id="formMessageId"
+    v-slot="{ message }"
     data-slot="form-message"
     as="p"
     :name="toValue(name)"
     :class="cn('text-destructive text-sm', props.class)"
-  />
+  >
+      <template v-if="message">
+          {{ t(message) }}
+      </template>
+  </ErrorMessage>
 </template>

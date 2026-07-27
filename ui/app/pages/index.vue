@@ -25,8 +25,8 @@ const { t } = useI18n()
 
 const formSchema = toTypedSchema(
     z.object({
-      username: z.string({message: t('aurorite.errors.formRequired')}),
-      password: z.string({message: t('aurorite.errors.formRequired')}).min(8, t('aurorite.errors.formPasswordCharacters')),
+      username: z.string({message: 'aurorite.errors.formRequired'}),
+      password: z.string({message: 'aurorite.errors.formRequired'}).min(8, 'aurorite.errors.formPasswordCharacters'),
   })
 )
 
@@ -104,19 +104,19 @@ const colorMode = useColorMode()
                         <FormField v-slot="{ componentField }" name="username">
                             <FormItem>
                                 <FormLabel class="pt-5 pb-1 mx-6 ps-2 md:ps-4 text-[1rem] text-card-foreground">{{t('aurorite.ui.username')}}</FormLabel>
-                                    <FormControl>
-                                          <Input v-model="username" type="text" :placeholder="t('aurorite.ui.username')" v-bind="componentField" class="w-[calc(100%-48px)] mt-1 mx-6 p-1 md:p-2 ps-2 md:ps-4 rounded-lg bg-input text-card-foreground" />
-                                    </FormControl>
-                                <FormMessage class="mx-6 ps-2 md:ps-4 text-[1rem]" />
+                                <FormControl>
+                                    <Input v-model="username" type="text" :placeholder="t('aurorite.ui.username')" v-bind="componentField" class="w-[calc(100%-48px)] mt-1 mx-6 p-1 md:p-2 ps-2 md:ps-4 rounded-lg bg-input text-card-foreground" />
+                                </FormControl>
+                                <FormMessage class="mx-6 ps-2 md:ps-4 text-[1rem]"/>
                             </FormItem>
                         </FormField>
                         <FormField v-slot="{ componentField }" name="password">
                             <FormItem>
                                 <FormLabel class="pt-5 pb-1 mx-6 ps-2 md:ps-4 text-[1rem] text-card-foreground">{{t('aurorite.ui.password')}}</FormLabel>
-                                    <FormControl>
-                                        <Input v-model="password" type="text" :placeholder="t('aurorite.ui.password')" v-bind="componentField" class="w-[calc(100%-48px)] mt-1 mx-6 p-1 md:p-2 ps-2 md:ps-4 rounded-lg bg-input text-card-foreground" />
-                                    </FormControl>
-                                <FormMessage class="mx-6 ps-2 md:ps-4 text-[1rem]" />
+                                <FormControl>
+                                    <Input v-model="password" type="text" :placeholder="t('aurorite.ui.password')" v-bind="componentField" class="w-[calc(100%-48px)] mt-1 mx-6 p-1 md:p-2 ps-2 md:ps-4 rounded-lg bg-input text-card-foreground" />
+                                </FormControl>
+                                <FormMessage class="mx-6 ps-2 md:ps-4 text-[1rem]"/>
                             </FormItem>
                         </FormField>
                         <div class="flex items-center justify-center h-[30%] md:h-[35%] mt-[3%] md:mt-[4%] pb-[1%] md:pb-[4%]">
