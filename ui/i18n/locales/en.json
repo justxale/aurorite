@@ -4,7 +4,10 @@
       "username": "Username",
       "password": "Password",
       "login": "Login",
-      "goBack": "Go back home"
+      "goBack": "Go back home",
+      "file": "File",
+      "edit": "Edit",
+      "preferences": "Preferences"
     },
     "errors": {
       "formRequired": "Required",
