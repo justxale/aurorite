@@ -25,5 +25,5 @@ export const useAuthenticationStore = defineStore('authentication', () => {
         displayName.value = userInfo.display_name
     }
 
-    return {fetchToken, fetchUser, username, displayName}
+    return {fetchToken, fetchUser, username, displayName, token}
 })
