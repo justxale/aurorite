@@ -47,8 +47,8 @@ const {locale, changeTheme, changeLanguage} = changeFunc()
                      </MenubarMenu>
                  </Menubar>
                  <div class="flex p-1 mx-2" @click="changeTheme">
-                     <MoonIcon class="cursor-pointer hover:bg-background h-8 w-8 p-1 rounded-sm block dark:hidden" />
-                     <SunIcon class="cursor-pointer hover:bg-background h-8 w-8 p-1 rounded-sm hidden dark:block" />
+                     <MoonIcon class="cursor-pointer hover:bg-background text-card-foreground h-8 w-8 p-1 rounded-sm hidden dark:block" />
+                     <SunIcon class="cursor-pointer hover:bg-background text-card-foreground h-8 w-8 p-1 rounded-sm block dark:hidden" />
                  </div>
              </div>
          </div>

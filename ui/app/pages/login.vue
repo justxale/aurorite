@@ -75,8 +75,8 @@ const authenticationStore = useAuthenticationStore()
     <div class="w-[80%] md:w-[50%] lg:w-[40%] h-screen/2 md:h-screen/2.5 justify-items-center">
         <div class="w-full h-full bg-card rounded-[10px]">
             <div class="flex w-full justify-center pt-2">
-                <img :src="auroriteDark" alt="logo" class="h-20 hidden md:block dark:hidden">
-                <img :src="auroriteLight" alt="logo" class="h-20 hidden dark:md:block">
+                <img :src="auroriteDark" alt="logo" class="h-20 hidden dark:md:block">
+                <img :src="auroriteLight" alt="logo" class="h-20 hidden md:block dark:hidden">
                 <img :src="auroriteMobile" alt="logo" class="h-20 block md:hidden">
             </div>
             <form @submit="onSubmit">
@@ -134,8 +134,8 @@ const authenticationStore = useAuthenticationStore()
                     </MenubarMenu>
                 </Menubar>
                 <div class="flex p-1 mx-1" @click="changeTheme">
-                    <MoonIcon class="cursor-pointer hover:bg-background text-card-foreground h-8 w-8 p-1 rounded-sm block dark:hidden" />
-                    <SunIcon class="cursor-pointer hover:bg-background text-card-foreground h-8 w-8 p-1 rounded-sm hidden dark:block" />
+                    <MoonIcon class="cursor-pointer hover:bg-background text-card-foreground h-8 w-8 p-1 rounded-sm hidden dark:block" />
+                    <SunIcon class="cursor-pointer hover:bg-background text-card-foreground h-8 w-8 p-1 rounded-sm block dark:hidden" />
                 </div>
             </div>
         </div>

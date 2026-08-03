@@ -11,6 +11,6 @@ export function changeFunc(){
     }
 
     return {
-        locale, changeTheme, changeLanguage
+        locale, changeTheme, changeLanguage, currentTheme
     }
 }
