@@ -14,9 +14,7 @@ export const useAuthenticationStore = defineStore('authentication', () => {
     }
 
     async function fetchUser() {
-        const userInfo = await $fetch<{
-            username: string,
-            display_name: string,}>(
+        const userInfo = await $fetch<User>(
                 'http://localhost:11811/client/me', {
             headers: {Authorization: `Bearer ${token.value}`}
         })

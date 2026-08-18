@@ -13,7 +13,10 @@
       "theme": "Тема",
       "darkTheme": "Тёмная",
       "lightTheme": "Светлая",
-      "systemTheme": "Системная"
+      "systemTheme": "Системная",
+      "register": "Зарегистрироваться",
+      "nickname": "Никнейм",
+      "displayName": "Отображаемое имя"
     },
     "errors": {
       "formRequired": "Обязательное поле",

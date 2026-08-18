@@ -13,7 +13,10 @@
       "theme": "Theme",
       "darkTheme": "Dark",
       "lightTheme": "Light",
-      "systemTheme": "System"
+      "systemTheme": "System",
+      "register": "Register",
+      "nickname": "Nickname",
+      "displayName": "Display name"
     },
     "errors": {
       "formRequired": "Required",

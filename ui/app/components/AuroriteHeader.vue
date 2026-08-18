@@ -32,7 +32,7 @@ const {locale, changeTheme, changeLanguage} = changeFunc()
                      </MenubarMenu>
                  </Menubar>
              </div>
-             <div v-if="useRoute().path !== '/login'" class="flex items-center justify-center text-2xl">
+             <div v-if="useRoute().path !== '/login' && useRoute().path !== '/register'" class="flex items-center justify-center text-2xl">
                  <Menubar class="border-0 bg-card hover:bg-background gap-0">
                      <MenubarMenu>
                          <MenubarTrigger class="cursor-pointer p-1"><LanguagesIcon class="text-card-foreground"/></MenubarTrigger>
