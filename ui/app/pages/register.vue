@@ -92,45 +92,42 @@ const createClient = form.handleSubmit(async () => {
                 <form @submit="onSubmit">
                     <FormField v-slot="{ componentField }" name="nickname">
                         <FormItem>
-                            <FormLabel class="pt-5 pb-1 mx-6 ps-2 md:ps-4 text-[1rem] text-card-foreground">
+                            <FormLabel>
                                 {{ t('aurorite.ui.nickname') }}</FormLabel>
                             <FormControl>
                                 <Input
                                     v-model="nickname" :placeholder="t('aurorite.ui.nickname')"
-                                    class="w-[calc(100%-48px)] mt-1 mx-6 p-1 md:p-2 ps-2 md:ps-4 rounded-lg bg-input text-card-foreground"
                                     type="text"
                                     v-bind="componentField"
                                 />
                             </FormControl>
-                            <FormMessage class="mx-6 ps-2 md:ps-4 text-[1rem]"/>
+                            <FormMessage/>
                         </FormItem>
                     </FormField>
                     <FormField v-slot="{ componentField }" name="display_name">
                         <FormItem>
-                            <FormLabel class="pt-5 pb-1 mx-6 ps-2 md:ps-4 text-[1rem] text-card-foreground">{{ t('aurorite.ui.displayName') }}</FormLabel>
+                            <FormLabel>{{ t('aurorite.ui.displayName') }}</FormLabel>
                             <FormControl>
                                 <Input
                                     v-model="display_name" :placeholder="t('aurorite.ui.displayName')"
-                                    class="w-[calc(100%-48px)] mt-1 mx-6 p-1 md:p-2 ps-2 md:ps-4 rounded-lg bg-input text-card-foreground"
                                     type="text"
                                     v-bind="componentField"
                                 />
                             </FormControl>
-                            <FormMessage class="mx-6 ps-2 md:ps-4 text-[1rem]"/>
+                            <FormMessage/>
                         </FormItem>
                     </FormField>
                     <FormField v-slot="{ componentField }" name="password">
                         <FormItem>
-                            <FormLabel class="pt-5 pb-1 mx-6 ps-2 md:ps-4 text-[1rem] text-card-foreground">{{ t('aurorite.ui.password') }}</FormLabel>
+                            <FormLabel>{{ t('aurorite.ui.password') }}</FormLabel>
                             <FormControl>
                                 <Input
                                     v-model="password" :placeholder="t('aurorite.ui.password')"
-                                    class="w-[calc(100%-48px)] mt-1 mx-6 p-1 md:p-2 ps-2 md:ps-4 rounded-lg bg-input text-card-foreground"
                                     type="text"
                                     v-bind="componentField"
                                 />
                             </FormControl>
-                            <FormMessage class="mx-6 ps-2 md:ps-4 text-[1rem]"/>
+                            <FormMessage/>
                         </FormItem>
                     </FormField>
                     <div class="flex items-center justify-center h-[30%] md:h-[35%] mt-[5%] md:mt-[4%] pb-[1%] md:pb-[2%]">
@@ -140,14 +137,14 @@ const createClient = form.handleSubmit(async () => {
                     </div>
                 </form>
                 <div v-if="useRoute().path === '/register'" class="flex items-center justify-center text-2xl pb-5">
-                    <Menubar class="border-0 bg-card hover:bg-background gap-0 p-1 mx-1">
+                    <Menubar>
                         <MenubarMenu>
-                            <MenubarTrigger class="cursor-pointer p-1"><LanguagesIcon class="text-card-foreground"/></MenubarTrigger>
-                            <MenubarContent class="bg-card border-card">
-                                <MenubarItem class="cursor-pointer text-card-foreground" @click="changeLanguage('en')">EN
+                            <MenubarTrigger><LanguagesIcon class="text-card-foreground"/></MenubarTrigger>
+                            <MenubarContent>
+                                <MenubarItem @click="changeLanguage('en')">EN
                                     <LucideCheck v-if="locale === 'en'" class="text-card-foreground" />
                                 </MenubarItem>
-                                <MenubarItem class="cursor-pointer text-card-foreground" @click="changeLanguage('ru')">RU
+                                <MenubarItem @click="changeLanguage('ru')">RU
                                     <LucideCheck v-if="locale === 'ru'" class="text-card-foreground" />
                                 </MenubarItem>
                             </MenubarContent>

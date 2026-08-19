@@ -15,7 +15,7 @@ const { error, formItemId } = useFormField()
     data-slot="form-label"
     :data-error="!!error"
     :class="cn(
-      'data-[error=true]:text-destructive',
+      'data-[error=true]:text-destructive pt-5 pb-1 mx-6 ps-2 md:ps-4 text-[1rem] text-card-foreground',
       props.class,
     )"
     :for="formItemId"

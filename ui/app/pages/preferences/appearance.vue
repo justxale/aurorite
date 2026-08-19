@@ -33,11 +33,11 @@ const selectedTheme = computed(() => themeList.value.find(theme => theme.id === 
     <div>
         <div class="flex items-center mb-3">
             <h1 class="text-card-foreground p-0.5 mt-0.5">{{t('aurorite.ui.language')}}:</h1>
-            <Menubar class="border-0 bg-card hover:bg-background gap-0 mx-3">
+            <Menubar class="mx-4 px-0">
                 <MenubarMenu>
-                    <MenubarTrigger class="cursor-pointer p-1 text-card-foreground border border-input">{{ t(selectedLanguage!) }}<ChevronDownIcon class="w-4 ms-2"/></MenubarTrigger>
-                    <MenubarContent class="bg-input border-card">
-                        <MenubarItem v-for="language in langList" :key="language.id" class="cursor-pointer text-card-foreground focus:bg-secondary" @click="changeLanguage(language.id)">{{t(language.name)}}
+                    <MenubarTrigger class="text-card-foreground border border-input px-2">{{ t(selectedLanguage!) }}<ChevronDownIcon class="w-4 ms-2"/></MenubarTrigger>
+                    <MenubarContent class="bg-input">
+                        <MenubarItem v-for="language in langList" :key="language.id" class="focus:bg-secondary" @click="changeLanguage(language.id)">{{t(language.name)}}
                             <LucideCheck v-if="locale === language.id" class="text-card-foreground" />
                         </MenubarItem>
                     </MenubarContent>
@@ -46,10 +46,10 @@ const selectedTheme = computed(() => themeList.value.find(theme => theme.id === 
         </div>
         <div class="flex items-center mb-3">
             <h1 class="text-card-foreground p-1">{{t('aurorite.ui.theme')}}:</h1>
-            <Menubar class="border-0 bg-card hover:bg-background gap-0 mx-3">
+            <Menubar class="mx-4 px-0">
                 <MenubarMenu>
-                    <MenubarTrigger class="cursor-pointer p-1 text-card-foreground border border-input">{{t(selectedTheme!.name)}}<ChevronDownIcon class="w-4 ms-2"/></MenubarTrigger>
-                    <MenubarContent class="bg-input border-card">
+                    <MenubarTrigger class="text-card-foreground border border-input px-2">{{t(selectedTheme!.name)}}<ChevronDownIcon class="w-4 ms-2"/></MenubarTrigger>
+                    <MenubarContent class="bg-input">
                         <MenubarItem v-for="theme in themeList" :key="theme.id" class="cursor-pointer text-card-foreground focus:bg-secondary" @click="changeThemeList(theme.id)">{{t(theme.name)}}
                             <LucideCheck v-if="theme.id === currentTheme.preference" class="text-card-foreground" />
                         </MenubarItem>

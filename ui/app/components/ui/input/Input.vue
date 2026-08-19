@@ -27,6 +27,7 @@ const modelValue = useVModel(props, "modelValue", emits, {
       'file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-darkWhite',
       'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3',
       'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive',
+      'w-[calc(100%-48px)] mt-1 mx-6 p-1 md:p-2 ps-2 md:ps-4 rounded-lg bg-input text-card-foreground',
       props.class,
     )"
   >

@@ -20,7 +20,7 @@ const { t } = useI18n()
     data-slot="form-message"
     as="p"
     :name="toValue(name)"
-    :class="cn('text-destructive text-sm', props.class)"
+    :class="cn('text-destructive text-sm mx-6 ps-2 md:ps-4 text-[1rem]', props.class)"
   >
       <template v-if="message">
           {{ t(message) }}
