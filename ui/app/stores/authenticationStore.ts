@@ -1,3 +1,5 @@
+import type {User} from "~/types/user";
+
 export const useAuthenticationStore = defineStore('authentication', () => {
     const token = useCookie('access_token')
     const username = ref('')

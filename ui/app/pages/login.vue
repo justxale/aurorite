@@ -69,6 +69,10 @@ const onSubmit = form.handleSubmit((values) => {
 const {locale, changeTheme, changeLanguage} = changeFunc()
 
 const authenticationStore = useAuthenticationStore()
+
+definePageMeta({
+    layout: 'headerless',
+})
 </script>
 
 <template>

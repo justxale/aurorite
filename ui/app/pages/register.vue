@@ -13,7 +13,7 @@ import {toTypedSchema} from "@vee-validate/zod";
 import {useForm} from "vee-validate";
 import {toast} from "vue-sonner";
 import type {FetchError} from 'ofetch';
-import type { User } from "~/components/user";
+import type { User } from "~/types/user";
 
 const {t} = useI18n();
 
@@ -78,6 +78,9 @@ const createClient = form.handleSubmit(async () => {
     }
 })
 
+definePageMeta({
+    layout: 'headerless',
+})
 </script>
 
 <template>
