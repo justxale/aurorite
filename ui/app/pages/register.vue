@@ -126,7 +126,7 @@ definePageMeta({
                             <FormControl>
                                 <Input
                                     v-model="password" :placeholder="t('aurorite.ui.password')"
-                                    type="text"
+                                    type="password"
                                     v-bind="componentField"
                                 />
                             </FormControl>
