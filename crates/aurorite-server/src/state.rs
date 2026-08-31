@@ -2,7 +2,7 @@ use crate::responses::AuroriteErrorResponse;
 use crate::session::SessionManager;
 use crate::traits::IntoJson;
 use aurorite_dataflow::{build_connection, database::Db};
-use aurorite_runtime::Character;
+use aurorite_runtime::{Character, RuntimeCtx};
 use axum::Json;
 use axum::http::StatusCode;
 use std::sync::Arc;
@@ -30,7 +30,19 @@ impl AuroriteState {
         self.db.clone()
     }
 
-    pub async fn session_character_and<F, C>(
+    pub fn session_and<F, C>(&self, session_id: Uuid, f: F) -> Result<C, (StatusCode, Json<AuroriteErrorResponse>)>
+    where
+        F: FnOnce(&RuntimeCtx) -> C,
+    {
+        let session = self.manager.session(session_id).ok_or((
+            StatusCode::NOT_FOUND,
+            AuroriteErrorResponse::new("no session with this id").json(),
+        ))?;
+        let res = f(&session.ctx().lock());
+        Ok(res)
+    }
+
+    pub fn session_character_and<F, C>(
         &self,
         session_id: Uuid,
         character_id: Uuid,
@@ -39,14 +51,12 @@ impl AuroriteState {
     where
         F: FnOnce(&Character) -> C,
     {
-        let session = self.manager.session(session_id).ok_or((
-            StatusCode::NOT_FOUND,
-            AuroriteErrorResponse::new("no session with this id").json(),
-        ))?;
-        session.ctx().lock().character(character_id).map(f).ok_or((
-            StatusCode::NOT_FOUND,
-            AuroriteErrorResponse::new("no character with this id").json(),
-        ))
+        self.session_and(session_id, |v| {
+            v.character(character_id).map(f).ok_or((
+                StatusCode::NOT_FOUND,
+                AuroriteErrorResponse::new("no character with this id").json(),
+            ))
+        })?
     }
 
     pub async fn cleanup(self) {

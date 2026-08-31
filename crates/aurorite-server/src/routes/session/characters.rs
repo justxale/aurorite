@@ -33,22 +33,10 @@ async fn get_session_characters(
     State(state): State<AuroriteState>,
     Path(params): Path<PathParams>,
 ) -> FailableResponse<SessionCharacters> {
-    let characters: Vec<Character> =
-        if let Some(ref session) = state.manager.session(params.session_id.uuid()) {
-            session
-                .ctx()
-                .lock()
-                .characters()
-                .values()
-                .cloned()
-                .collect()
-        } else {
-            return Err((
-                StatusCode::NOT_FOUND,
-                AuroriteErrorResponse::new("no character with this id").json(),
-            ));
-        };
-    Ok((StatusCode::OK, SessionCharacters { characters }.json()))
+    state.session_and(params.session_id.uuid(), |v| {
+        let characters = v.characters().values().cloned().collect();
+        Ok((StatusCode::OK, SessionCharacters { characters }.json()))
+    })?    
 }
 
 async fn get_session_character(
@@ -58,8 +46,7 @@ async fn get_session_character(
     let char = state
         .session_character_and(params.session_id.uuid(), params.character_id.uuid(), |v| {
             v.clone()
-        })
-        .await?;
+        })?;
     Ok((StatusCode::OK, char.json()))
 }
 
@@ -79,8 +66,7 @@ async fn get_character_roll(
                 }
                 (Either::Right(ability), Some(true)) => v.save_throw_dice(ability),
             },
-        )
-        .await?;
+        )?;
     Ok((
         StatusCode::OK,
         RollResult {
