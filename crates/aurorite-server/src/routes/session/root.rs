@@ -93,9 +93,8 @@ async fn post_message(
 }
 
 pub fn build_root_routes() -> Router<AuroriteState> {
-    let id_router = Router::new()
+    Router::new()
         .route("/", get(get_session))
         .route("/ws", any(handle_ws))
-        .route("/chat", post(post_message));
-    Router::new().nest("/{session_id}", id_router)
+        .route("/chat", post(post_message))
 }

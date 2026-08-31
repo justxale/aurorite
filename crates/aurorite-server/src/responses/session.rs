@@ -1,8 +1,10 @@
+use std::collections::HashMap;
 use crate::session::{Session, SessionClient};
-use aurorite_runtime::Character;
+use aurorite_runtime::{Character, Initiative};
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use aurorite_util::uuid::EncodedUuid;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct SessionClientInfo {
@@ -63,4 +65,21 @@ impl From<&Session> for SessionInfo {
 #[derive(Serialize)]
 pub struct SessionCharacters {
     pub characters: Vec<Character>,
+}
+
+#[derive(Serialize)]
+pub struct SessionInitiative {
+    order: HashMap<EncodedUuid, i64>,
+    round: u16
+}
+
+impl From<&Initiative> for SessionInitiative {
+    fn from(value: &Initiative) -> Self {
+        Self {
+            round: value.round,
+            order: value.order.iter().map(|(id, v)| {
+                (EncodedUuid(*id), *v)
+            }).collect()
+        }
+    }
 }

@@ -62,7 +62,7 @@ where
     Ok(decode_uuid(&String::deserialize(des)?))
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct EncodedUuid(pub Uuid);
 
 impl EncodedUuid {

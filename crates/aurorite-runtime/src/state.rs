@@ -10,11 +10,25 @@ use crate::events::{InitiativeOrder, Throw};
 #[derive(Debug)]
 pub struct Initiative {
     pub order: Vec<(Uuid, i64)>,
+    pub round: u16,
+    counter: usize
 }
 
 impl Initiative {
     pub fn new() -> Self {
-        Self { order: Vec::new() }
+        Self {
+            order: Vec::new(),
+            round: 1,
+            counter: 0
+        }
+    }
+
+    pub fn order(&self) -> &Vec<(Uuid, i64)> {
+        &self.order
+    }
+
+    pub fn round(&self) -> u16 {
+        self.round
     }
 
     pub fn add_character(&mut self, character: &Character) -> (Uuid, i64, i16) {
@@ -35,9 +49,24 @@ impl Initiative {
     }
 
     pub fn finalize(&mut self) -> &Vec<(Uuid, i64)> {
-        self.order.sort_by_key(|entry| entry.1);
-        self.order.reverse();
+        self.order.sort_by(|left, right| right.1.cmp(&left.1));
         &self.order
+    }
+
+    pub fn next_turn(&mut self) {
+        self.counter = (self.counter + 1) % self.order.len();
+        if self.counter == 0 {
+            self.on_round_start();
+        }
+        self.on_turn_start()
+    }
+
+    pub fn on_round_start(&mut self) {
+
+    }
+
+    pub fn on_turn_start(&mut self) {
+
     }
 }
 
@@ -78,7 +107,7 @@ impl RuntimeCtx {
         self.scene = None;
     }
 
-    pub async fn start_initiative(&mut self, character_ids: &[Uuid]) -> Result<(), &'static str> {
+    pub async fn start_initiative(&mut self, character_ids: &[Uuid]) -> Result<&Initiative, &'static str> {
         let mut initiative = Initiative::new();
         let mut characters: Vec<&Character> = Vec::with_capacity(character_ids.len());
         for id in character_ids {
@@ -100,9 +129,7 @@ impl RuntimeCtx {
             order.iter().copied().map(|(target, value)| { InitiativeOrder { target, value } }).collect()
         )).await;
 
-
-        self.initiative = Some(initiative);
-        Ok(())
+        Ok(self.initiative.insert(initiative))
     }
 
     pub fn remove_initiative(&mut self) {
@@ -126,5 +153,9 @@ impl RuntimeCtx {
 
     pub fn character_mut(&mut self, id: Uuid) -> Option<&mut Character> {
         self.characters.get_mut(&id)
+    }
+
+    pub fn initiative(&self) -> Option<&Initiative> {
+        self.initiative.as_ref()
     }
 }
