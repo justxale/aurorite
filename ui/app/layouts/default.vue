@@ -9,7 +9,7 @@ import {Toaster} from 'vue-sonner'
         <div class="absolute -z-10 w-full h-full m-0 text-black rounded-sm border-solid [clip-path:polygon(0_40%,90%_17.5%,90%_70%,0_100%)] bg-[radial-gradient(ellipse_at_75%_50%,#c273ff_0,transparent_75%)] opacity-40"/>
         <AuroriteHeader/>
         <Toaster position="top-center"/>
-        <main class="flex min-h-screen w-screen items-center justify-center text-black rounded-b-xl border-solid">
+        <main class="flex min-h-screen w-screen text-black rounded-b-xl border-solid">
             <slot/>
         </main>
     </div>
