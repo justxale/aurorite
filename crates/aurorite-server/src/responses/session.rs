@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use crate::session::{Session, SessionClient};
 use aurorite_runtime::{Character, Initiative};
 use jiff::Timestamp;
@@ -68,9 +67,16 @@ pub struct SessionCharacters {
 }
 
 #[derive(Serialize)]
+pub struct SessionInitiativeEntry {
+    target: EncodedUuid,
+    value: i64
+}
+
+#[derive(Serialize)]
 pub struct SessionInitiative {
-    order: HashMap<EncodedUuid, i64>,
-    round: u16
+    order: Vec<SessionInitiativeEntry>,
+    round: u16,
+    turn_idx: usize,
 }
 
 impl From<&Initiative> for SessionInitiative {
@@ -78,8 +84,9 @@ impl From<&Initiative> for SessionInitiative {
         Self {
             round: value.round,
             order: value.order.iter().map(|(id, v)| {
-                (EncodedUuid(*id), *v)
-            }).collect()
+                SessionInitiativeEntry { target: EncodedUuid(*id), value: *v }
+            }).collect(),
+            turn_idx: value.turn_idx,
         }
     }
 }

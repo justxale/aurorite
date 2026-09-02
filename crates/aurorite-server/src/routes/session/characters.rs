@@ -1,4 +1,4 @@
-use crate::responses::{AuroriteErrorResponse, FailableResponse, RollResult, SessionCharacters};
+use crate::responses::{FailableResponse, RollResult, SessionCharacters};
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
 use aurorite_dataflow::enums::{Ability, Skill};

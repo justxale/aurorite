@@ -1,22 +1,21 @@
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use aurorite_util::uuid::EncodedUuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Throw {
-    pub source: Uuid,
+pub struct ThrowEntry {
+    pub source: EncodedUuid,
     pub all: Option<Vec<u16>>,
     pub res: i64,
     pub bonus: i16
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct InitiativeOrder {
-    pub target: Uuid,
-    pub value: i64,
-}
-
 pub enum RuntimeEvent {
-    ThrowDice(Throw),
-    ThrowDices(Vec<Throw>),
-    FinalizeInitiative(Vec<InitiativeOrder>)
+    ThrowDice(ThrowEntry),
+    ThrowDices(Vec<ThrowEntry>),
+    
+    LoadInitiative,
+    UnloadInitiative,
+    
+    LoadScene(EncodedUuid),
+    UnloadScene,
 }

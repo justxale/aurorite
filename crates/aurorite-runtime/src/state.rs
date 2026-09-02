@@ -2,16 +2,17 @@ use crate::Character;
 use crate::{RuntimeEvent, Scene};
 use aurorite_dataflow::dto::SceneDto;
 use std::collections::HashMap;
-use tokio::sync::mpsc::Sender;
+use std::sync::mpsc::{Sender, SendError};
 use uuid::Uuid;
 use aurorite_dataflow::enums::Ability;
-use crate::events::{InitiativeOrder, Throw};
+use aurorite_util::uuid::EncodedUuid;
+use crate::events::ThrowEntry;
 
 #[derive(Debug)]
 pub struct Initiative {
     pub order: Vec<(Uuid, i64)>,
     pub round: u16,
-    counter: usize
+    pub turn_idx: usize
 }
 
 impl Initiative {
@@ -19,7 +20,7 @@ impl Initiative {
         Self {
             order: Vec::new(),
             round: 1,
-            counter: 0
+            turn_idx: 0
         }
     }
 
@@ -49,13 +50,13 @@ impl Initiative {
     }
 
     pub fn finalize(&mut self) -> &Vec<(Uuid, i64)> {
-        self.order.sort_by(|left, right| right.1.cmp(&left.1));
+        self.order.sort_by_key(|right| std::cmp::Reverse(right.1));
         &self.order
     }
 
     pub fn next_turn(&mut self) {
-        self.counter = (self.counter + 1) % self.order.len();
-        if self.counter == 0 {
+        self.turn_idx = (self.turn_idx + 1) % self.order.len();
+        if self.turn_idx == 0 {
             self.on_round_start();
         }
         self.on_turn_start()
@@ -90,7 +91,7 @@ impl RuntimeCtx {
         }
     }
 
-    pub fn switch_scene(&mut self, dto: SceneDto) {
+    pub fn load_scene(&mut self, dto: SceneDto) {
         let mut characters = Vec::with_capacity(dto.preloads.len());
         for p in dto.preloads {
             characters.push((p.character.id.uuid(), p.is_visible));
@@ -103,11 +104,11 @@ impl RuntimeCtx {
         });
     }
 
-    pub fn remove_scene(&mut self) {
+    pub fn unload_scene(&mut self) {
         self.scene = None;
     }
 
-    pub async fn start_initiative(&mut self, character_ids: &[Uuid]) -> Result<&Initiative, &'static str> {
+    pub fn load_initiative(&mut self, character_ids: &[Uuid]) -> Result<&Initiative, &'static str> {
         let mut initiative = Initiative::new();
         let mut characters: Vec<&Character> = Vec::with_capacity(character_ids.len());
         for id in character_ids {
@@ -120,20 +121,22 @@ impl RuntimeCtx {
             }
         }
         let throws = initiative.add_characters(&characters);
-        let throws = throws.iter().copied().map(|(source, res, bonus)| Throw { source, res, bonus, all: None }).collect();
+        let throws = throws.iter().copied().map(|(source, res, bonus)| ThrowEntry { source: EncodedUuid(source), res, bonus, all: None }).collect();
         let _ = self.sender.send(
             RuntimeEvent::ThrowDices(throws)
-        ).await;
-        let order =initiative.finalize();
-        let _ = self.sender.send(RuntimeEvent::FinalizeInitiative(
-            order.iter().copied().map(|(target, value)| { InitiativeOrder { target, value } }).collect()
-        )).await;
+        );
+        initiative.finalize();
+        let _ = self.sender.send(RuntimeEvent::LoadInitiative);
 
         Ok(self.initiative.insert(initiative))
     }
 
-    pub fn remove_initiative(&mut self) {
-        self.initiative = None;
+    pub fn unload_initiative(&mut self) -> Result<(), SendError<RuntimeEvent>>{
+        match self.sender.send(RuntimeEvent::UnloadInitiative) {
+            Ok(()) => self.initiative = None,
+            Err(err) => return Err(err),
+        }
+        Ok(())
     }
 
     pub fn characters_current_hits(&self) -> Vec<(Uuid, u16)> {

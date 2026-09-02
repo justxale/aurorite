@@ -82,7 +82,7 @@ async fn post_message(
             .session(id)
             .unwrap()
             .value()
-            .broadcast(WebsocketMessage::Chat {
+            .broadcast(WebsocketMessage::OnMessage {
                 content: body.content,
                 created_at: now,
                 client: info,

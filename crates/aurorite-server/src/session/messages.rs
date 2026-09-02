@@ -3,7 +3,8 @@ use axum::extract::ws::Message;
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
-use aurorite_runtime::{InitiativeOrder, RuntimeEvent, Throw};
+use aurorite_runtime::{RuntimeEvent, ThrowEntry};
+use aurorite_util::uuid::EncodedUuid;
 
 #[derive(Debug, Copy, Clone, Deserialize)]
 pub enum WebsocketError {
@@ -23,23 +24,29 @@ impl Display for WebsocketError {
 impl std::error::Error for WebsocketError {}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(tag = "type", content = "payload", rename_all = "snake_case")]
+#[serde(tag = "event", content = "payload", rename_all = "snake_case")]
 pub enum WebsocketMessage {
     Auth {
         token: String,
     },
-    Chat {
+    
+    OnMessage {
         client: SessionClientInfo,
         content: String,
         created_at: Timestamp,
     },
-    Shutdown {
+    OnShutdown {
         reason: Option<String>,
     },
 
-    RtInitiativeFinalize(Vec<InitiativeOrder>),
-    RtDiceThrow(Throw),
-    RtDicesThrow(Vec<Throw>)
+    // runtime events
+    LoadInitiative,
+    UnloadInitiative,
+    LoadScene(EncodedUuid),
+    UnloadScene,
+    
+    OnDiceThrow(ThrowEntry),
+    OnDicesThrow(Vec<ThrowEntry>)
 }
 
 impl TryFrom<&Message> for WebsocketMessage {
@@ -57,9 +64,15 @@ impl TryFrom<&Message> for WebsocketMessage {
 impl From<RuntimeEvent> for WebsocketMessage {
     fn from(event: RuntimeEvent) -> Self {
         match event {
-            RuntimeEvent::FinalizeInitiative(initiatives) => WebsocketMessage::RtInitiativeFinalize(initiatives),
-            RuntimeEvent::ThrowDice(throw) => WebsocketMessage::RtDiceThrow(throw),
-            RuntimeEvent::ThrowDices(throws) => WebsocketMessage::RtDicesThrow(throws),
+            RuntimeEvent::ThrowDice(throw) => WebsocketMessage::OnDiceThrow(throw),
+            RuntimeEvent::ThrowDices(throws) => WebsocketMessage::OnDicesThrow(throws),
+
+            RuntimeEvent::LoadInitiative => WebsocketMessage::LoadInitiative,
+            RuntimeEvent::UnloadInitiative => WebsocketMessage::UnloadInitiative,
+
+            RuntimeEvent::LoadScene(id) => WebsocketMessage::LoadScene(id),
+            RuntimeEvent::UnloadScene => WebsocketMessage::UnloadScene,
+
         }
     }
 }

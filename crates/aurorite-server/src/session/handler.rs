@@ -12,7 +12,9 @@ use futures_util::{SinkExt, StreamExt};
 use jiff::Timestamp;
 use parking_lot::Mutex;
 use std::sync::Arc;
-use tokio::sync::mpsc::{Receiver, Sender, channel};
+use std::sync::mpsc::{Receiver, channel};
+use std::thread;
+use tokio::sync::mpsc::{Receiver as TokioReceiver, Sender as TokioSender, channel as tokio_channel};
 use tokio::task::JoinSet;
 use uuid::Uuid;
 
@@ -30,7 +32,7 @@ fn handle_event(set: &mut JoinSet<Result<(), SendEvent>>, event: SendEvent) {
 }
 
 fn broadcast_owned(
-    sockets: &Arc<DashMap<Uuid, DashMap<Uuid, Sender<WebsocketMessage>>>>,
+    sockets: &Arc<DashMap<Uuid, DashMap<Uuid, TokioSender<WebsocketMessage>>>>,
     msg: WebsocketMessage
 ) {
     let mut set = JoinSet::new();
@@ -76,7 +78,7 @@ struct SendEvent {
     pub id: Uuid,
     pub client_id: Uuid,
     pub msg: WebsocketMessage,
-    pub sender: Sender<WebsocketMessage>,
+    pub sender: TokioSender<WebsocketMessage>,
 }
 
 #[derive(Debug)]
@@ -90,7 +92,7 @@ pub struct Session {
     db: Db,
     clients: DashMap<Uuid, SessionClient>,
     guests: DashMap<Uuid, SessionClient>,
-    sockets: Arc<DashMap<Uuid, DashMap<Uuid, Sender<WebsocketMessage>>>>,
+    sockets: Arc<DashMap<Uuid, DashMap<Uuid, TokioSender<WebsocketMessage>>>>,
     ctx: Arc<Mutex<RuntimeCtx>>,
     rt: AuroriteRuntime,
 
@@ -99,7 +101,7 @@ pub struct Session {
 
 impl Session {
     pub fn new(campaign_id: Uuid, db: Db) -> Self {
-        let (sender, reader) = channel::<RuntimeEvent>(BUFFER_SIZE);
+        let (sender, reader) = channel::<RuntimeEvent>();
         let ctx = Arc::new(Mutex::new(RuntimeCtx::new(campaign_id, sender)));
         let session = Self {
             campaign_id,
@@ -111,7 +113,8 @@ impl Session {
             rt: AuroriteRuntime::new(ctx),
             started_at: Timestamp::now(),
         };
-        tokio::spawn(Self::handle_event_stream(session.sockets.clone(), reader));
+        let cloned = session.sockets.clone();
+        thread::spawn(|| Self::handle_event_stream(cloned, reader));
         session
     }
 
@@ -159,7 +162,7 @@ impl Session {
                 },
                 payload.id()
             );
-            let (sender, reader) = channel::<WebsocketMessage>(BUFFER_SIZE);
+            let (sender, reader) = tokio_channel::<WebsocketMessage>(BUFFER_SIZE);
             self.sockets
                 .entry(payload.id())
                 .or_default()
@@ -198,7 +201,7 @@ impl Session {
 
     async fn handle_message_stream(
         mut sink: SplitSink<WebSocket, Message>,
-        mut stream: Receiver<WebsocketMessage>,
+        mut stream: TokioReceiver<WebsocketMessage>,
     ) {
         while let Some(event) = stream.recv().await {
             let _ = sink
@@ -209,11 +212,11 @@ impl Session {
         }
     }
 
-    async fn handle_event_stream(
-        sockets: Arc<DashMap<Uuid, DashMap<Uuid, Sender<WebsocketMessage>>>>,
-        mut stream: Receiver<RuntimeEvent>
+    fn handle_event_stream(
+        sockets: Arc<DashMap<Uuid, DashMap<Uuid, TokioSender<WebsocketMessage>>>>,
+        stream: Receiver<RuntimeEvent>
     ) {
-        while let Some(event) = stream.recv().await {
+        while let Ok(event) = stream.recv() {
             let msg = WebsocketMessage::from(event);
             broadcast_owned(&sockets, msg);
         }
@@ -248,9 +251,9 @@ impl Session {
             .as_ref()
             .and_then(|s| SceneDto::try_from(s).ok())
         {
-            lock.switch_scene(dto);
+            lock.load_scene(dto);
         } else {
-            lock.remove_scene();
+            lock.unload_scene();
         }
         Ok(())
     }
@@ -265,7 +268,7 @@ impl Session {
             Err(_) => Err("scene not found"),
             Ok(s) => {
                 let mut lock = self.ctx.lock();
-                lock.switch_scene(SceneDto::try_from(&s)?);
+                lock.load_scene(SceneDto::try_from(&s)?);
                 Ok(())
             }
         }
@@ -326,7 +329,7 @@ impl Session {
 
     async fn cleanup(self, db: &mut Db) {
         let (_, _) = tokio::join!(
-            self.broadcast(WebsocketMessage::Shutdown {
+            self.broadcast(WebsocketMessage::OnShutdown {
                 reason: Some("disconnecting".to_string())
             }),
             self.save_state(db)

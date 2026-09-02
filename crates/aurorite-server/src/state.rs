@@ -32,13 +32,13 @@ impl AuroriteState {
 
     pub fn session_and<F, C>(&self, session_id: Uuid, f: F) -> Result<C, (StatusCode, Json<AuroriteErrorResponse>)>
     where
-        F: FnOnce(&RuntimeCtx) -> C,
+        F: FnOnce(&mut RuntimeCtx) -> C
     {
         let session = self.manager.session(session_id).ok_or((
             StatusCode::NOT_FOUND,
             AuroriteErrorResponse::new("no session with this id").json(),
         ))?;
-        let res = f(&session.ctx().lock());
+        let res = f(&mut session.ctx().lock());
         Ok(res)
     }
 
@@ -49,7 +49,7 @@ impl AuroriteState {
         f: F,
     ) -> Result<C, (StatusCode, Json<AuroriteErrorResponse>)>
     where
-        F: FnOnce(&Character) -> C,
+        F: FnOnce(&Character) -> C
     {
         self.session_and(session_id, |v| {
             v.character(character_id).map(f).ok_or((
