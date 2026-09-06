@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use uuid::Uuid;
+use aurorite_util::uuid::EncodedUuid;
 
 #[derive(Debug, Deserialize)]
 pub struct PostSessionMessage {
@@ -8,5 +8,5 @@ pub struct PostSessionMessage {
 
 #[derive(Debug, Deserialize)]
 pub struct PostSessionInitiative {
-    pub members: Vec<Uuid>
+    pub members: Vec<EncodedUuid>
 }

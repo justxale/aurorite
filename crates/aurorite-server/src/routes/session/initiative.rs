@@ -7,6 +7,7 @@ use aurorite_util::uuid::EncodedUuid;
 use crate::requests::PostSessionInitiative;
 use crate::responses::{AuroriteErrorResponse, FailableResponse, SessionInitiative};
 use crate::traits::IntoJson;
+use uuid::Uuid;
 
 async fn get_initiative(
     Path(EncodedUuid(session_id)): Path<EncodedUuid>,
@@ -25,7 +26,8 @@ async fn post_initiative(
     Json(request): Json<PostSessionInitiative>
 ) -> FailableResponse<SessionInitiative> {
     state.session_and(session_id, |v| {
-        v.load_initiative(&request.members)
+        let ids: Vec<Uuid> = request.members.iter().map(|v| v.uuid()).collect();
+        v.load_initiative(&ids)
             .map(|v| (StatusCode::OK, SessionInitiative::from(v).json()))
             .map_err(|v| (StatusCode::CONFLICT, AuroriteErrorResponse::new(v).json()))
     })?
