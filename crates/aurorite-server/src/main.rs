@@ -19,6 +19,7 @@ mod state;
 #[cfg(test)]
 mod tests;
 mod traits;
+mod alloc;
 
 async fn build_app() -> (AuroriteState, Router) {
     let state = AuroriteState::new().await;
@@ -142,6 +143,5 @@ async fn main() {
             input.read_exact(&mut [0; 1]).unwrap();
         }));
     }
-
     serve().await;
 }
