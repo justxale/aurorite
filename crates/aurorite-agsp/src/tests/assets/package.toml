@@ -1,0 +1,25 @@
+[package]
+name = "Ultimate Aurorite Package"
+id = "ultimate_package"
+author = "aurorite"
+version = "0.1.0"
+license = "MIT"
+
+[packager]
+version = 1
+
+[edition]
+name = ""
+
+[package.includes]
+classes = []
+spells = []
+races = []
+backgrounds = []
+
+[edition.includes]
+classes = []
+spells = []
+races = []
+backrounds = []
+

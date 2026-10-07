@@ -1,12 +1,10 @@
 mod agsp;
-mod backgrounds;
 mod campaigns;
 mod characters;
-mod classes;
 mod client;
-mod races;
 mod rolls;
 mod session;
+mod editions;
 
 use crate::state::AuroriteState;
 use aurorite_util::common::create_hex;
@@ -26,8 +24,7 @@ pub fn build_routes() -> Router<AuroriteState> {
     Router::new()
         .nest("/characters", characters::build_characters_routes())
         .nest("/clients", client::build_client_routes())
-        .nest("/backgrounds", backgrounds::build_backgrounds_routes())
-        .nest("/classes", classes::build_classes_routes())
+        .nest("/editions", editions::build_editions_routes())
         .nest("/campaigns", campaigns::build_campaign_routes())
         .nest("/agsp", agsp::build_agsp_routes())
         .nest("/rolls", rolls::build_roll_routes())
