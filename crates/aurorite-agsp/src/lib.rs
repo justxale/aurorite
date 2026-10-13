@@ -9,3 +9,5 @@ mod tests;
 pub use common::{AssetRecord, AssetType, MAX_PACKAGE_SIZE, ManifestRecord};
 pub use exporter::export;
 pub use importer::{AgspError, import};
+
+pub static VERSION: &str = env!("CARGO_PKG_VERSION");

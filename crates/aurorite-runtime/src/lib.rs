@@ -13,3 +13,5 @@ pub use scene::Scene;
 pub use spell::{CachedScript, Spell};
 pub use state::{RuntimeCtx, Initiative};
 pub use vismut_core::{RegistryError, VismutScript, schemas::ScriptSchema};
+
+pub static VERSION: &str = env!("CARGO_PKG_VERSION");

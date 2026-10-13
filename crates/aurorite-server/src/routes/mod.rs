@@ -5,12 +5,12 @@ mod client;
 mod rolls;
 mod session;
 mod editions;
+mod service;
 
 use crate::state::AuroriteState;
 use aurorite_util::common::create_hex;
 use axum::extract::{MatchedPath, Request};
 use axum::response::Response;
-use axum::routing::any;
 use axum::{Router, http};
 use http::StatusCode;
 use std::time::Duration;
@@ -29,7 +29,7 @@ pub fn build_routes() -> Router<AuroriteState> {
         .nest("/agsp", agsp::build_agsp_routes())
         .nest("/rolls", rolls::build_roll_routes())
         .nest("/sessions", session::build_sessions_routes())
-        .route("/healthcheck", any(async || StatusCode::NO_CONTENT))
+        .nest("/service", service::build_service_routes())
         .route_service("/", ServeDir::new("static"))
         .layer(
             ServiceBuilder::new()

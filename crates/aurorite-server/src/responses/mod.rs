@@ -6,6 +6,7 @@ mod client;
 mod common;
 mod roll;
 mod session;
+mod service;
 
 pub use background::*;
 pub use campaign::*;
@@ -15,3 +16,4 @@ pub use client::*;
 pub use common::*;
 pub use roll::*;
 pub use session::*;
+pub use service::*;

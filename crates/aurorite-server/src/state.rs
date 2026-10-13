@@ -5,13 +5,22 @@ use aurorite_dataflow::{build_connection, database::Db};
 use aurorite_runtime::{Character, RuntimeCtx};
 use axum::Json;
 use axum::http::StatusCode;
-use std::sync::Arc;
+use serde::Serialize;
+use std::sync::{Arc, LazyLock};
+use tokio::sync::broadcast::{channel, Sender};
+use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
+
+pub static SERVICE_EVENT_SENDER: LazyLock<Sender<ServiceEvent>> = LazyLock::new(|| {
+    let (tx, _) = channel::<ServiceEvent>(16);
+    tx
+});
 
 #[derive(Clone)]
 pub struct AuroriteState {
     db: Db,
     pub manager: Arc<SessionManager>,
+    pub cancellation_token: CancellationToken
 }
 
 impl AuroriteState {
@@ -20,9 +29,11 @@ impl AuroriteState {
         let connection = build_connection::<true>().await;
         #[cfg(not(test))]
         let connection = build_connection::<false>().await;
+
         AuroriteState {
             db: connection.clone(),
             manager: Arc::new(SessionManager::new(connection)),
+            cancellation_token: CancellationToken::new()
         }
     }
 
@@ -65,5 +76,32 @@ impl AuroriteState {
             Err(_) => tracing::error!("error on cleanup, data will not be saved"),
             Ok(manager) => manager.cleanup().await,
         };
+    }
+}
+
+#[derive(Serialize, Copy, Clone)]
+#[serde(rename_all = "snake_case")]
+pub enum ServiceState {
+    Stale,
+    Processing
+}
+
+#[derive(Serialize, Copy, Clone)]
+#[serde(tag = "ev", rename_all = "snake_case")]
+pub enum ServiceEvent {
+    RamUsage { current: usize },
+    StateUpdate { new: ServiceState },
+    ProcessUpdate { id: &'static str, current: u64, total: u64 },
+    IndefiniteProcessUpdate { id: &'static str, is_finished: Option<bool> },
+}
+
+impl ServiceEvent {
+    pub fn event_name(&self) -> &'static str {
+        match self {
+            ServiceEvent::RamUsage { .. } => "ram_usage",
+            ServiceEvent::StateUpdate { .. } => "state_update",
+            ServiceEvent::ProcessUpdate { .. } => "process_update",
+            ServiceEvent::IndefiniteProcessUpdate { .. } => "indefinite_process_update"
+        }
     }
 }

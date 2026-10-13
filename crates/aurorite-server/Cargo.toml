@@ -10,6 +10,7 @@ authors.workspace = true
 axum = { version = "0.8.9", features = ["http2", "macros", "multipart", "ws"] }
 serde = { version = "1.0.228", features = ["derive"] }
 tokio = { version = "1.52.0", features = ["fs", "macros", "parking_lot", "rt-multi-thread", "signal", "tracing"] }
+tokio-stream = { version = "0.1.18", features = ["sync"] }
 tracing = "0.1.44"
 aurorite-agsp = { path = "../aurorite-agsp" }
 aurorite-dataflow = { path = "../aurorite-dataflow" }

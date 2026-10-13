@@ -1,14 +1,17 @@
 use crate::routes::build_routes;
-use crate::state::AuroriteState;
+use crate::state::{AuroriteState, ServiceEvent, SERVICE_EVENT_SENDER};
 use aurorite_util::env;
 use axum::Router;
 #[cfg(target_os = "windows")]
 use std::io::{Read, Write, stderr, stdin};
 use std::str::FromStr;
+use std::time::Duration;
+use tokio_util::sync::CancellationToken;
 use tracing::Level;
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
 use tracing_subscriber::{EnvFilter, Registry, fmt, prelude::*};
+use crate::alloc::GLOBAL;
 
 pub mod extractors;
 pub mod requests;
@@ -20,6 +23,8 @@ mod state;
 mod tests;
 mod traits;
 mod alloc;
+
+pub static VERSION: &str = env!("CARGO_PKG_VERSION");
 
 async fn build_app() -> (AuroriteState, Router) {
     let state = AuroriteState::new().await;
@@ -78,19 +83,27 @@ async fn serve() -> () {
     drop(span);
     tracing::info!(
         "Aurorite (v{}) is ready. Listening on {}",
-        env!("CARGO_PKG_VERSION"),
+        VERSION,
         listener.local_addr().unwrap()
     );
+    let tx = SERVICE_EVENT_SENDER.clone();
+    let handle = tokio::spawn(async move {
+        loop {
+            let _ = tx.send(ServiceEvent::RamUsage { current: GLOBAL.heap_size() });
+            tokio::time::sleep(Duration::from_secs(2)).await;
+        }
+    });
     axum::serve(listener, app.into_make_service())
-        .with_graceful_shutdown(shutdown_signal())
+        .with_graceful_shutdown(shutdown_signal(state.cancellation_token.clone()))
         .await
         .unwrap();
     let span = tracing::info_span!("shutdown").entered();
     state.cleanup().await;
+    handle.abort();
     drop(span)
 }
 
-async fn shutdown_signal() {
+async fn shutdown_signal(token: CancellationToken) {
     let ctrl_c = async {
         tokio::signal::ctrl_c()
             .await
@@ -111,9 +124,11 @@ async fn shutdown_signal() {
     tokio::select! {
         _ = ctrl_c => {
             tracing::info!("received SIGTERM, graceful shutdown...");
+            token.cancel();
         },
         _ = terminate => {
             tracing::info!("received SIGTERM, graceful shutdown...");
+            token.cancel();
         },
     }
 }
