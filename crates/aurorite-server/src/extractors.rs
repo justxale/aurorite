@@ -11,6 +11,7 @@ use axum::http::request::Parts;
 use axum_extra::headers;
 use axum_extra::headers::authorization::Bearer;
 use axum_extra::typed_header::TypedHeader;
+use axum_typed_multipart::BaseMultipart;
 
 pub struct AuthorizedClient(pub Client);
 pub struct AuthorizedAdmin(pub Client);
@@ -170,3 +171,5 @@ impl<const LOAD_CAMPAIGN: bool> OptionalFromRequestParts<AuroriteState>
         }
     }
 }
+
+pub type AuroriteMultipart<T> = BaseMultipart<T, AuroriteErrorResponse>;

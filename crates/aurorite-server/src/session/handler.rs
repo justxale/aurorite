@@ -1,5 +1,5 @@
 use crate::session::WebsocketMessage;
-use aurorite_agsp::loader::load_text_file;
+use aurorite_agsp::fs::read_text_file;
 use aurorite_dataflow::database::{Campaign, CampaignCharacter, Db, Scene, Script};
 use aurorite_dataflow::dto::SceneDto;
 use aurorite_runtime::{AuroriteRuntime, CachedScript, RuntimeCtx, RuntimeEvent, ScriptSchema};
@@ -293,7 +293,7 @@ impl Session {
         let script = match t {
             Script::Python => unimplemented!(),
             Script::Vismut => {
-                let content = match load_text_file(asset).await {
+                let content = match read_text_file(asset).await {
                     Ok(c) => c,
                     Err(_) => return Err("script loading failed"),
                 };

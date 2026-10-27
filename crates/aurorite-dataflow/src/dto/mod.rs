@@ -6,6 +6,7 @@ mod client;
 mod race;
 mod scene;
 mod spell;
+mod tracks;
 
 pub use background::BackgroundDto;
 pub use campaign::CampaignDto;
@@ -15,3 +16,4 @@ pub use client::ClientDto;
 pub use race::RaceDto;
 pub use scene::{PreloadDto, SceneDto};
 pub use spell::SpellDto;
+pub use tracks::{TrackDto, PlaylistDto};

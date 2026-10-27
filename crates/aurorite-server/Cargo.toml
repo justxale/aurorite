@@ -20,7 +20,7 @@ uuid = { version = "1.23.1", features = ["serde"] }
 tower = "0.5.3"
 tower-http = { version = "0.7.0", features = ["fs", "timeout", "trace"] }
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
-axum-extra = { version = "0.12.6", features = ["typed-header"] }
+axum-extra = { version = "0.12.6", features = ["typed-header", "typed-routing", "file-stream"] }
 jiff = { version = "0.2.24", features = ["serde"] }
 dotenvy = "0.15.7"
 tracing-appender = "0.2.5"
@@ -29,6 +29,8 @@ dashmap = { version = "7.0.0-rc2", features = ["inline-more"] }
 serde_json = "1.0.150"
 futures-util = "0.3.32"
 parking_lot = { version = "0.12.5", features = ["send_guard"] }
+axum_typed_multipart = { version = "0.16.8", default-features = false, features = ["tempfile_3"] }
+tempfile = "3.27.0"
 
 [dev-dependencies]
 http-body-util = "0.1.3"

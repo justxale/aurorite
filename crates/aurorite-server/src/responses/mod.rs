@@ -7,6 +7,7 @@ mod common;
 mod roll;
 mod session;
 mod service;
+mod tracks;
 
 pub use background::*;
 pub use campaign::*;
@@ -17,3 +18,4 @@ pub use common::*;
 pub use roll::*;
 pub use session::*;
 pub use service::*;
+pub use tracks::*;

@@ -6,6 +6,7 @@ mod rolls;
 mod session;
 mod editions;
 mod service;
+mod tracks;
 
 use crate::state::AuroriteState;
 use aurorite_util::common::create_hex;
@@ -30,6 +31,7 @@ pub fn build_routes() -> Router<AuroriteState> {
         .nest("/rolls", rolls::build_roll_routes())
         .nest("/sessions", session::build_sessions_routes())
         .nest("/service", service::build_service_routes())
+        .merge(tracks::build_track_routes())
         .route_service("/", ServeDir::new("static"))
         .layer(
             ServiceBuilder::new()
