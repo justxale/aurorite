@@ -4,19 +4,60 @@ use crate::traits::IntoJson;
 use aurorite_dataflow::database::{Campaign, CampaignClient, Client};
 use aurorite_util::jwt::{Authorization, TokenError, decode_key};
 use aurorite_util::uuid::EncodedUuid;
-use axum::RequestPartsExt;
-use axum::extract::{FromRequestParts, Json, OptionalFromRequestParts, Path};
-use axum::http::StatusCode;
+use axum::{Form, RequestPartsExt};
+use axum::extract::{FromRequest, FromRequestParts, Json, OptionalFromRequestParts, Path, Request};
+use axum::http::{StatusCode, header};
 use axum::http::request::Parts;
+use axum::response::Response;
 use axum_extra::headers;
 use axum_extra::headers::authorization::Bearer;
 use axum_extra::typed_header::TypedHeader;
 use axum_typed_multipart::BaseMultipart;
+use axum::RequestExt;
+use axum::response::IntoResponse;
 
 pub struct AuthorizedClient(pub Client);
 pub struct AuthorizedAdmin(pub Client);
 pub struct AuthorizedMaster<const LOAD_CAMPAIGN: bool>(pub Client, pub Campaign);
 pub struct AuthorizedUnchecked(pub Authorization);
+
+pub struct FormOrJson<T>(pub T);
+
+impl<S, T> FromRequest<S> for FormOrJson<T>
+where
+    Json<T>: FromRequest<()>,
+    Form<T>: FromRequest<()>,
+    T: 'static,
+    S: Send + Sync,
+{
+    type Rejection = Response;
+
+    async fn from_request(req: Request, _state: &S) -> Result<Self, Self::Rejection> {
+        let content_type = req
+            .headers()
+            .get(header::CONTENT_TYPE)
+            .and_then(|value| value.to_str().ok())
+            .ok_or_else(|| StatusCode::BAD_REQUEST.into_response())?;
+
+        if content_type.starts_with("application/json") {
+            let Json(payload) = req
+                .extract::<Json<T>, _>()
+                .await
+                .map_err(|err| err.into_response())?;
+
+            Ok(Self(payload))
+        } else if content_type.starts_with("application/x-www-form-urlencoded") {
+            let Form(payload) = req
+                .extract::<Form<T>, _>()
+                .await
+                .map_err(|err| err.into_response())?;
+
+            Ok(Self(payload))
+        } else {
+            Err((StatusCode::UNSUPPORTED_MEDIA_TYPE, AuroriteErrorResponse::new("only application/json or application/x-www-form-urlencoded is accepted")).into_response())
+        }
+    }
+}
 
 impl<S> FromRequestParts<S> for AuthorizedUnchecked
 where

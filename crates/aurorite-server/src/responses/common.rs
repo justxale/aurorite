@@ -3,9 +3,10 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum_typed_multipart::TypedMultipartError;
 use serde::Serialize;
+use utoipa::ToSchema;
 use crate::traits::IntoJson;
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct AuroriteErrorResponse {
     err: String,
     #[serde(skip)]

@@ -74,6 +74,7 @@ fn setup_tracing() -> (WorkerGuard, WorkerGuard, WorkerGuard) {
 async fn serve() -> () {
     let span = tracing::info_span!("startup").entered();
     tracing::info!("performing Aurorite startup...");
+    aurorite_agsp::consts::create_paths().await;
 
     let listener = tokio::net::TcpListener::bind(format!("{}:{}", env().host, env().port))
         .await

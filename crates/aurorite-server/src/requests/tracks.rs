@@ -1,11 +1,13 @@
+use axum::body::Bytes;
 use axum_typed_multipart::{FieldData, TryFromMultipart};
 use tempfile::NamedTempFile;
+use utoipa::ToSchema;
 
-#[derive(TryFromMultipart)]
-#[try_from_multipart(strict, rename_all = "snake_case")]
+#[derive(TryFromMultipart, ToSchema)]
 pub struct MpPostTrack {
     pub name: String,
     pub tags: Vec<String>,
-    #[form_data(limit = "64MB")]
-    pub blob: FieldData<NamedTempFile>
+    #[schema(value_type = String, format = Binary)]
+    #[form_data(limit = "64MiB")]
+    pub blob: FieldData<Bytes>
 }

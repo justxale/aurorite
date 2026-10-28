@@ -6,6 +6,7 @@ use crate::database::Client;
 #[derive(Model)]
 pub struct Track {
     #[key]
+    #[auto]
     pub id: Uuid,
 
     pub name: String,
@@ -71,6 +72,7 @@ pub struct PlaylistTrack {
 #[derive(Model)]
 pub struct Playlist {
     #[key]
+    #[auto]
     pub id: Uuid,
     pub name: String,
 

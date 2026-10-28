@@ -1,33 +1,34 @@
 use crate::extractors::{AuroriteMultipart, AuthorizedClient};
 use crate::requests::MpPostTrack;
-use crate::responses::{AuroriteErrorResponse, ClientTracks, FailableResponse};
+use crate::responses::{AuroriteErrorResponse, ClientTracks, FailableResponse, TrackInfo};
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
 use aurorite_agsp::consts::track_path;
-use aurorite_dataflow::database::Track;
+use aurorite_dataflow::database::{Track, TrackTag};
 use aurorite_dataflow::dto::TrackDto;
 use aurorite_util::uuid::EncodedUuid;
-use axum::Router;
-use axum::extract::{DefaultBodyLimit, State};
-use axum::handler::Handler;
+use axum::extract::{DefaultBodyLimit, State, Path};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use axum_extra::routing::{RouterExt, TypedPath};
-use serde::Deserialize;
+use tokio::fs::File;
+use tokio::io::AsyncWriteExt;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_axum::routes;
 use aurorite_agsp::fs::delete_file;
 
-#[derive(TypedPath, Deserialize)]
-#[typed_path("/tracks/{id}")]
-struct TrackIdPath {
-    id: EncodedUuid
-}
 
-#[derive(TypedPath, Deserialize)]
-#[typed_path("/tracks")]
-struct TracksPath;
-
+#[utoipa::path(
+    get, path = "/tracks",
+    security(
+        ("password" = [])
+    ),
+    responses(
+        (status = OK, body = ClientTracks),
+        (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse)
+    ),
+    tag = "tracks"
+)]
 async fn get_tracks(
-    _: TracksPath,
     AuthorizedClient(client): AuthorizedClient,
     State(state): State<AuroriteState>
 ) -> FailableResponse<ClientTracks> {
@@ -35,25 +36,44 @@ async fn get_tracks(
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(e).json())),
         Ok(records) => Ok((StatusCode::OK, ClientTracks {
             total: records.len(),
-            tracks: records.into_iter().filter_map(|v| TrackDto::try_from(v).ok()).collect(),
+            tracks: records.into_iter().filter_map(|v| TrackDto::try_from(v).map(TrackInfo::from).ok()).collect(),
         }.json()))
     }
 }
 
+#[utoipa::path(
+    post, path = "/tracks",
+    request_body(
+        content_type = "multipart/form-data", content = MpPostTrack
+    ),
+    responses(
+        (status = CREATED, body = TrackInfo),
+        (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse)
+    ),
+    security(
+        ("password" = [])
+    ),
+    tag = "tracks"
+)]
 async fn post_track(
-    _: TracksPath,
     AuthorizedClient(client): AuthorizedClient,
     State(state): State<AuroriteState>,
     multipart: AuroriteMultipart<MpPostTrack>
-) -> FailableResponse<TrackDto> {
-    let record = match Track::create().name(&multipart.name).client(client).exec(&mut state.db()).await {
+) -> FailableResponse<TrackInfo> {
+    let mut db = state.db();
+    let record = match Track::create().name(&multipart.name).client(client).exec(&mut db).await {
         Ok(r) => r,
         Err(err) => return Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))
     };
-    match multipart.data.blob.contents.persist(track_path(record.id)) {
-        Ok(_) => match TrackDto::try_from(record) {
-            Ok(v) => {
-                Ok((StatusCode::CREATED, v.json()))
+    let record = if let Ok(record) = Track::filter_by_id(record.id).include(Track::fields().tags()).get(&mut db).await { record } else { unreachable!() };
+
+    match File::create(track_path(record.id)).await {
+        Ok(mut f) => match f.write_all(&multipart.blob.contents).await {
+            Ok(_) => match TrackDto::try_from(record) {
+                Ok(v) => {
+                    Ok((StatusCode::CREATED, TrackInfo::from(v).json()))
+                }
+                Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))
             }
             Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))
         }
@@ -63,8 +83,21 @@ async fn post_track(
     }
 }
 
+#[utoipa::path(
+    delete, path = "/tracks/{id}",
+    params(("id", description = "ID of track")),
+    security(
+        ("password" = [])
+    ),
+    responses(
+        (status = NO_CONTENT),
+        (status = NOT_FOUND, body = AuroriteErrorResponse),
+        (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse)
+    ),
+    tag = "tracks"
+)]
 async fn delete_track(
-    TrackIdPath { id }: TrackIdPath,
+    Path(id): Path<EncodedUuid>,
     AuthorizedClient(client): AuthorizedClient,
     State(state): State<AuroriteState>
 ) -> Result<StatusCode, impl IntoResponse> {
@@ -88,9 +121,9 @@ async fn delete_track(
     }
 }
 
-pub fn build_track_routes() -> Router<AuroriteState> {
-    Router::new()
-        .typed_get(get_tracks)
-        .typed_post(post_track.layer(DefaultBodyLimit::max(64 * 1024usize.pow(3))))
-        .typed_delete(delete_track)
+pub fn build_track_routes() -> OpenApiRouter<AuroriteState> {
+    OpenApiRouter::new()
+        .routes(routes!(post_track, get_tracks))
+        .routes(routes!(delete_track))
+        .layer(DefaultBodyLimit::max(64 * 1024usize.pow(3)))
 }

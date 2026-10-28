@@ -1,4 +1,4 @@
-use crate::extractors::AuthorizedUnchecked;
+use crate::extractors::{AuthorizedUnchecked, FormOrJson};
 use crate::requests::{ClientAuth, NewClientData, UpdatedClientData};
 use crate::responses::ClientToken;
 use crate::responses::{AuroriteErrorResponse, FailableResponse};
@@ -11,8 +11,12 @@ use aurorite_util::jwt::encode_key;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::routing::{get, post};
-use axum::{Json, Router};
+use axum::{Json, Router, Form};
+use axum_extra::either::Either;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_axum::routes;
 
+#[utoipa::path(get, path = "/clients/me")]
 async fn get_self(
     State(state): State<AuroriteState>,
     AuthorizedUnchecked(user): AuthorizedUnchecked,
@@ -29,7 +33,8 @@ async fn get_self(
     }
 }
 
-async fn edit_self(
+#[utoipa::path(put, path = "/clients/me")]
+async fn put_self(
     State(state): State<AuroriteState>,
     AuthorizedUnchecked(user): AuthorizedUnchecked,
     Json(fields): Json<UpdatedClientData>,
@@ -67,9 +72,18 @@ async fn edit_self(
     Ok((StatusCode::OK, ClientDto::from(&record).json()))
 }
 
+#[utoipa::path(
+    post, path = "/clients/auth/login",
+    request_body(
+        content(
+            (ClientAuth = "application/www-form-urlencoded"),
+            (ClientAuth = "application/json")
+        )
+    )
+)]
 async fn login_client(
     State(state): State<AuroriteState>,
-    Json(body): Json<ClientAuth>,
+    FormOrJson(body): FormOrJson<ClientAuth>,
 ) -> FailableResponse<ClientToken> {
     let record = Client::get_by_username(&mut state.db(), &body.login).await;
     if record.is_err() {
@@ -108,6 +122,7 @@ async fn login_client(
     }
 }
 
+#[utoipa::path(post, path = "/clients/auth/register")]
 async fn register_client(
     State(state): State<AuroriteState>,
     AuthorizedUnchecked(_user): AuthorizedUnchecked,
@@ -135,9 +150,9 @@ async fn register_client(
     Ok((StatusCode::CREATED, ClientDto::from(&record).json()))
 }
 
-pub fn build_client_routes() -> Router<AuroriteState> {
-    Router::new()
-        .route("/me", get(get_self).put(edit_self))
-        .route("/auth/login", post(login_client))
-        .route("/auth/register", post(register_client))
+pub fn build_client_routes() -> OpenApiRouter<AuroriteState> {
+    OpenApiRouter::new()
+        .routes(routes!(get_self, put_self))
+        .routes(routes!(login_client))
+        .routes(routes!(register_client))
 }

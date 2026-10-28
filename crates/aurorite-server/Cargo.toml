@@ -31,6 +31,10 @@ futures-util = "0.3.32"
 parking_lot = { version = "0.12.5", features = ["send_guard"] }
 axum_typed_multipart = { version = "0.16.8", default-features = false, features = ["tempfile_3"] }
 tempfile = "3.27.0"
+utoipa = { version = "6.0.0", features = ["axum_extras", "jiff_0_2"] }
+utoipa-axum = "0.3.0"
+utoipa-swagger-ui = { version = "10.0.2", features = ["axum", "gzip", "minified", "vendored"] }
+utoipa-rapidoc = { version = "7.0.0", features = ["axum"] }
 
 [dev-dependencies]
 http-body-util = "0.1.3"
