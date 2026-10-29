@@ -4,18 +4,17 @@ use crate::responses::{AuroriteErrorResponse, ClientTracks, FailableResponse, Tr
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
 use aurorite_agsp::consts::track_path;
-use aurorite_dataflow::database::{Track, TrackTag};
+use aurorite_agsp::fs::delete_file;
+use aurorite_dataflow::database::Track;
 use aurorite_dataflow::dto::TrackDto;
 use aurorite_util::uuid::EncodedUuid;
-use axum::extract::{DefaultBodyLimit, State, Path};
+use axum::extract::{DefaultBodyLimit, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
-use aurorite_agsp::fs::delete_file;
-
 
 #[utoipa::path(
     get, path = "/tracks",
@@ -30,14 +29,27 @@ use aurorite_agsp::fs::delete_file;
 )]
 async fn get_tracks(
     AuthorizedClient(client): AuthorizedClient,
-    State(state): State<AuroriteState>
+    State(state): State<AuroriteState>,
 ) -> FailableResponse<ClientTracks> {
-    match Track::filter_by_client_id(client.id).exec(&mut state.db()).await {
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(e).json())),
-        Ok(records) => Ok((StatusCode::OK, ClientTracks {
-            total: records.len(),
-            tracks: records.into_iter().filter_map(|v| TrackDto::try_from(v).map(TrackInfo::from).ok()).collect(),
-        }.json()))
+    match Track::filter_by_client_id(client.id)
+        .exec(&mut state.db())
+        .await
+    {
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            AuroriteErrorResponse::new(e).json(),
+        )),
+        Ok(records) => Ok((
+            StatusCode::OK,
+            ClientTracks {
+                total: records.len(),
+                tracks: records
+                    .into_iter()
+                    .filter_map(|v| TrackDto::try_from(v).map(TrackInfo::from).ok())
+                    .collect(),
+            }
+            .json(),
+        )),
     }
 }
 
@@ -48,6 +60,7 @@ async fn get_tracks(
     ),
     responses(
         (status = CREATED, body = TrackInfo),
+        (status = UNSUPPORTED_MEDIA_TYPE, body = AuroriteErrorResponse),
         (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse)
     ),
     security(
@@ -58,28 +71,63 @@ async fn get_tracks(
 async fn post_track(
     AuthorizedClient(client): AuthorizedClient,
     State(state): State<AuroriteState>,
-    multipart: AuroriteMultipart<MpPostTrack>
+    multipart: AuroriteMultipart<MpPostTrack>,
 ) -> FailableResponse<TrackInfo> {
+    if !multipart.blob.contents.starts_with(b"OggS") {
+        return Err((StatusCode::UNSUPPORTED_MEDIA_TYPE, AuroriteErrorResponse::new("only ogg files supported").json()))
+    }
     let mut db = state.db();
-    let record = match Track::create().name(&multipart.name).client(client).exec(&mut db).await {
+    let record = match Track::create()
+        .name(&multipart.name)
+        .client(client)
+        .exec(&mut db)
+        .await
+    {
         Ok(r) => r,
+        Err(err) => {
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                AuroriteErrorResponse::new(err).json(),
+            ));
+        }
+    };
+    let record = match Track::filter_by_id(record.id)
+        .include(Track::fields().tags())
+        .get(&mut db)
+        .await
+    {
+        Ok(record) => record,
         Err(err) => return Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))
     };
-    let record = if let Ok(record) = Track::filter_by_id(record.id).include(Track::fields().tags()).get(&mut db).await { record } else { unreachable!() };
-
-    match File::create(track_path(record.id)).await {
+    let path = track_path(record.id);
+    match File::create(&path).await {
         Ok(mut f) => match f.write_all(&multipart.blob.contents).await {
             Ok(_) => match TrackDto::try_from(record) {
-                Ok(v) => {
-                    Ok((StatusCode::CREATED, TrackInfo::from(v).json()))
-                }
-                Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))
-            }
-            Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))
-        }
-        Err(err) => {
-            Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err).json()))
-        }
+                Ok(v) => Ok((StatusCode::CREATED, TrackInfo::from(v).json())),
+                Err(err) => {
+                    let _ = f.flush().await;
+                    drop(f);
+                    let _ = tokio::fs::remove_file(&path).await;
+                    Err((
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        AuroriteErrorResponse::new(err).json(),
+                    ))
+                },
+            },
+            Err(err) => {
+                let _ = f.flush().await;
+                drop(f);
+                let _ = tokio::fs::remove_file(&path).await;
+                Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    AuroriteErrorResponse::new(err).json(),
+                ))
+            },
+        },
+        Err(err) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            AuroriteErrorResponse::new(err).json(),
+        )),
     }
 }
 
@@ -99,25 +147,29 @@ async fn post_track(
 async fn delete_track(
     Path(id): Path<EncodedUuid>,
     AuthorizedClient(client): AuthorizedClient,
-    State(state): State<AuroriteState>
+    State(state): State<AuroriteState>,
 ) -> Result<StatusCode, impl IntoResponse> {
     let mut db = state.db();
-    let record = match Track::filter_by_id(id.uuid()).filter_by_client_id(client.id).get(&mut db).await {
+    let record = match Track::filter_by_id(id.uuid())
+        .filter_by_client_id(client.id)
+        .get(&mut db)
+        .await
+    {
         Ok(r) => r,
         Err(err) => {
             return if err.is_record_not_found() {
                 Err(AuroriteErrorResponse::with_code(StatusCode::NOT_FOUND, err))
             } else {
                 Err(AuroriteErrorResponse::new(err))
-            }
+            };
         }
     };
     if let Err(err) = delete_file(track_path(record.id)).await {
-        return Err(AuroriteErrorResponse::new(err))
+        return Err(AuroriteErrorResponse::new(err));
     }
     match record.delete().exec(&mut db).await {
         Ok(()) => Ok(StatusCode::NO_CONTENT),
-        Err(err) => Err(AuroriteErrorResponse::new(err))
+        Err(err) => Err(AuroriteErrorResponse::new(err)),
     }
 }
 
