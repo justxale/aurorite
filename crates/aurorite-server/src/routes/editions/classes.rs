@@ -6,11 +6,18 @@ use crate::traits::IntoJson;
 use aurorite_dataflow::database::{Class, ToastyJson};
 use aurorite_dataflow::dto::ClassDto;
 use aurorite_util::uuid::EncodedUuid;
-use axum::Router;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
-use axum::routing::get;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_axum::routes;
 
+#[utoipa::path(
+    get,
+    path = "/",
+    tag = "editions",
+    security(("password" = [])),
+    responses((status = OK, description = "List classes"), (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse))
+)]
 async fn get_classes(
     State(state): State<AuroriteState>,
     AuthorizedClient(_client): AuthorizedClient,
@@ -30,6 +37,13 @@ async fn get_classes(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/",
+    tag = "editions",
+    security(("password" = [])),
+    responses((status = CREATED, description = "Class created"), (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse))
+)]
 async fn post_class(
     State(state): State<AuroriteState>,
     AuthorizedAdmin(_client): AuthorizedAdmin,
@@ -51,6 +65,14 @@ async fn post_class(
     Ok((StatusCode::CREATED, ClassDto::from(&record).json()))
 }
 
+#[utoipa::path(
+    get,
+    path = "/{class_id}",
+    params(("class_id", description = "ID of class")),
+    tag = "editions",
+    security(("password" = [])),
+    responses((status = OK, description = "Class details"), (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse))
+)]
 async fn get_class(
     State(state): State<AuroriteState>,
     AuthorizedClient(_client): AuthorizedClient,
@@ -67,8 +89,8 @@ async fn get_class(
     Ok((StatusCode::OK, ClassDto::from(&record).json()))
 }
 
-pub fn build_classes_routes() -> Router<AuroriteState> {
-    Router::new()
-        .route("/", get(get_classes).post(post_class))
-        .route("/{class_id}", get(get_class))
+pub fn build_classes_routes() -> OpenApiRouter<AuroriteState> {
+    OpenApiRouter::new()
+        .routes(routes!(get_classes, post_class))
+        .routes(routes!(get_class))
 }

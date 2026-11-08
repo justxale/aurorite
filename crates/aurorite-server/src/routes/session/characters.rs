@@ -4,11 +4,11 @@ use crate::traits::IntoJson;
 use aurorite_dataflow::enums::{Ability, Skill};
 use aurorite_runtime::Character;
 use aurorite_util::uuid::EncodedUuid;
-use axum::Router;
 use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
-use axum::routing::get;
 use serde::Deserialize;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_axum::routes;
 
 #[derive(Deserialize)]
 struct PathParams {
@@ -29,6 +29,13 @@ struct ApiRollQuery {
     save: Option<bool>,
 }
 
+#[utoipa::path(
+    get,
+    path = "/",
+    params(("session_id", description = "ID of session")),
+    tag = "sessions",
+    responses((status = OK, description = "List session characters"), (status = NOT_FOUND, body = crate::responses::AuroriteErrorResponse))
+)]
 async fn get_session_characters(
     State(state): State<AuroriteState>,
     Path(params): Path<PathParams>,
@@ -39,6 +46,16 @@ async fn get_session_characters(
     })?    
 }
 
+#[utoipa::path(
+    get,
+    path = "/{character_id}",
+    params(
+        ("session_id", description = "ID of session"),
+        ("character_id", description = "ID of character")
+    ),
+    tag = "sessions",
+    responses((status = OK, description = "Session character"), (status = NOT_FOUND, body = crate::responses::AuroriteErrorResponse))
+)]
 async fn get_session_character(
     State(state): State<AuroriteState>,
     Path(params): Path<PathParams>,
@@ -50,6 +67,18 @@ async fn get_session_character(
     Ok((StatusCode::OK, char.json()))
 }
 
+#[utoipa::path(
+    get,
+    path = "/{character_id}/roll",
+    params(
+        ("session_id", description = "ID of session"),
+        ("character_id", description = "ID of character"),
+        ("attr" = String, Query, description = "Skill or ability to roll"),
+        ("save" = Option<bool>, Query, description = "Roll a saving throw")
+    ),
+    tag = "sessions",
+    responses((status = OK, description = "Character roll result"), (status = NOT_FOUND, body = crate::responses::AuroriteErrorResponse))
+)]
 async fn get_character_roll(
     State(state): State<AuroriteState>,
     Path(params): Path<PathParams>,
@@ -79,11 +108,9 @@ async fn get_character_roll(
     ))
 }
 
-pub fn build_character_routes() -> Router<AuroriteState> {
-    let id_router = Router::new()
-        .route("/", get(get_session_character))
-        .route("/roll", get(get_character_roll));
-    Router::new()
-        .nest("/{character_id}", id_router)
-        .route("/", get(get_session_characters))
+pub fn build_character_routes() -> OpenApiRouter<AuroriteState> {
+    OpenApiRouter::new()
+        .routes(routes!(get_session_characters))
+        .routes(routes!(get_session_character))
+        .routes(routes!(get_character_roll))
 }

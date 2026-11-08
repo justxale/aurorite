@@ -7,9 +7,17 @@ use aurorite_dataflow::database::{AccessState, Campaign, CampaignClient, Visibil
 use aurorite_dataflow::dto::CampaignDto;
 use axum::extract::State;
 use axum::http::StatusCode;
-use axum::routing::get;
-use axum::{Json, Router};
+use axum::Json;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_axum::routes;
 
+#[utoipa::path(
+    get,
+    path = "/",
+    tag = "campaigns",
+    security(("password" = [])),
+    responses((status = OK, description = "List the client's campaigns"), (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse))
+)]
 async fn get_campaigns(
     State(state): State<AuroriteState>,
     AuthorizedClient(client): AuthorizedClient,
@@ -33,6 +41,13 @@ async fn get_campaigns(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/",
+    tag = "campaigns",
+    security(("password" = [])),
+    responses((status = CREATED, description = "Campaign created"), (status = NOT_FOUND, body = AuroriteErrorResponse), (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse))
+)]
 async fn post_campaign(
     State(state): State<AuroriteState>,
     AuthorizedAdmin(client): AuthorizedAdmin,
@@ -81,6 +96,14 @@ async fn post_campaign(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/{campaign_id}",
+    params(("campaign_id", description = "ID of campaign")),
+    tag = "campaigns",
+    security(("password" = [])),
+    responses((status = OK, description = "Campaign details"), (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse))
+)]
 async fn get_campaign(
     State(_state): State<AuroriteState>,
     AuthorizedMaster(_client, campaign): AuthorizedMaster<true>,
@@ -94,6 +117,14 @@ async fn get_campaign(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/{campaign_id}",
+    params(("campaign_id", description = "ID of campaign")),
+    tag = "campaigns",
+    security(("password" = [])),
+    responses((status = NO_CONTENT, description = "Campaign deactivated"), (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse))
+)]
 async fn delete_campaign(
     AuthorizedMaster(_client, mut campaign): AuthorizedMaster<false>,
     State(state): State<AuroriteState>,
@@ -112,12 +143,28 @@ async fn delete_campaign(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/{campaign_id}/session",
+    params(("campaign_id", description = "ID of campaign")),
+    tag = "campaigns",
+    security(("password" = [])),
+    responses((status = OK, description = "Campaign session access state"))
+)]
 async fn get_campaign_session(
     AuthorizedMaster(_client, campaign): AuthorizedMaster<false>,
 ) -> FailableResponse<AccessState> {
     Ok((StatusCode::OK, campaign.access_state.json()))
 }
 
+#[utoipa::path(
+    put,
+    path = "/{campaign_id}/session",
+    params(("campaign_id", description = "ID of campaign")),
+    tag = "campaigns",
+    security(("password" = [])),
+    responses((status = OK, description = "Campaign session access state updated"), (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse))
+)]
 async fn put_campaign_session(
     AuthorizedMaster(_client, mut campaign): AuthorizedMaster<false>,
     State(state): State<AuroriteState>,
@@ -142,12 +189,9 @@ async fn put_campaign_session(
     }
 }
 
-pub fn build_campaign_routes() -> Router<AuroriteState> {
-    Router::new()
-        .route("/", get(get_campaigns).post(post_campaign))
-        .route("/{campaign_id}", get(get_campaign).delete(delete_campaign))
-        .route(
-            "/{campaign_id}/session",
-            get(get_campaign_session).put(put_campaign_session),
-        )
+pub fn build_campaign_routes() -> OpenApiRouter<AuroriteState> {
+    OpenApiRouter::new()
+        .routes(routes!(get_campaigns, post_campaign))
+        .routes(routes!(get_campaign, delete_campaign))
+        .routes(routes!(get_campaign_session, put_campaign_session))
 }

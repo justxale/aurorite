@@ -9,12 +9,19 @@ use crate::traits::IntoJson;
 use aurorite_dataflow::database::{Background, Character, Class, Db, Race};
 use aurorite_dataflow::dto::{BackgroundDto, CharacterDto, ClassDto, RaceDto};
 use aurorite_util::uuid::EncodedUuid;
-use axum::Router;
 use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
-use axum::routing::get;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_axum::routes;
 use uuid::Uuid;
 
+#[utoipa::path(
+    get,
+    path = "/",
+    tag = "characters",
+    security(("password" = [])),
+    responses((status = OK, description = "List the client's characters"), (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse))
+)]
 async fn get_characters(
     State(state): State<AuroriteState>,
     AuthorizedClient(client): AuthorizedClient,
@@ -45,6 +52,13 @@ async fn get_characters(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/",
+    tag = "characters",
+    security(("password" = [])),
+    responses((status = CREATED, description = "Character created"), (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse))
+)]
 async fn post_character(
     State(state): State<AuroriteState>,
     AuthorizedClient(client): AuthorizedClient,
@@ -79,6 +93,14 @@ async fn post_character(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/{character_id}",
+    params(("character_id", description = "ID of character")),
+    tag = "characters",
+    security(("password" = [])),
+    responses((status = OK, description = "Character details"), (status = NOT_FOUND, body = AuroriteErrorResponse), (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse))
+)]
 async fn get_character(
     Path(EncodedUuid(character_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
@@ -132,6 +154,14 @@ async fn get_character_record(
         })
 }
 
+#[utoipa::path(
+    get,
+    path = "/{character_id}/class",
+    params(("character_id", description = "ID of character")),
+    tag = "characters",
+    security(("password" = [])),
+    responses((status = OK, description = "Character class"), (status = NOT_FOUND, body = AuroriteErrorResponse))
+)]
 async fn get_character_class(
     Path(EncodedUuid(character_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
@@ -155,6 +185,14 @@ async fn get_character_class(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/{character_id}/class",
+    params(("character_id", description = "ID of character")),
+    tag = "characters",
+    security(("password" = [])),
+    responses((status = OK, description = "Character class updated"), (status = NOT_FOUND, body = AuroriteErrorResponse), (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse))
+)]
 async fn put_character_class(
     Path(EncodedUuid(character_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
@@ -195,6 +233,14 @@ async fn put_character_class(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/{character_id}/class",
+    params(("character_id", description = "ID of character")),
+    tag = "characters",
+    security(("password" = [])),
+    responses((status = OK, description = "Character class removed"), (status = NOT_FOUND, body = AuroriteErrorResponse), (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse))
+)]
 async fn delete_character_class(
     Path(EncodedUuid(character_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
@@ -218,6 +264,14 @@ async fn delete_character_class(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/{character_id}/race",
+    params(("character_id", description = "ID of character")),
+    tag = "characters",
+    security(("password" = [])),
+    responses((status = OK, description = "Character race"), (status = NOT_FOUND, body = AuroriteErrorResponse))
+)]
 async fn get_character_race(
     Path(EncodedUuid(character_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
@@ -241,6 +295,14 @@ async fn get_character_race(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/{character_id}/race",
+    params(("character_id", description = "ID of character")),
+    tag = "characters",
+    security(("password" = [])),
+    responses((status = OK, description = "Character race updated"), (status = NOT_FOUND, body = AuroriteErrorResponse), (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse))
+)]
 async fn put_character_race(
     Path(EncodedUuid(character_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
@@ -277,6 +339,14 @@ async fn put_character_race(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/{character_id}/race",
+    params(("character_id", description = "ID of character")),
+    tag = "characters",
+    security(("password" = [])),
+    responses((status = OK, description = "Character race removed"), (status = NOT_FOUND, body = AuroriteErrorResponse), (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse))
+)]
 async fn delete_character_race(
     Path(EncodedUuid(character_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
@@ -299,6 +369,14 @@ async fn delete_character_race(
         )),
     }
 }
+#[utoipa::path(
+    get,
+    path = "/{character_id}/background",
+    params(("character_id", description = "ID of character")),
+    tag = "characters",
+    security(("password" = [])),
+    responses((status = OK, description = "Character background"), (status = NOT_FOUND, body = AuroriteErrorResponse))
+)]
 async fn get_character_background(
     Path(EncodedUuid(character_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
@@ -327,6 +405,14 @@ async fn get_character_background(
     ))
 }
 
+#[utoipa::path(
+    put,
+    path = "/{character_id}/background",
+    params(("character_id", description = "ID of character")),
+    tag = "characters",
+    security(("password" = [])),
+    responses((status = OK, description = "Character background updated"), (status = NOT_FOUND, body = AuroriteErrorResponse), (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse))
+)]
 async fn put_character_background(
     Path(EncodedUuid(character_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
@@ -363,6 +449,14 @@ async fn put_character_background(
     }
 }
 
+#[utoipa::path(
+    delete,
+    path = "/{character_id}/background",
+    params(("character_id", description = "ID of character")),
+    tag = "characters",
+    security(("password" = [])),
+    responses((status = OK, description = "Character background removed"), (status = NOT_FOUND, body = AuroriteErrorResponse), (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse))
+)]
 async fn delete_character_background(
     Path(EncodedUuid(character_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
@@ -386,26 +480,23 @@ async fn delete_character_background(
     }
 }
 
-pub fn build_characters_routes() -> Router<AuroriteState> {
-    Router::new()
-        .route("/", get(get_characters).post(post_character))
-        .route("/{character_id}", get(get_character))
-        .route(
-            "/{character_id}/class",
-            get(get_character_class)
-                .put(put_character_class)
-                .delete(delete_character_class),
-        )
-        .route(
-            "/{character_id}/race",
-            get(get_character_race)
-                .put(put_character_race)
-                .delete(delete_character_race),
-        )
-        .route(
-            "/{character_id}/background",
-            get(get_character_background)
-                .put(put_character_background)
-                .delete(delete_character_background),
-        )
+pub fn build_characters_routes() -> OpenApiRouter<AuroriteState> {
+    OpenApiRouter::new()
+        .routes(routes!(get_characters, post_character))
+        .routes(routes!(get_character))
+        .routes(routes!(
+            get_character_class,
+            put_character_class,
+            delete_character_class
+        ))
+        .routes(routes!(
+            get_character_race,
+            put_character_race,
+            delete_character_race
+        ))
+        .routes(routes!(
+            get_character_background,
+            put_character_background,
+            delete_character_background
+        ))
 }

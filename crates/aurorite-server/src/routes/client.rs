@@ -10,13 +10,11 @@ use aurorite_util::auth::{generate_password, hash_password, verify};
 use aurorite_util::jwt::encode_key;
 use axum::extract::State;
 use axum::http::StatusCode;
-use axum::routing::{get, post};
-use axum::{Json, Router, Form};
-use axum_extra::either::Either;
+use axum::Json;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 
-#[utoipa::path(get, path = "/clients/me")]
+#[utoipa::path(get, path = "/me", tag = "clients")]
 async fn get_self(
     State(state): State<AuroriteState>,
     AuthorizedUnchecked(user): AuthorizedUnchecked,
@@ -33,7 +31,7 @@ async fn get_self(
     }
 }
 
-#[utoipa::path(put, path = "/clients/me")]
+#[utoipa::path(put, path = "/me", tag = "clients")]
 async fn put_self(
     State(state): State<AuroriteState>,
     AuthorizedUnchecked(user): AuthorizedUnchecked,
@@ -73,13 +71,14 @@ async fn put_self(
 }
 
 #[utoipa::path(
-    post, path = "/clients/auth/login",
+    post, path = "/auth/login",
     request_body(
         content(
             (ClientAuth = "application/www-form-urlencoded"),
             (ClientAuth = "application/json")
         )
-    )
+    ),
+    tag = "clients"
 )]
 async fn login_client(
     State(state): State<AuroriteState>,
@@ -122,7 +121,7 @@ async fn login_client(
     }
 }
 
-#[utoipa::path(post, path = "/clients/auth/register")]
+#[utoipa::path(post, path = "/auth/register", tag = "clients")]
 async fn register_client(
     State(state): State<AuroriteState>,
     AuthorizedUnchecked(_user): AuthorizedUnchecked,

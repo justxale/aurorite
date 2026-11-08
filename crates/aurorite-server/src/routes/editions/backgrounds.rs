@@ -8,9 +8,17 @@ use aurorite_dataflow::dto::BackgroundDto;
 use aurorite_util::uuid::EncodedUuid;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
-use axum::routing::get;
-use axum::{Json, Router};
+use axum::Json;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_axum::routes;
 
+#[utoipa::path(
+    get,
+    path = "/",
+    tag = "editions",
+    security(("password" = [])),
+    responses((status = OK, description = "List backgrounds"), (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse))
+)]
 async fn get_backgrounds(
     State(state): State<AuroriteState>,
     AuthorizedClient(_client): AuthorizedClient,
@@ -36,6 +44,13 @@ async fn get_backgrounds(
     ))
 }
 
+#[utoipa::path(
+    post,
+    path = "/",
+    tag = "editions",
+    security(("password" = [])),
+    responses((status = OK, description = "Background created"), (status = CONFLICT, body = AuroriteErrorResponse))
+)]
 async fn post_background(
     State(state): State<AuroriteState>,
     AuthorizedAdmin(_client): AuthorizedAdmin,
@@ -50,6 +65,14 @@ async fn post_background(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/{id}",
+    params(("id", description = "ID of background")),
+    tag = "editions",
+    security(("password" = [])),
+    responses((status = OK, description = "Background details"), (status = NOT_FOUND, body = AuroriteErrorResponse))
+)]
 async fn get_background(
     Path(EncodedUuid(id)): Path<EncodedUuid>,
     AuthorizedClient(_client): AuthorizedClient,
@@ -64,8 +87,8 @@ async fn get_background(
     }
 }
 
-pub fn build_backgrounds_routes() -> Router<AuroriteState> {
-    Router::new()
-        .route("/", get(get_backgrounds).post(post_background))
-        .route("/{id}", get(get_background))
+pub fn build_backgrounds_routes() -> OpenApiRouter<AuroriteState> {
+    OpenApiRouter::new()
+        .routes(routes!(get_backgrounds, post_background))
+        .routes(routes!(get_background))
 }

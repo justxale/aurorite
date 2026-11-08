@@ -1,14 +1,22 @@
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use crate::state::AuroriteState;
-use axum::{Json, Router};
-use axum::routing::get;
+use axum::Json;
 use aurorite_util::uuid::EncodedUuid;
 use crate::requests::PostSessionInitiative;
 use crate::responses::{AuroriteErrorResponse, FailableResponse, SessionInitiative};
 use crate::traits::IntoJson;
 use uuid::Uuid;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_axum::routes;
 
+#[utoipa::path(
+    get,
+    path = "/",
+    params(("session_id", description = "ID of session")),
+    tag = "sessions",
+    responses((status = OK, description = "Active initiative"), (status = NOT_FOUND, body = AuroriteErrorResponse))
+)]
 async fn get_initiative(
     Path(EncodedUuid(session_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>
@@ -20,6 +28,14 @@ async fn get_initiative(
     })?
 }
 
+#[utoipa::path(
+    post,
+    path = "/",
+    params(("session_id", description = "ID of session")),
+    tag = "sessions",
+    security(("password" = [])),
+    responses((status = OK, description = "Initiative started"), (status = CONFLICT, body = AuroriteErrorResponse))
+)]
 async fn post_initiative(
     Path(EncodedUuid(session_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
@@ -33,6 +49,14 @@ async fn post_initiative(
     })?
 }
 
+#[utoipa::path(
+    delete,
+    path = "/",
+    params(("session_id", description = "ID of session")),
+    tag = "sessions",
+    security(("password" = [])),
+    responses((status = NO_CONTENT, description = "Initiative stopped"), (status = CONFLICT, body = AuroriteErrorResponse))
+)]
 async fn delete_initiative(
     Path(EncodedUuid(session_id)): Path<EncodedUuid>,
     State(state): State<AuroriteState>,
@@ -44,7 +68,7 @@ async fn delete_initiative(
     })?
 }
 
-pub fn build_initiative_routes() -> Router<AuroriteState> {
-    Router::new()
-        .route("/", get(get_initiative).post(post_initiative).delete(delete_initiative))
+pub fn build_initiative_routes() -> OpenApiRouter<AuroriteState> {
+    OpenApiRouter::new()
+        .routes(routes!(get_initiative, post_initiative, delete_initiative))
 }

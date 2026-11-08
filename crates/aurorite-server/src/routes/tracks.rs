@@ -17,7 +17,7 @@ use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 
 #[utoipa::path(
-    get, path = "/tracks",
+    get, path = "/",
     security(
         ("password" = [])
     ),
@@ -54,7 +54,7 @@ async fn get_tracks(
 }
 
 #[utoipa::path(
-    post, path = "/tracks",
+    post, path = "/",
     request_body(
         content_type = "multipart/form-data", content = MpPostTrack
     ),
@@ -132,7 +132,7 @@ async fn post_track(
 }
 
 #[utoipa::path(
-    delete, path = "/tracks/{id}",
+    delete, path = "/{id}",
     params(("id", description = "ID of track")),
     security(
         ("password" = [])

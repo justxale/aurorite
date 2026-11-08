@@ -1,14 +1,14 @@
 use crate::AuroriteState;
-use axum::Router;
+use utoipa_axum::router::OpenApiRouter;
 
 mod characters;
 mod root;
 mod initiative;
 
-pub fn build_sessions_routes() -> Router<AuroriteState> {
-    let router = Router::new()
+pub fn build_sessions_routes() -> OpenApiRouter<AuroriteState> {
+    let router = OpenApiRouter::new()
         .merge(root::build_root_routes())
         .nest("/characters", characters::build_character_routes())
         .nest("/initiative", initiative::build_initiative_routes());
-    Router::new().nest("/{session_id}", router)
+    OpenApiRouter::new().nest("/{session_id}", router)
 }

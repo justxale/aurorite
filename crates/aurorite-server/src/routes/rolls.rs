@@ -4,11 +4,23 @@ use crate::responses::{AuroriteErrorResponse, FailableResponse};
 use crate::state::AuroriteState;
 use crate::traits::IntoJson;
 use aurorite_util::formulas::Dice;
-use axum::Router;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
-use axum::routing::get;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_axum::routes;
 
+#[utoipa::path(
+    get,
+    path = "/",
+    params(
+        ("amount" = Option<u16>, Query, description = "Number of dice"),
+        ("max" = Option<u16>, Query, description = "Maximum value on each die"),
+        ("bonus" = Option<i16>, Query, description = "Roll bonus"),
+        ("line" = Option<String>, Query, description = "Dice expression")
+    ),
+    tag = "rolls",
+    responses((status = OK, description = "Dice roll result"), (status = UNPROCESSABLE_ENTITY, body = AuroriteErrorResponse))
+)]
 async fn get_roll(
     State(_state): State<AuroriteState>,
     Query(query): Query<RollQuery>,
@@ -41,6 +53,6 @@ async fn get_roll(
     ))
 }
 
-pub fn build_roll_routes() -> Router<AuroriteState> {
-    Router::new().route("/", get(get_roll))
+pub fn build_roll_routes() -> OpenApiRouter<AuroriteState> {
+    OpenApiRouter::new().routes(routes!(get_roll))
 }

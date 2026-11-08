@@ -31,7 +31,14 @@ use utoipa_swagger_ui::SwaggerUi;
     modifiers(&SecurityModifier),
     tags(
         (name = "clients"),
-        (name = "tracks")
+        (name = "tracks"),
+        (name = "agsp"),
+        (name = "campaigns"),
+        (name = "characters"),
+        (name = "editions"),
+        (name = "rolls"),
+        (name = "service"),
+        (name = "sessions")
     )
 )]
 struct ApiDoc;
@@ -58,12 +65,9 @@ impl Modify for SecurityModifier {
 const RAPIDOC_HTML: &str = include_str!("../../static/rapidoc.html");
 
 pub fn build_routes() -> Router<AuroriteState> {
-    let router = OpenApiRouter::with_openapi(ApiDoc::openapi())
-        .merge(tracks::build_track_routes())
-        .merge(client::build_client_routes())
-        .route_service("/", ServeDir::new("static"));
-    let (router, api) = router.split_for_parts();
-    router
+    let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
+        .nest("/tracks", tracks::build_track_routes())
+        .nest("/clients", client::build_client_routes())
         .nest("/characters", characters::build_characters_routes())
         .nest("/editions", editions::build_editions_routes())
         .nest("/campaigns", campaigns::build_campaign_routes())
@@ -71,6 +75,9 @@ pub fn build_routes() -> Router<AuroriteState> {
         .nest("/rolls", rolls::build_roll_routes())
         .nest("/sessions", session::build_sessions_routes())
         .nest("/service", service::build_service_routes())
+        .route_service("/", ServeDir::new("static"))
+        .split_for_parts();
+    router
         .merge(SwaggerUi::new("/swagger").url("/openapi.json", api))
         .merge(
             RapiDoc::new("openapi.json")

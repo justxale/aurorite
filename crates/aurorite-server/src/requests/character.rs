@@ -1,8 +1,9 @@
 use aurorite_dataflow::enums::Skill;
 use aurorite_util::uuid::EncodedUuid;
 use serde::Deserialize;
+use utoipa::ToSchema;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct PostCharacterBase {
     pub level: u8,
 
@@ -17,18 +18,22 @@ pub struct PostCharacterBase {
     pub charisma: u8,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct PutCharacterClass {
+    #[schema(value_type = String)]
     pub class_id: EncodedUuid,
+    #[schema(value_type = Vec<String>)]
     pub chosen_skills: Vec<Skill>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct PutCharacterRace {
+    #[schema(value_type = String)]
     pub race_id: EncodedUuid,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct PutCharacterBackground {
+    #[schema(value_type = String)]
     pub background_id: EncodedUuid,
 }

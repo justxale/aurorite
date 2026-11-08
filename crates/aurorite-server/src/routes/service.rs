@@ -5,8 +5,9 @@ use axum::extract::{Query, Request, State};
 use axum::http::StatusCode;
 use axum::response::sse::{Event, KeepAlive};
 use axum::response::{IntoResponse, Response, Sse};
-use axum::routing::get;
-use axum::{Router, http::Version};
+use axum::http::Version;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_axum::routes;
 use serde::Deserialize;
 use std::time::Duration;
 use tokio_stream::StreamExt;
@@ -17,7 +18,13 @@ struct Q {
     stream: Option<bool>,
 }
 
-#[axum::debug_handler]
+#[utoipa::path(
+    get,
+    path = "/",
+    params(("stream" = Option<bool>, Query, description = "Stream service events over HTTP/2 or HTTP/3")),
+    tag = "service",
+    responses((status = OK, description = "Service information or event stream"), (status = HTTP_VERSION_NOT_SUPPORTED, description = "Streaming requires HTTP/2 or HTTP/3"))
+)]
 async fn get_service(State(state): State<AuroriteState>, Query(query): Query<Q>, request: Request) -> Response {
     match (query, request.version()) {
         (Q { stream: Some(true), }, Version::HTTP_2 | Version::HTTP_3, ) => {
@@ -39,6 +46,6 @@ async fn get_service(State(state): State<AuroriteState>, Query(query): Query<Q>,
     }
 }
 
-pub fn build_service_routes() -> Router<AuroriteState> {
-    Router::new().route("/", get(get_service))
+pub fn build_service_routes() -> OpenApiRouter<AuroriteState> {
+    OpenApiRouter::new().routes(routes!(get_service))
 }
