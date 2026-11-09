@@ -10,6 +10,7 @@ pub struct Track {
     pub id: Uuid,
 
     pub name: String,
+    pub length: u64,
 
     #[index]
     pub client_id: Uuid,
@@ -85,6 +86,41 @@ pub struct Playlist {
     #[has_many]
     pub tracks: Deferred<Vec<PlaylistTrack>>,
 
+    #[auto]
+    pub updated_at: Timestamp,
+    #[auto]
+    pub created_at: Timestamp,
+}
+
+#[derive(Model)]
+pub struct TimelineClip {
+    #[index]
+    #[key]
+    timeline_id: Uuid,
+
+    #[key]
+    pub order: u32,
+
+    pub playlist_id: Option<Uuid>,
+    pub track_id: Option<Uuid>,
+
+    #[belongs_to(key = timeline_id, references = id)]
+    pub timeline: Deferred<Timeline>,
+    #[belongs_to(key = playlist_id, references = id)]
+    pub playlist: Deferred<Option<Playlist>>,
+    #[belongs_to(key = track_id, references = id)]
+    pub track: Deferred<Option<Track>>,
+}
+
+#[derive(Model)]
+pub struct Timeline {
+    #[key]
+    #[auto]
+    pub id: Uuid,
+
+    #[has_many]
+    pub clips: Deferred<Vec<TimelineClip>>,
+    
     #[auto]
     pub updated_at: Timestamp,
     #[auto]

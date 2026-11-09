@@ -1,7 +1,7 @@
 use jiff::Timestamp;
 use serde::Serialize;
 use aurorite_util::uuid::EncodedUuid;
-use crate::database::{Playlist, PlaylistTrack, Track};
+use crate::database::{Playlist, PlaylistTrack, Timeline, TimelineClip, Track};
 
 #[derive(Serialize)]
 pub struct TrackDto {
@@ -73,5 +73,80 @@ impl TryFrom<Playlist> for PlaylistDto {
             updated_at: value.updated_at,
             created_at: value.created_at,
         })
+    }
+}
+
+#[derive(Serialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum TimelineClipDto {
+    Playlist { order: u32, #[serde(flatten)] dto: PlaylistDto },
+    Track { order: u32, #[serde(flatten)] dto: TrackDto }
+}
+
+impl TryFrom<TimelineClip> for TimelineClipDto {
+    type Error = &'static str;
+    fn try_from(value: TimelineClip) -> Result<Self, Self::Error> {
+        match (value.playlist_id, value.track_id) {
+            (Some(_), None) => {
+                if value.playlist.is_unloaded() {
+                    return Err("failed to load playlist data")
+                }
+                match value.playlist.into_inner().map(PlaylistDto::try_from) {
+                    Some(Ok(dto)) => Ok(Self::Playlist { order: value.order, dto }),
+                    Some(Err(err)) => Err(err),
+                    None => Err("invalid playlist record")
+                }
+            },
+            (None, Some(_)) => {
+                if value.track.is_unloaded() {
+                    return Err("failed to load track data")
+                }
+                match value.track.into_inner().map(TrackDto::try_from) {
+                    Some(Ok(dto)) => Ok(Self::Track { order: value.order, dto }),
+                    Some(Err(err)) => Err(err),
+                    None => Err("invalid track record")
+                }
+            },
+            (None, None) | (Some(_), Some(_)) => Err("invalid clip record")
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct TimelineDto {
+    pub id: EncodedUuid,
+    pub clips: Vec<TimelineClipDto>,
+
+    pub updated_at: Timestamp,
+    pub created_at: Timestamp,
+}
+
+impl TryFrom<Timeline> for TimelineDto {
+    type Error = &'static str;
+
+    fn try_from(value: Timeline) -> Result<Self, Self::Error> {
+        if value.clips.is_unloaded() {
+            return Err("failed to load clips data")
+        }
+        let clips: Vec<_> = value
+            .clips
+            .into_inner()
+            .into_iter()
+            .filter_map(|v| {
+                match TimelineClipDto::try_from(v) {
+                    Ok(v) => Some(v),
+                    Err(err) => {
+                        None
+                    }
+                }
+            })
+            .collect();
+        Ok(Self {
+            id: EncodedUuid(value.id),
+            clips,
+            updated_at: value.updated_at,
+            created_at: value.created_at
+        })
+
     }
 }

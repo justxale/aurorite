@@ -1,3 +1,4 @@
+use std::ops::{Bound, RangeBounds};
 use crate::extractors::{AuroriteMultipart, AuthorizedClient};
 use crate::requests::MpPostTrack;
 use crate::responses::{AuroriteErrorResponse, ClientTracks, FailableResponse, TrackInfo};
@@ -8,13 +9,20 @@ use aurorite_agsp::fs::delete_file;
 use aurorite_dataflow::database::Track;
 use aurorite_dataflow::dto::TrackDto;
 use aurorite_util::uuid::EncodedUuid;
-use axum::extract::{DefaultBodyLimit, Path, State};
+use axum::extract::{DefaultBodyLimit, Path, Query, State};
 use axum::http::StatusCode;
-use axum::response::IntoResponse;
+use axum::response::{IntoResponse, Response};
+use axum_extra::TypedHeader;
+use serde::Deserialize;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
+use utoipa::ToSchema;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
+use axum_extra::headers::Range;
+use axum_extra::response::FileStream;
+use tokio_util::io::ReaderStream;
+use tracing::log::Level::Trace;
 
 #[utoipa::path(
     get, path = "/",
@@ -132,6 +140,76 @@ async fn post_track(
 }
 
 #[utoipa::path(
+    get, path = "/{id}",
+    params(("id", description = "ID of track")),
+    responses(
+        (status = OK, body = TrackInfo),
+        (status = NOT_FOUND, body = AuroriteErrorResponse),
+        (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse)
+    ),
+    tag = "tracks"
+)]
+async fn get_track(
+    Path(id): Path<EncodedUuid>,
+    State(state): State<AuroriteState>,
+
+) -> FailableResponse<TrackInfo> {
+    let record = match Track::filter_by_id(id.uuid())
+        .include(Track::fields().tags())
+        .get(&mut state.db())
+        .await
+    {
+        Ok(record) => record,
+        Err(_) => return Err((StatusCode::NOT_FOUND, AuroriteErrorResponse::new("track not found").json()))
+    };
+    let record = match TrackDto::try_from(record) {
+        Ok(record) => record,
+        Err(_) => return Err((StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new("track not found").json()))
+    };
+    Ok((StatusCode::OK, TrackInfo::from(record).json()))
+}
+
+#[utoipa::path(
+    get, path = "/{id}/stream",
+    params(("id", description = "ID of track")),
+    responses(
+        (status = PARTIAL_CONTENT),
+        (status = NOT_FOUND, body = AuroriteErrorResponse),
+        (status = INTERNAL_SERVER_ERROR, body = AuroriteErrorResponse)
+    ),
+    tag = "tracks"
+)]
+async fn get_track_stream(
+    Path(id): Path<EncodedUuid>,
+    State(state): State<AuroriteState>,
+    range: Option<TypedHeader<Range>>
+) -> Result<Response, (StatusCode, AuroriteErrorResponse)> {
+    const MAX_UNBOUNDED: u64 = 1024 * 1024u64;
+    let record = match Track::filter_by_id(id.uuid())
+        .include(Track::fields().tags())
+        .get(&mut state.db())
+        .await
+    {
+        Ok(record) => record,
+        Err(_) => return Err((StatusCode::NOT_FOUND, AuroriteErrorResponse::new("track not found")))
+    };
+    let path = track_path(record.id);
+    let range = match range.map(|v| v.satisfiable_ranges(record.length).next()) {
+        Some(Some(range)) => range,
+        None | Some(None) => return Err((StatusCode::RANGE_NOT_SATISFIABLE, AuroriteErrorResponse::new("invalid range")))
+    };
+    let (start, end) = match range {
+        (Bound::Included(start), Bound::Included(end)) => (start, end),
+        (Bound::Unbounded, Bound::Included(end)) => (record.length - end, end),
+        (Bound::Included(start), Bound::Unbounded) if start < MAX_UNBOUNDED => (start, MAX_UNBOUNDED),
+        _ => return Err((StatusCode::RANGE_NOT_SATISFIABLE, AuroriteErrorResponse::new("invalid range")))
+    };
+    FileStream::<ReaderStream<File>>::try_range_response(path, start, end)
+        .await
+        .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, AuroriteErrorResponse::new(err)))
+}
+
+#[utoipa::path(
     delete, path = "/{id}",
     params(("id", description = "ID of track")),
     security(
@@ -176,6 +254,7 @@ async fn delete_track(
 pub fn build_track_routes() -> OpenApiRouter<AuroriteState> {
     OpenApiRouter::new()
         .routes(routes!(post_track, get_tracks))
-        .routes(routes!(delete_track))
+        .routes(routes!(get_track, delete_track))
+        .routes(routes!(get_track_stream))
         .layer(DefaultBodyLimit::max(64 * 1024usize.pow(3)))
 }
